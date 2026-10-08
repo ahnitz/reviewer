@@ -1,0 +1,13 @@
+# Logs and runtime PIDs
+.review_server.pid
+.review_server.log
+*.tmp.*
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Local OS
+.DS_Store
+*.swp
+*~

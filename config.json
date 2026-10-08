@@ -1,0 +1,27 @@
+{
+  "system": {
+    "name": "PyCBC Dual-Direction PR Review System",
+    "version": "1.0.0"
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "dashboard_path": "dashboard/pr_review_dashboard.html"
+  },
+  "storage": {
+    "feedback_file": "data/reviewer_feedback.json",
+    "auto_backup": true
+  },
+  "project": {
+    "upstream_repo": "gwastro/pycbc",
+    "upstream_branch": "master",
+    "target_merge_base": "f6eaed241",
+    "maintainer_fork": "ahnitz/pycbc",
+    "working_tree_path": "/home/ahnitz/projects/claude/searchdev/pycbc-work/apogee",
+    "branch_prefix": "pr-"
+  },
+  "sentinel": {
+    "poll_interval_seconds": 3,
+    "notify_on_new_comment": true
+  }
+}

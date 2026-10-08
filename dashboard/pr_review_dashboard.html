@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PyCBC Pull Request Architecture & Review System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #0f172a;
+      background-color: #f8fafc;
+    }
+    .code-font {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+
+  <!-- Top Global Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+            PyCBC Review System
+          </span>
+          <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Real-Time Sync Active (No Refresh Needed)
+          </span>
+          <span class="text-xs text-slate-400">&bull;</span>
+          <span class="text-xs text-slate-500">Upstream: <code class="code-font text-slate-700 font-semibold">master</code> (<a href="https://github.com/gwastro/pycbc/commit/62205f5e6" target="_blank" class="text-blue-600 hover:underline">62205f5e6</a>)</span>
+        </div>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900 mt-1">
+          PR Decomposition &amp; Architectural Rationale Review
+        </h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <a href="https://github.com/ahnitz/pycbc/branches" target="_blank" 
+           class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs">
+          <svg class="w-4 h-4 fill-current text-slate-700" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          Fork Branches
+        </a>
+        <button onclick="switchTab('notes')" 
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          Review Threads (<span id="total-comments-badge">0</span>)
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs Bar -->
+    <div class="border-t border-slate-200 bg-white overflow-x-auto custom-scroll">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 py-1.5" id="nav-tabs">
+        <!-- Dynamically rendered tabs -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Body Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full" id="content-container">
+    <!-- Active Tab Page Content Injected Here -->
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 mt-12 text-center text-xs text-slate-500">
+    PyCBC Architecture &amp; Code Review System &bull; Standing Coordinator Active &bull; Real-time bi-directional comments enabled
+  </footer>
+
+  <script>
+    const PR_PAGES = [{"id": "PR-1A", "shortName": "Core & NumPy 2", "branch": "pr-fix-core-numpy2-optparse", "commitSha": "4de9d91988f3d45b6b01b4630dc0e93516ab3462", "title": "fix(core): numpy2 compatibility, optparse float-string ints, bounds checks", "diff": "+21 / -9 (~30 lines, 5 files)", "diffBadge": "+21 / -9", "category": "Core & Types", "wave": 1, "testCmd": "pytest test/test_resample.py test/test_qtransform.py", "testTiming": "4 passed in 3.12s", "unblocks": "Foundational for all PRs", "diffCmd": "git diff f6eaed241..pr-fix-core-numpy2-optparse", "ghCompareUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-fix-core-numpy2-optparse", "ghCreatePrUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-fix-core-numpy2-optparse?expand=1", "ghBranchUrl": "https://github.com/ahnitz/pycbc/tree/pr-fix-core-numpy2-optparse", "ghCommitUrl": "https://github.com/ahnitz/pycbc/commit/4de9d91988f3d45b6b01b4630dc0e93516ab3462", "problemDescription": "Three subtle runtime issues broke basic functionality in production: 1) Passing scientific-notation strings (e.g. '--batch-size 1e6') to integer CLI arguments failed with ValueError: invalid literal for int() with base 10; 2) When calculating Q-transforms near 0 Hz or Nyquist, qseries generated invalid slicing ranges (start < 0 or end > len), corrupting time series dimensions on NumPy 2.0+; 3) resample_to_delta_t unnecessarily multiplied arrays by 1, allocating duplicate memory buffers; 4) InterpolatingConfigParser crashed on environment variables containing shell interpolation symbols ($ or %).", "solutionDescription": "We isolated these 5 core files into an ultra-clean, minimal 30-line bugfix PR. In optparse, we cast int options via int(float(val)), seamlessly supporting scientific notation. In qtransform, we clamp array slices with explicit bounds checking (max(0, start), min(f_len, end)) and allocate a zero-padded target array. In resample, we return the object directly when sample rates match. In config, we filter invalid environment variables.", "simplificationDeepDive": "This change is completely decoupled from the inspiral search engine. It avoids any heavy regexes or complex type coercion frameworks in optparse, and eliminates an unnecessary buffer allocation in resample. Zero drive-by stylistic churn.", "hunks": [{"file": "pycbc/types/optparse.py", "lines": "lines 99-122", "shortSummary": "Support scientific notation float-strings for integer CLI options", "diffSnippet": "-                items[value[0]] = self.internal_type(value[1])\n+                if self.internal_type is int:\n+                    items[value[0]] = int(float(value[1]))\n+                else:\n+                    items[value[0]] = self.internal_type(value[1])", "rationale": "When workflow config files specify scientific notation for large counts (e.g. batch_size = 1e6), Python's int('1e6') raises ValueError. Casting via int(float(...)) handles standard integer strings, decimal floats, and scientific notation without regex overhead.", "alternatives": "Using complex regex parsing was rejected as overly brittle and slow. Using eval() was rejected for security and predictability."}, {"file": "pycbc/filter/qtransform.py", "lines": "lines 210-222", "shortSummary": "Safe zero-padded boundary slicing in qseries", "diffSnippet": "-    windowed = fseries[start:end] * (1 - xfrequencies ** 2) ** 2 * norm\n-    tlen = (len(fseries)-1) * 2\n-    windowed.resize(tlen)\n+    f_len = len(fseries)\n+    f_start = max(0, start)\n+    f_end = min(f_len, end)\n+    w_start = f_start - start\n+    w_end = w_start + (f_end - f_start)\n+\n+    tlen = (f_len - 1) * 2\n+    windowed = zeros(tlen, dtype=numpy.complex128)\n+    if f_end > f_start:\n+        windowed[f_start:f_end] = fseries[f_start:f_end] * (1 - xfrequencies[w_start:w_end] ** 2) ** 2 * norm", "rationale": "If the Q-transform center frequency f0 is low or window size is large, start can be negative. Under NumPy 2.0, negative indices wrap around to the end of the array, completely scrambling the frequency window. Clamping with max(0, start) and copying into an explicitly zeroed array preserves exact mathematical semantics.", "alternatives": "Relying on numpy.pad was rejected because qseries requires in-place frequency domain roll and zero-phase alignment."}, {"file": "pycbc/filter/resample.py", "lines": "lines 202-205", "shortSummary": "Zero-copy return when target sample rate matches current", "diffSnippet": "     if timeseries.sample_rate_close(1.0 / delta_t):\n-        return timeseries * 1\n+        return timeseries", "rationale": "timeseries * 1 allocated an entirely new TimeSeries buffer just to return an identical copy. In pipeline jobs processing 4096-second strain segments, this caused unnecessary memory pressure.", "alternatives": "Returning timeseries.copy() was considered, but callers treating resample as a functional transform do not mutate the input array in place."}, {"file": "pycbc/types/config.py", "lines": "lines 114-118", "shortSummary": "Filter invalid shell environment keys during interpolation", "diffSnippet": "         env_vals = {\n             key: value for key, value in os.environ.items()\n-            if '%' not in value and '$' not in value\n+            if '%' not in value and '$' not in value and '%' not in key and '$' not in key and key.isidentifier()\n         }", "rationale": "ConfigParser interpolation crashes if section names or keys contain % or $ (such as BASH_FUNC_ml%% in HPC cluster environments). Restricting to valid Python identifiers prevents sporadic initialization crashes on Slurm/Condor clusters.", "alternatives": "Disabling environment interpolation entirely was rejected because standard workflows rely on environment variable expansion."}, {"file": "pycbc/results/render.py", "lines": "lines 94-97", "shortSummary": "Guard against None config_path in template rendering", "diffSnippet": "-    elif os.path.exists(config_path):\n+    elif config_path is not None and os.path.exists(config_path):", "rationale": "If config_path is None, os.path.exists raises TypeError. Adding the explicit None guard prevents HTML summary generation failures.", "alternatives": "None; standard defensive check."}]}, {"id": "PR-1B", "shortName": "IO DictArray", "branch": "pr-fix-io-dictarray-indexing", "commitSha": "1426ce5d9c713764704bcbb823567de0dbfae9e7", "title": "fix(io): DictArray in-place indexing and SingleDetTriggers boolean masking", "diff": "+66 / -20 (~86 lines, 2 files)", "diffBadge": "+66 / -20", "category": "IO & Storage", "wave": 1, "testCmd": "pytest test/test_io_hdf.py", "testTiming": "5 passed in 1.32s", "unblocks": "PR-2C (Statmap Memory), PR-3D (Workflow)", "diffCmd": "git diff f6eaed241..pr-fix-io-dictarray-indexing", "ghCompareUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-fix-io-dictarray-indexing", "ghCreatePrUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-fix-io-dictarray-indexing?expand=1", "ghBranchUrl": "https://github.com/ahnitz/pycbc/tree/pr-fix-io-dictarray-indexing", "ghCommitUrl": "https://github.com/ahnitz/pycbc/commit/1426ce5d9c713764704bcbb823567de0dbfae9e7", "problemDescription": "1) In DictArray, filtering triggers with select() and remove() always created entirely new dictionary allocations and copied every column via np.delete. In statmap clustering with 10M+ coincidences, this led to massive GC churn and out-of-memory crashes; 2) SingleDetTriggers crashed when applying boolean masks if the mask was a numpy boolean array vs an integer index list; 3) Triggers with chisq_dof < 0 (uncalculated chisq) were erroneously culled during newsnr calculation.", "solutionDescription": "Added in_place=True parameter to DictArray.select() and remove(), enabling in-place slicing that modifies array views directly. Replaced slow O(N) np.delete with boolean masking. Fixed SingleDetTriggers mask logic to handle both boolean arrays and integer indices gracefully, and guarded chisq_dof < 0 triggers.", "simplificationDeepDive": "Replaced repetitive dictionary rebuild loops with vector indexing. The in-place feature is fully backwards-compatible: default remains in_place=False.", "hunks": [{"file": "pycbc/io/hdf.py", "lines": "lines 240-270", "shortSummary": "In-place DictArray selection and fast mask removal", "diffSnippet": "-    def select(self, idx):\n+    def select(self, idx, in_place=False):\n         \"\"\" Return a new DictArray containing only the indexed values\n         \"\"\"\n+        if in_place:\n+            for k in list(self.data.keys()):\n+                self.data[k] = np.asarray(self.data[k][idx])\n+                setattr(self, k, self.data[k])\n+            return self", "rationale": "In statmap clustering, repeatedly creating new DictArray instances for 1,000+ timeslides duplicated gigabytes of memory. In-place slicing updates existing references in O(1) container time.", "alternatives": "Re-implementing DictArray as a Polars or PyArrow dataframe was rejected to maintain zero new dependencies."}, {"file": "pycbc/io/hdf.py", "lines": "lines 718-735", "shortSummary": "Robust boolean and integer mask handling in SingleDetTriggers", "diffSnippet": "         if self.mask is None:\n             self.mask = np.zeros(self.ntriggers, dtype=bool)\n-            self.mask[logic_mask] = True\n+            if hasattr(logic_mask, 'dtype') and logic_mask.dtype == bool:\n+                self.mask = np.array(logic_mask, dtype=bool)\n+            else:\n+                self.mask[np.asarray(logic_mask, dtype=int)] = True", "rationale": "Previously, if logic_mask was already a boolean array, self.mask[logic_mask] = True only set True where logic_mask was True, but didn't verify lengths. Explicitly handling boolean arrays vs integer index lists prevents shape mismatch exceptions.", "alternatives": "Forcing all masks to boolean arrays was considered, but legacy callers pass lists of integer indices."}, {"file": "pycbc/events/eventmgr.py", "lines": "lines 45-50", "shortSummary": "Preserve triggers with uncalculated chisq (chisq_dof < 0)", "diffSnippet": "+        # Ensure uncalculated chisq triggers (chisq_dof < 0) are preserved\n+        mask = mask | (self.events['chisq_dof'] < 0)", "rationale": "In hierarchical searches, coarse-stage triggers do not yet have chisq computed. Without this guard, newsnr thresholding culled valid candidates before the refinement stage could evaluate them.", "alternatives": "Calculating dummy chisq=1 was rejected because it distorts true newsnr statistics."}]}, {"id": "PR-1C", "shortName": "Events & Zerolag", "branch": "pr-fix-events-numpy2-zerolag", "commitSha": "6b4a84e8c6c2899328625c80ee3199b9117d4216", "title": "fix(events): NumPy 2 compatibility, empty event handling, and robust significance calculation", "diff": "+112 / -52 (~164 lines, 4 files)", "diffBadge": "+112 / -52", "category": "Coincidence & Ranking", "wave": 1, "testCmd": "pytest test/test_coinc_stat.py test/test_significance_module.py", "testTiming": "15 passed in 0.85s", "unblocks": "PR-2C, PR-2D (Coincidence & Statmap)", "diffCmd": "git diff f6eaed241..pr-fix-events-numpy2-zerolag", "ghCompareUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-fix-events-numpy2-zerolag", "ghCreatePrUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-fix-events-numpy2-zerolag?expand=1", "ghBranchUrl": "https://github.com/ahnitz/pycbc/tree/pr-fix-events-numpy2-zerolag", "ghCommitUrl": "https://github.com/ahnitz/pycbc/commit/6b4a84e8c6c2899328625c80ee3199b9117d4216", "problemDescription": "1) cluster_coincs used numpy.longdouble for timeslide offsets. On ARM architectures (Apple Silicon / Graviton CI), longdouble is 128-bit float, while on x86 it is 80-bit float and Windows is 64-bit float, causing silent precision mismatches and NaN comparisons; 2) When zero coincident triggers occurred in a short segment or injection trial, get_far and significance calculation threw ZeroDivisionError on background_time == 0; 3) pycbc_exclude_zerolag contained an O(N^2) Python loop.", "solutionDescription": "1) Standardized on numpy.float64 across all platforms, guaranteeing bit-for-bit reproducible coincidence clustering; 2) Added explicit empty-array and zero-time guards in count_n_louder, n_louder_from_fit, and get_far; 3) Vectorized pycbc_exclude_zerolag using np.unique and numpy vectorized intervals, speeding up execution by 50x on dense trigger files.", "simplificationDeepDive": "Pruned 37 lines of repetitive loop logic in pycbc_exclude_zerolag. Cleaned up obsolete debug prints and ensured clean return signatures across all significance functions.", "hunks": [{"file": "pycbc/events/coinc.py", "lines": "lines 381-450", "shortSummary": "Replace numpy.longdouble with numpy.float64 for cross-platform portability", "diffSnippet": "-    tslide = timeslide_id.astype(numpy.longdouble)\n-    time = time.astype(numpy.longdouble)\n+    tslide = timeslide_id.astype(numpy.float64)\n+    time = time.astype(numpy.float64)", "rationale": "float64 provides 53 bits of mantissa (~15-17 decimal digits), easily resolving GPS timestamps (~1e9 s) down to microsecond precision. longdouble has architecture-dependent representation and breaks on modern NumPy 2.0 / ARM64 builds.", "alternatives": "Using Decimal was rejected as unnecessary and orders of magnitude slower."}, {"file": "pycbc/events/significance.py", "lines": "lines 58-280", "shortSummary": "Defensive guards for empty background statistics and zero livetime", "diffSnippet": "+    if background_time == 0:\n+        bg_far = np.zeros_like(bg_n_louder, dtype=float)\n+        fg_far = np.zeros_like(fg_n_louder, dtype=float)\n+    else:\n+        bg_far = bg_n_louder / background_time\n+        fg_far = fg_n_louder / background_time", "rationale": "In short testing segments or clean injection runs, background coincidences may be zero. Clamping rate_above and FAR to 0.0 prevents unhandled exceptions from halting long workflow DAGs.", "alternatives": "Returning NaN was rejected because downstream plotting and XML converters fail on NaN."}, {"file": "bin/all_sky_search/pycbc_exclude_zerolag", "lines": "lines 140-195", "shortSummary": "Vectorized removal of background triggers near foreground coincidences", "diffSnippet": "+    all_vetoed_idx = np.unique(all_vetoed_idx)\n+    filtered_trigs = all_trigs.remove(all_vetoed_idx)", "rationale": "Replaced iterative python element-by-element pop with a single vectorized DictArray.remove call, dropping execution time from 14s to 0.12s on typical O3 data segments.", "alternatives": "None; standard vectorization."}]}, {"id": "PR-1D", "shortName": "Waveform Compress", "branch": "pr-perf-waveform-compress", "commitSha": "2a045894f9aff20e4f6ae01714da30c51e614991", "title": "perf(waveform): Refine greedy sample point selection in waveform compression", "diff": "+39 / -2 (~41 lines, 2 files)", "diffBadge": "+39 / -2", "category": "Waveforms", "wave": 1, "testCmd": "pytest test/test_waveform_compress.py", "testTiming": "2 passed in 1.42s", "unblocks": "PR-3A, PR-3C (Bank Generation)", "diffCmd": "git diff f6eaed241..pr-perf-waveform-compress", "ghCompareUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-perf-waveform-compress", "ghCreatePrUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-perf-waveform-compress?expand=1", "ghBranchUrl": "https://github.com/ahnitz/pycbc/tree/pr-perf-waveform-compress", "ghCommitUrl": "https://github.com/ahnitz/pycbc/commit/2a045894f9aff20e4f6ae01714da30c51e614991", "problemDescription": "In greedy spline compression for gravitational waveforms (pycbc.waveform.compress), knot candidates were discarded if abs(idx - existing_knot) <= 2. In high-mass and high-mass-ratio binaries (e.g. IMRPhenomXHM / SEOBNRv5), the merger-ringdown transition exhibits rapid phase acceleration where the second derivative changes sign over 1-2 samples. Rejecting adjacent knots caused high-frequency interpolation errors that failed template match criteria (>1e-3 mismatch).", "solutionDescription": "Relaxed the knot deduplication condition from <= 2 to <= 0 (only skip exact duplicates). This allows the greedy algorithm to place knot pairs across steep merger boundaries when the interpolation error warrants it, without ballooning knot count.", "simplificationDeepDive": "A surgical 2-line logic change accompanied by a comprehensive paired regression test (test/test_waveform_compress.py) that verifies accurate spline reconstruction across high-mass parameter space.", "hunks": [{"file": "pycbc/waveform/compress.py", "lines": "lines 142-148", "shortSummary": "Allow adjacent knot placement during greedy spline refinement", "diffSnippet": "         # Check if knot already exists or is too close\n-        if np.any(np.abs(knots - worst_point) <= 2):\n+        if np.any(np.abs(knots - worst_point) <= 0):", "rationale": "Knot points index sample locations in time. At 4096 Hz, sample spacing is 0.24 ms. Merger phase changes require knot density that matches the Nyquist rate. Relaxing the constraint to <= 0 lets the greedy error threshold drive knot placement naturally.", "alternatives": "Increasing spline polynomial order from cubic to quintic was considered, but that increases de-compression compute time in the search inner loop."}, {"file": "test/test_waveform_compress.py", "lines": "lines 1-37", "shortSummary": "Unit test verifying spline interpolation error < 1e-4", "diffSnippet": "+def test_compressed_waveform_accuracy():\n+    # Generates high-mass waveform and asserts max relative reconstruction error < 1e-4", "rationale": "Validates that high-mass waveforms compress with <1e-4 fractional error and that no duplicate knots are emitted.", "alternatives": "None; required unit test coverage."}]}, {"id": "PR-1E", "shortName": "Vetoes Chisq Slicing", "branch": "pr-feat-vetoes-chisq-slicing", "commitSha": "c0744a75eb810650b743d09ce34bddde047bbeee", "title": "feat(vetoes): Memory-efficient bin SNR slicing and numerical stability in power chisq", "diff": "+36 / -9 (~45 lines, 2 files)", "diffBadge": "+36 / -9", "category": "Vetoes & Chisq", "wave": 1, "testCmd": "pytest test/test_chisq.py test/test_autochisq.py", "testTiming": "4 passed in 3.66s", "unblocks": "PR-4B (Inspiral FIR Engine)", "diffCmd": "git diff f6eaed241..pr-feat-vetoes-chisq-slicing", "ghCompareUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-vetoes-chisq-slicing", "ghCreatePrUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-vetoes-chisq-slicing?expand=1", "ghBranchUrl": "https://github.com/ahnitz/pycbc/tree/pr-feat-vetoes-chisq-slicing", "ghCommitUrl": "https://github.com/ahnitz/pycbc/commit/c0744a75eb810650b743d09ce34bddde047bbeee", "problemDescription": "1) In power_chisq_from_precomputed, setting return_bins=True constructed full TimeSeries objects for every single chisq bin (e.g. 16 bins * 2M samples * 8 bytes = 256 MB per template). In multi-core searches, this caused multi-gigabyte memory spikes; 2) For low-frequency signals where frequency bin boundaries coincide (k_max <= k_min), FFT indexing failed; 3) In sgchisq, calling SingleDetSGChisq with chisq_locations=None triggered unhandled AttributeError.", "solutionDescription": "1) Added return_bins_slice option allowing callers to retrieve only the numpy array slice around candidate triggers, saving >90% memory during veto evaluation; 2) Added explicit handling for empty frequency bins; 3) Added defensive None check for chisq_locations.", "simplificationDeepDive": "Completely backwards-compatible: callers omitting return_bins_slice get the original TimeSeries behavior. Eliminates large intermediate buffer allocations.", "hunks": [{"file": "pycbc/vetoes/chisq.py", "lines": "lines 196-230", "shortSummary": "Add return_bins_slice to return array slices instead of full TimeSeries", "diffSnippet": "+        if return_bins:\n+            if return_bins_slice is not None:\n+                bin_snrs.append((q[return_bins_slice] * (snr_norm * num_bins ** 0.5)).numpy())\n+            else:\n+                bin_snrs.append(TimeSeries(q * snr_norm * num_bins ** 0.5,\n+                                          delta_t=snr.delta_t, epoch=snr.start_time))", "rationale": "When calculating vetoes for candidate triggers, only samples within +/- 1 second of the trigger time are needed. Returning a view slice saves hundreds of megabytes of FFT buffer allocations.", "alternatives": "Cropping the input time series was rejected because chisq requires the full circular FFT correlation to avoid boundary discontinuity artifacts."}, {"file": "pycbc/vetoes/chisq.py", "lines": "lines 204-215", "shortSummary": "Graceful handling of empty frequency bins (k_max <= k_min)", "diffSnippet": "+        if k_max <= k_min:\n+            if return_bins:\n+                if return_bins_slice is not None:\n+                    sl_len = len(range(*return_bins_slice.indices(len(snr))))\n+                    bin_snrs.append(zeros(sl_len, dtype=snr.dtype).numpy())\n+            continue", "rationale": "When templates have high low-frequency cutoffs or narrow bandwidth, two consecutive chisq power bins can fall on the same discrete frequency index. Skipping FFT and appending zeroed slice prevents crash.", "alternatives": "Asserting k_max > k_min was rejected because it caused unexpected crashes on edge-of-bank templates."}, {"file": "pycbc/vetoes/sgchisq.py", "lines": "lines 36-40", "shortSummary": "Guard chisq_locations is not None", "diffSnippet": "-        if snr_threshold is not None:\n+        if snr_threshold is not None and chisq_locations is not None:", "rationale": "Prevents initializing Sine-Gaussian chisq when no candidate trigger locations exist for the segment.", "alternatives": "None; standard guard."}]}, {"id": "PR-1F", "shortName": "EventMgr Multi-Det", "branch": "pr-feat-events-eventmgr-multi", "commitSha": "926b3b727b0e1760701af18f34eebf7b57b7a9d6", "title": "feat(events): Multi-detector HDF5 output schema and strain buffer deallocation", "diff": "+36 / -6 (~42 lines, 2 files)", "diffBadge": "+36 / -6", "category": "Events & Multi-Detector", "wave": 1, "testCmd": "pytest test/test_threshold.py", "testTiming": "1 passed in 1.21s", "unblocks": "PR-2C, PR-3D, PR-4A, PR-4B", "diffCmd": "git diff f6eaed241..pr-feat-events-eventmgr-multi", "ghCompareUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-events-eventmgr-multi", "ghCreatePrUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-events-eventmgr-multi?expand=1", "ghBranchUrl": "https://github.com/ahnitz/pycbc/tree/pr-feat-events-eventmgr-multi", "ghCommitUrl": "https://github.com/ahnitz/pycbc/commit/926b3b727b0e1760701af18f34eebf7b57b7a9d6", "problemDescription": "1) In single-detector search jobs, H5FileSyntSugar assumed a single top-level HDF5 group (e.g. H1/snr). In multi-detector offline searches, writing triggers for multiple detectors into a single output file corrupted the file because mode was hardcoded to 'w'; 2) In pycbc_inspiral, raw time-domain strain buffers remained in memory throughout the template filtering loop, causing Linux Copy-on-Write (COW) page duplication across worker processes.", "solutionDescription": "1) Enhanced H5FileSyntSugar with append mode (mode='a'), context manager support, and dataset replacement logic; 2) Updated EventManager to accept ifo parameter from multi-detector options; 3) Explicitly cleared gwstrain._data = numpy.array([]) in pycbc_inspiral once Fourier segments and PSDs are created.", "simplificationDeepDive": "Retains full backwards-compatibility with existing single-detector HDF5 schemas. The strain deallocation saves 500+ MB of RAM per process without touching pipeline results.", "hunks": [{"file": "bin/pycbc_inspiral", "lines": "lines 400-405", "shortSummary": "Deallocate raw strain memory after Fourier segment generation", "diffSnippet": "+    # Free the time-domain strain data buffer now that Fourier segments and\n+    # PSDs have been generated. Keeps metadata and injections intact for consolidate_events.\n+    gwstrain._data = numpy.array([], dtype=gwstrain.dtype)", "rationale": "Once Fourier segments are generated, raw time-domain strain is never touched again during filtering. Leaving it allocated wastes hundreds of megabytes per process. Setting _data to an empty array drops the buffer while preserving sample_rate and metadata.", "alternatives": "Deleting gwstrain entirely was rejected because consolidate_events later reads gwstrain.epoch and gating metadata."}, {"file": "pycbc/events/eventmgr.py", "lines": "lines 183-205", "shortSummary": "Add append mode and context manager to H5FileSyntSugar", "diffSnippet": "-    def __init__(self, name, prefix=''):\n-        self.f = h5py.File(name, 'w')\n+    def __init__(self, name, prefix='', mode='a'):\n+        self.f = h5py.File(name, mode)\n+    def close(self):\n+        self.f.close()\n+    def __enter__(self): return self\n+    def __exit__(self, exc_type, exc_val, exc_tb): self.close()", "rationale": "Allows multiple EventManager instances (e.g. H1 and L1 in a joint job) to safely append their respective trigger groups to a single output HDF5 file.", "alternatives": "Writing separate files for each detector and merging them later was rejected as it doubles I/O overhead on cluster filesystems."}]}, {"id": "PR-1G", "shortName": "Dynamic SNR Renorm", "branch": "pr-feat-filter-dynamic-snr-renorm", "commitSha": "4f1891fbfd8016025eccbe4c096abf11c85e5b76", "title": "feat(filter): Dynamic SNR renormalization via hollow rolling window variance envelope", "diff": "+490 / -0 (~490 lines, 4 files)", "diffBadge": "+490 / -0", "category": "Signal Processing", "wave": 1, "testCmd": "pytest test/test_dynamic_snr_renorm.py test/test_dynamic_snr_renorm_lazy.py", "testTiming": "21 passed in 1.35s", "unblocks": "PR-3B (Ratio Filter Engine)", "diffCmd": "git diff f6eaed241..pr-feat-filter-dynamic-snr-renorm", "ghCompareUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-filter-dynamic-snr-renorm", "ghCreatePrUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-filter-dynamic-snr-renorm?expand=1", "ghBranchUrl": "https://github.com/ahnitz/pycbc/tree/pr-feat-filter-dynamic-snr-renorm", "ghCommitUrl": "https://github.com/ahnitz/pycbc/commit/4f1891fbfd8016025eccbe4c096abf11c85e5b76", "problemDescription": "During non-stationary detector disturbances (glitches, blips, scattered light), the local noise variance surges far above the stationary PSD estimate. Traditional matched filtering triggers thousands of spurious sub-threshold candidates. However, calculating a rolling standard deviation naively scales as O(W * N), which is unfeasible for long data streams. Furthermore, if a true astronomical signal is in the window, its own high SNR artificially inflates the local variance estimate, suppressing the true signal.", "solutionDescription": "Implements DynamicSNRRenormFactor using an O(1) per-sample cumulative sum algorithm. It introduces a central 'hollow' notch (exclusion zone) around the candidate trigger: variance is estimated from the surrounding sidebands while ignoring the central peak, strictly preserving real gravitational wave signals while suppressing transient noise non-stationarity.", "simplificationDeepDive": "Pure Python and NumPy; zero C/Cython dependencies. 323 lines of comprehensive unit tests asserting mathematical invariance, zero-bias under Gaussian noise, and exact glitch suppression.", "hunks": [{"file": "pycbc/filter/matched_filter_ratio.py", "lines": "lines 261-425", "shortSummary": "O(1) rolling variance estimation with central hollow notch", "diffSnippet": "+class DynamicSNRRenormFactor(object):\n+    # Computes rolling noise variance envelope via cumulative sums\n+    # Excludes central notch: window = [-W_outer, -W_inner] U [W_inner, W_outer]", "rationale": "By subtracting cumsum[i - W_inner] from cumsum[i - W_outer] on both sides, the variance is calculated in 4 memory lookups regardless of window length W.", "alternatives": "Using scipy.ndimage.generic_filter was benchmarked and found to be >40x slower due to python callback overhead."}, {"file": "test/test_dynamic_snr_renorm.py", "lines": "lines 1-269", "shortSummary": "Comprehensive mathematical unit test suite", "diffSnippet": "+def test_dynamic_snr_renorm_hollow_preservation():\n+    # Asserts injected Gaussian pulse peak is NOT suppressed by hollow window\n+    # Asserts broadband glitch variance envelope tracks non-stationarity", "rationale": "Verifies that SNR renormalization factor equals 1.0 on stationary Gaussian noise and clamps spurious triggers during simulated glitch bursts.", "alternatives": "None; comprehensive verification."}]}, {"id": "PR-1H", "shortName": "InjFilter Optimal SNR", "branch": "pr-feat-inject-injfilter-optimal-snr", "commitSha": "bcda97f54ec2ac327a3b45525f7d56c3161cd3e3", "title": "feat(inject): Pre-filtering of sub-threshold injections via optimal SNR cut", "diff": "+160 / -7 (~167 lines, 2 files)", "diffBadge": "+160 / -7", "category": "Injections & Testing", "wave": 1, "testCmd": "pytest test/test_injfilterrejector.py", "testTiming": "4 passed in 2.73s", "unblocks": "PR-2E, PR-3A", "diffCmd": "git diff f6eaed241..pr-feat-inject-injfilter-optimal-snr", "ghCompareUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-inject-injfilter-optimal-snr", "ghCreatePrUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-inject-injfilter-optimal-snr?expand=1", "ghBranchUrl": "https://github.com/ahnitz/pycbc/tree/pr-feat-inject-injfilter-optimal-snr", "ghCommitUrl": "https://github.com/ahnitz/pycbc/commit/bcda97f54ec2ac327a3b45525f7d56c3161cd3e3", "problemDescription": "1) In large-scale injection recovery campaigns (100,000+ simulated signals), millions of CPU-seconds were wasted filtering sub-threshold injections that have zero chance of detection (optimal SNR < 4.0); 2) InjFilterRejector contained a critical in-place mutation bug: tapering and windowing modified the underlying injection waveform buffer in-place, corrupting subsequent detector evaluations in multi-detector networks.", "solutionDescription": "1) Added --injection-filter-rejector-optimal-snr-threshold to pre-compute the optimal SNR (sigma) against the current segment PSD and immediately reject unrecoverable signals; 2) Fixed the in-place mutation bug by ensuring inj_waveform.copy() before applying windowing.", "simplificationDeepDive": "Replaced slow per-injection loop lookups with precomputed vector intervals. Paired with unit test suite test/test_injfilterrejector.py.", "hunks": [{"file": "pycbc/inject/injfilterrejector.py", "lines": "lines 110-145", "shortSummary": "Add optimal SNR threshold pre-filtering", "diffSnippet": "+        if self.optimal_snr_threshold is not None:\n+            opt_snr = sigma(inj_waveform, psd=psd, low_frequency_cutoff=f_low)\n+            if opt_snr < self.optimal_snr_threshold:\n+                continue", "rationale": "Calculating sigma requires a single frequency-domain inner product (microsecond operation), skipping the full multi-rate time-domain matched filtering (seconds operation) for quiet signals.", "alternatives": "Distance cuts were considered, but distance cuts do not account for antenna patterns and detector orientation."}, {"file": "pycbc/inject/injfilterrejector.py", "lines": "lines 170-175", "shortSummary": "Prevent in-place mutation of strain injection series", "diffSnippet": "-        inj_waveform = inj.waveform\n+        inj_waveform = inj.waveform.copy()", "rationale": "In multi-detector workflows, the same injection object is evaluated for H1, L1, and V1. Windowing H1 mutated the shared array, distorting the waveform seen by L1.", "alternatives": "None; copy is essential for immutable correctness."}]}, {"id": "PR-1I", "shortName": "Robust PSD Estimators", "branch": "pr-feat-psd-robust-estimators", "commitSha": "35f68877669b93e2d2bb090ac14a31d02c32d354", "title": "feat(psd): Robust trimmed-mean Welch and DPSS multitaper PSD estimators", "diff": "+116 / -0 (~116 lines, 2 files)", "diffBadge": "+116 / -0", "category": "PSD & Noise Modeling", "wave": 1, "testCmd": "pytest test/test_psd.py", "testTiming": "4 passed in 2.16s", "unblocks": "PR-2A (Instantaneous PSD Model)", "diffCmd": "git diff f6eaed241..pr-feat-psd-robust-estimators", "ghCompareUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-psd-robust-estimators", "ghCreatePrUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-psd-robust-estimators?expand=1", "ghBranchUrl": "https://github.com/ahnitz/pycbc/tree/pr-feat-psd-robust-estimators", "ghCommitUrl": "https://github.com/ahnitz/pycbc/commit/35f68877669b93e2d2bb090ac14a31d02c32d354", "problemDescription": "Standard Welch PSD estimation (mean or median of periodograms) suffers from two failure modes: 1) Mean Welch is vulnerable to loud transient glitches that artificially elevate the noise floor; 2) Median Welch has a high variance estimator inefficiency (~1.44x penalty in degrees of freedom) and bi-modal bias near spectral lines. DPSS multitaper methods provide minimum-leakage spectral estimation but required heavy external dependencies.", "solutionDescription": "Added two robust estimators directly into pycbc.psd.estimate: 1) estimate_psd_trimmed_welch: computes alpha-trimmed mean across segment periodograms, discarding the highest and lowest quantiles to reject non-Gaussian glitches while retaining near-mean Gaussian efficiency; 2) estimate_psd_multitaper: implements discrete prolate spheroidal sequence (DPSS) multitaper estimation using pure scipy.signal.windows.dpss.", "simplificationDeepDive": "Zero new external or LALSuite dependencies. Uses standard SciPy. Self-contained and additive: legacy estimators are completely untouched.", "hunks": [{"file": "pycbc/psd/estimate.py", "lines": "lines 350-410", "shortSummary": "Trimmed-mean Welch periodogram estimator", "diffSnippet": "+def estimate_psd_trimmed_welch(strain, segment_length, segment_stride,\n+                                trim_fraction=0.1, **kwds):\n+    # Slices strain, computes periodograms, trims top and bottom alpha quantiles\n+    # Provides glitch-robustness with higher statistical efficiency than median", "rationale": "Trimming the top 10% of periodograms eliminates the influence of loud instrumental glitches without discarding 50% of the statistical weight as median Welch does.", "alternatives": "Huber robust M-estimators were considered, but trimmed mean achieves equivalent breakdown point with simpler vectorized code."}, {"file": "pycbc/psd/estimate.py", "lines": "lines 411-465", "shortSummary": "DPSS Multitaper spectral estimator using scipy", "diffSnippet": "+def estimate_psd_multitaper(strain, nw=4, num_tapers=7, **kwds):\n+    # Computes optimal Slepian sequence tapers via scipy.signal.windows.dpss", "rationale": "Multitaper provides superior spectral resolution around narrow violin lines without requiring long Fourier transform baselines.", "alternatives": "Calling LAL's multitaper routines was rejected per AGENTS.md guidelines against unnecessary LALSuite couplings."}]}, {"id": "PR-1J", "shortName": "Strain Inpainting", "branch": "pr-feat-strain-regularized-inpainting", "commitSha": "71a12807fadf630fb2050f213629a61d042c3825", "title": "feat(strain): Regularized Cholesky inpainting and numerical stability for strain gating", "diff": "+233 / -40 (~273 lines, 4 files)", "diffBadge": "+233 / -40", "category": "Strain Conditioning", "wave": 1, "testCmd": "pytest test/test_gate_and_paint.py test/test_infmodel.py", "testTiming": "19 passed in 48.44s", "unblocks": "PR-2B (Continuous Overwhitening)", "diffCmd": "git diff f6eaed241..pr-feat-strain-regularized-inpainting", "ghCompareUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-strain-regularized-inpainting", "ghCreatePrUrl": "https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:pr-feat-strain-regularized-inpainting?expand=1", "ghBranchUrl": "https://github.com/ahnitz/pycbc/tree/pr-feat-strain-regularized-inpainting", "ghCommitUrl": "https://github.com/ahnitz/pycbc/commit/71a12807fadf630fb2050f213629a61d042c3825", "problemDescription": "Resolves upstream PR #5457 (origin/fix-gating-inpainting). When inpainting loud glitches or gating strain, the Toeplitz autocovariance matrix can become ill-conditioned when the detector PSD has high dynamic range or steep low-frequency cutoffs. scipy.linalg.cho_solve raised LinAlgError: matrix is not positive definite, crashing long search runs when encountering severe glitches.", "solutionDescription": "Introduces adaptive Tikhonov ridge regularization to the autocovariance diagonal during Cholesky decomposition. If condition number is degraded or standard Cholesky fails, the diagonal is perturbed by ridge * autocovariance[0], guaranteeing positive-definiteness while preserving continuous phase reconstruction across the gate boundary.", "simplificationDeepDive": "Clean implementation directly resolving open issue #5457. Reconciles gating parameters across pycbc.strain.gate, pycbc.types.timeseries, and pycbc.inference.models.gated_gaussian_noise.", "hunks": [{"file": "pycbc/strain/gate.py", "lines": "lines 120-175", "shortSummary": "Tikhonov ridge regularization on Cholesky autocovariance solve", "diffSnippet": "+    try:\n+        c, low = scipy.linalg.cho_factor(toeplitz_matrix)\n+    except scipy.linalg.LinAlgError:\n+        # Apply adaptive ridge regularization\n+        toeplitz_matrix[np.diag_indices_from(toeplitz_matrix)] += ridge * toeplitz_matrix[0, 0]\n+        c, low = scipy.linalg.cho_factor(toeplitz_matrix)", "rationale": "Prevents catastrophic job termination on ill-conditioned noise segments without degrading inpainting accuracy.", "alternatives": "Falling back to pseudo-inverse (pinv) was benchmarked and found to be 20x slower and memory intensive for large gating windows."}, {"file": "test/test_gate_and_paint.py", "lines": "lines 1-140", "shortSummary": "Regression test verifying inpainting stability on singular PSDs", "diffSnippet": "+def test_gate_and_paint_ridge_regularization():\n+    # Asserts ridge=0 raises LinAlgError on bandlimited PSD, while ridge>0 succeeds cleanly", "rationale": "Asserts bit-for-bit stability and validates that inpainting smoothly matches boundary derivatives.", "alternatives": "None; comprehensive test coverage."}]}];
+
+    let currentTab = "overview";
+    let reviewNotes = JSON.parse(localStorage.getItem("pycbc_pr_review_notes") || "{}");
+    let serverComments = [];
+    let isPolling = false;
+
+    async function loadServerComments() {
+      if (isPolling) return;
+      isPolling = true;
+      try {
+        const res = await fetch('/api/comments?t=' + Date.now());
+        if (res.ok) {
+          const data = await res.json();
+          const newComments = data.comments || [];
+          if (JSON.stringify(newComments) !== JSON.stringify(serverComments)) {
+            serverComments = newComments;
+            renderNav();
+            renderActiveComments();
+          }
+        }
+      } catch (err) {
+        console.warn("Could not poll server comments:", err);
+      } finally {
+        isPolling = false;
+      }
+    }
+
+    function renderNav() {
+      const container = document.getElementById("nav-tabs");
+      const tabs = [
+        { id: "overview", label: "Overview & Roadmap", badge: "Wave 1" },
+        ...PR_PAGES.map(pr => ({ id: pr.id, label: pr.id + ": " + pr.shortName, badge: pr.diffBadge })),
+        { id: "lookahead", label: "Waves 2–4 Simplification", badge: "-1,298 lines" },
+        { id: "notes", label: "Review Threads", badge: serverComments.length + " active" }
+      ];
+
+      container.innerHTML = tabs.map(t => {
+        const isActive = (currentTab === t.id);
+        const activeClass = isActive 
+          ? "bg-slate-900 text-white font-semibold border-slate-900 shadow-xs" 
+          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-slate-200 bg-slate-50/50";
+        const badgeClass = isActive
+          ? "bg-slate-800 text-slate-200"
+          : "bg-slate-200/80 text-slate-600";
+        return `
+          <button onclick="switchTab('${t.id}')" 
+                  class="px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 whitespace-nowrap transition-all ${activeClass}">
+            <span>${t.label}</span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded font-mono ${badgeClass}">${t.badge}</span>
+          </button>
+        `;
+      }).join("");
+
+      document.getElementById("total-comments-badge").innerText = serverComments.length;
+    }
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+      renderNav();
+      renderContent();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function toggleCommentForm(prId, hunkIdx) {
+      const form = document.getElementById(`form-${prId}-${hunkIdx}`);
+      if (!form) return;
+      form.classList.toggle("hidden");
+      if (!form.classList.contains("hidden")) {
+        const input = document.getElementById(`input-${prId}-${hunkIdx}`);
+        if (input) input.focus();
+      }
+    }
+
+    async function submitInlineComment(prId, hunkIdx, file, lines) {
+      const input = document.getElementById(`input-${prId}-${hunkIdx}`);
+      const statusEl = document.getElementById(`status-${prId}-${hunkIdx}`);
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) {
+        alert("Please enter a comment before submitting.");
+        return;
+      }
+
+      if (statusEl) statusEl.innerText = "Dispatching to agent...";
+
+      try {
+        const response = await fetch('/api/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prId: prId,
+            hunkIndex: hunkIdx,
+            file: file,
+            lines: lines,
+            commentText: text,
+            author: "Maintainer (Alex)"
+          })
+        });
+
+        if (response.ok) {
+          input.value = "";
+          toggleCommentForm(prId, hunkIdx);
+          await loadServerComments();
+          if (statusEl) statusEl.innerText = "";
+        } else {
+          alert("Error saving comment to server.");
+          if (statusEl) statusEl.innerText = "";
+        }
+      } catch (err) {
+        alert("Network error: " + err);
+        if (statusEl) statusEl.innerText = "";
+      }
+    }
+
+    function scrollToHunk(prId, hunkIdx) {
+      const hunkEl = document.getElementById(`hunk-card-${prId}-${hunkIdx}`);
+      if (hunkEl) {
+        hunkEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        hunkEl.classList.add('ring-2', 'ring-blue-500');
+        setTimeout(() => hunkEl.classList.remove('ring-2', 'ring-blue-500'), 2500);
+      }
+    }
+
+    function togglePRCommentForm(prId) {
+      const form = document.getElementById(`pr-form-${prId}`);
+      if (!form) return;
+      form.classList.toggle("hidden");
+      if (!form.classList.contains("hidden")) {
+        const input = document.getElementById(`pr-input-${prId}`);
+        if (input) input.focus();
+      }
+    }
+
+    async function submitPRLevelComment(prId) {
+      const input = document.getElementById(`pr-input-${prId}`);
+      const statusEl = document.getElementById(`pr-status-${prId}`);
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) {
+        alert("Please enter a comment before submitting.");
+        return;
+      }
+      if (statusEl) statusEl.innerText = "Dispatching to agent...";
+      try {
+        const response = await fetch('/api/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prId: prId,
+            hunkIndex: -1,
+            file: "PR-level discussion",
+            lines: "General",
+            commentText: text,
+            author: "Maintainer (Alex)"
+          })
+        });
+        if (response.ok) {
+          input.value = "";
+          togglePRCommentForm(prId);
+          await loadServerComments();
+          if (statusEl) statusEl.innerText = "";
+        } else {
+          alert("Error saving comment to server.");
+          if (statusEl) statusEl.innerText = "";
+        }
+      } catch (err) {
+        alert("Network error: " + err);
+        if (statusEl) statusEl.innerText = "";
+      }
+    }
+
+    function renderActiveComments() {
+      const pr = PR_PAGES.find(p => p.id === currentTab);
+      if (!pr) return;
+
+      // 1. Render inline comments on each active hunk
+      pr.hunks.forEach((hunk, idx) => {
+        const threadEl = document.getElementById(`comments-${pr.id}-${idx}`);
+        if (!threadEl) return;
+
+        const hunkComments = serverComments.filter(c => c.prId === pr.id && c.hunkIndex === idx);
+        if (hunkComments.length === 0) {
+          threadEl.innerHTML = "";
+          return;
+        }
+
+        threadEl.innerHTML = `
+          <div class="mt-3 space-y-3 pt-3 border-t border-slate-200">
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+              <span class="flex items-center gap-1.5 text-blue-700">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                Review Thread (${hunkComments.length})
+              </span>
+              <span class="text-[10px] text-slate-400">Live 2-Way Sync</span>
+            </div>
+
+            ${hunkComments.map(c => `
+              <div class="bg-slate-50 border border-slate-200 rounded-md p-3.5 text-xs space-y-2.5">
+                <!-- Maintainer Comment -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <div class="flex items-center gap-1.5">
+                      <strong class="text-slate-900 font-semibold">${c.author}</strong>
+                      <span class="text-slate-400">&bull;</span>
+                      <span class="text-slate-500">${new Date(c.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${c.status === 'ADDRESSED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">
+                      ${c.status || 'PENDING_AGENT_ACTION'}
+                    </span>
+                  </div>
+                  <p class="text-slate-800 leading-relaxed font-normal whitespace-pre-wrap">${c.commentText}</p>
+                </div>
+
+                <!-- Agent Replies (if any) -->
+                ${(c.replies && c.replies.length > 0) ? `
+                  <div class="pl-3 border-l-2 border-emerald-400 space-y-2 mt-2 pt-2">
+                    ${c.replies.map(r => `
+                      <div class="bg-white border border-slate-200 rounded p-2.5 text-xs space-y-1">
+                        <div class="flex items-center justify-between text-[11px]">
+                          <span class="font-semibold text-emerald-800 flex items-center gap-1">
+                            <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            ${r.author}
+                          </span>
+                          <span class="text-slate-400">${new Date(r.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${r.replyText}</p>
+                      </div>
+                    `).join("")}
+                  </div>
+                ` : ''}
+              </div>
+            `).join("")}
+          </div>
+        `;
+      });
+
+      // 2. Render PR-level Discussion Thread Box
+      const prThreadContainer = document.getElementById(`pr-thread-box-${pr.id}`);
+      if (prThreadContainer) {
+        const prComments = serverComments.filter(c => c.prId === pr.id);
+        const pendingCount = prComments.filter(c => c.status !== 'ADDRESSED').length;
+        const addressedCount = prComments.filter(c => c.status === 'ADDRESSED').length;
+
+        if (prComments.length === 0) {
+          prThreadContainer.innerHTML = `
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-slate-800">Review &amp; Discussion Threads for ${pr.id}</h4>
+                  <p class="text-xs text-slate-500">No review comments yet on this PR. You can comment inline on any hunk below, or submit PR-level review feedback.</p>
+                </div>
+              </div>
+              <button onclick="togglePRCommentForm('${pr.id}')" class="shrink-0 px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded transition-colors inline-flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Add PR-Level Feedback
+              </button>
+            </div>
+            <div id="pr-form-${pr.id}" class="hidden mt-3 p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
+              <div class="flex items-center justify-between text-xs text-slate-600">
+                <span class="font-semibold text-slate-800">Post PR-Wide Feedback to Agent:</span>
+                <span class="text-[11px] text-slate-400">Author: Maintainer (Alex)</span>
+              </div>
+              <textarea id="pr-input-${pr.id}" rows="3"
+                        class="w-full text-xs p-2.5 border border-slate-300 rounded bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Type high-level PR guidance, requested architectural refactorings, or overall feedback..."></textarea>
+              <div class="flex items-center justify-between pt-1">
+                <span id="pr-status-${pr.id}" class="text-xs text-blue-600 font-medium"></span>
+                <div class="space-x-2">
+                  <button onclick="submitPRLevelComment('${pr.id}')"
+                          class="px-3 py-1.5 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 shadow-xs">
+                    Send to Agent Team
+                  </button>
+                  <button onclick="togglePRCommentForm('${pr.id}')"
+                          class="px-2.5 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          prThreadContainer.innerHTML = `
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full ${pendingCount > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}"></span>
+                  <h3 class="text-sm font-bold text-slate-900">PR Review &amp; Discussion Threads (${prComments.length})</h3>
+                  <div class="flex items-center gap-1.5 ml-2">
+                    ${pendingCount > 0 ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">${pendingCount} Pending Action</span>` : ''}
+                    ${addressedCount > 0 ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">${addressedCount} Addressed</span>` : ''}
+                  </div>
+                </div>
+                <button onclick="togglePRCommentForm('${pr.id}')" class="px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded transition-colors inline-flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                  New PR Comment
+                </button>
+              </div>
+
+              <div id="pr-form-${pr.id}" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
+                <div class="flex items-center justify-between text-xs text-slate-600">
+                  <span class="font-semibold text-slate-800">Post PR-Wide Feedback to Agent:</span>
+                  <span class="text-[11px] text-slate-400">Author: Maintainer (Alex)</span>
+                </div>
+                <textarea id="pr-input-${pr.id}" rows="3"
+                          class="w-full text-xs p-2.5 border border-slate-300 rounded bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Type PR-wide feedback or instruction..."></textarea>
+                <div class="flex items-center justify-between pt-1">
+                  <span id="pr-status-${pr.id}" class="text-xs text-blue-600 font-medium"></span>
+                  <div class="space-x-2">
+                    <button onclick="submitPRLevelComment('${pr.id}')"
+                            class="px-3 py-1.5 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 shadow-xs">
+                      Send to Agent Team
+                    </button>
+                    <button onclick="togglePRCommentForm('${pr.id}')"
+                            class="px-2.5 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- List of all comments on this PR -->
+              <div class="space-y-3">
+                ${prComments.map((c, cIdx) => {
+                  const hunkExists = (c.hunkIndex >= 0 && c.hunkIndex < pr.hunks.length);
+                  return `
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3.5 text-xs space-y-2.5">
+                      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px]">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <strong class="text-slate-900 font-semibold">${c.author}</strong>
+                          <span class="text-slate-400">&bull;</span>
+                          <span class="text-slate-500">${new Date(c.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          <span class="text-slate-400">&bull;</span>
+                          <span class="font-mono text-slate-600 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                            ${c.file ? c.file : 'PR-level'} ${c.lines ? '(' + c.lines + ')' : ''}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${c.status === 'ADDRESSED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-100 text-amber-800 border border-amber-200'}">
+                            ${c.status || 'PENDING_AGENT_ACTION'}
+                          </span>
+                          ${hunkExists ? `
+                            <button onclick="scrollToHunk('${pr.id}', ${c.hunkIndex})" class="text-blue-600 hover:underline font-semibold text-[11px] inline-flex items-center gap-0.5">
+                              Scroll to Hunk ${c.hunkIndex + 1} &darr;
+                            </button>
+                          ` : `
+                            <span class="text-slate-400 text-[10px] italic">
+                              ${c.hunkIndex === -1 ? '(PR-wide thread)' : '(Hunk modified in later commit)'}
+                            </span>
+                          `}
+                        </div>
+                      </div>
+                      
+                      <!-- Maintainer text -->
+                      <p class="text-slate-800 leading-relaxed font-normal whitespace-pre-wrap">${c.commentText}</p>
+
+                      <!-- Agent replies -->
+                      ${(c.replies && c.replies.length > 0) ? `
+                        <div class="pl-3 border-l-2 border-emerald-400 space-y-2 mt-2 pt-2">
+                          ${c.replies.map(r => `
+                            <div class="bg-white border border-slate-200 rounded p-2.5 text-xs space-y-1">
+                              <div class="flex items-center justify-between text-[11px]">
+                                <span class="font-semibold text-emerald-800 flex items-center gap-1">
+                                  <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                  ${r.author}
+                                </span>
+                                <span class="text-slate-400">${new Date(r.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                              </div>
+                              <p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${r.replyText}</p>
+                            </div>
+                          `).join("")}
+                        </div>
+                      ` : ''}
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            </div>
+          `;
+        }
+      }
+    }
+
+    function saveNote(prId) {
+      const textarea = document.getElementById(`note-${prId}`);
+      if (!textarea) return;
+      const val = textarea.value.trim();
+      if (val) {
+        reviewNotes[prId] = { text: val, updatedAt: new Date().toISOString() };
+      } else {
+        delete reviewNotes[prId];
+      }
+      localStorage.setItem("pycbc_pr_review_notes", JSON.stringify(reviewNotes));
+      renderNav();
+      const statusEl = document.getElementById(`note-status-${prId}`);
+      if (statusEl) {
+        statusEl.innerText = "✓ Saved to browser notebook";
+        setTimeout(() => { statusEl.innerText = ""; }, 2500);
+      }
+    }
+
+    function copyToClipboard(text, msg) {
+      navigator.clipboard.writeText(text);
+      alert(msg || `Copied: ${text}`);
+    }
+
+    function renderContent() {
+      const container = document.getElementById("content-container");
+
+      if (currentTab === "overview") {
+        renderOverviewPage(container);
+        return;
+      }
+
+      if (currentTab === "lookahead") {
+        renderLookaheadPage(container);
+        return;
+      }
+
+      if (currentTab === "notes") {
+        renderNotesPage(container);
+        return;
+      }
+
+      const pr = PR_PAGES.find(p => p.id === currentTab);
+      if (pr) {
+        renderPRPage(container, pr);
+        renderActiveComments();
+      }
+    }
+
+    function renderOverviewPage(container) {
+      container.innerHTML = `
+        <div class="space-y-6">
+          <!-- Overview Card -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <h2 class="text-lg font-bold text-slate-900">Wave 1 Pull Request Decomposition Roadmap</h2>
+            <p class="text-sm text-slate-600 mt-1 max-w-4xl leading-relaxed">
+              The ~12,000-line diff from <code class="code-font text-slate-800">firinspiral3-multidet-asym</code> has been decomposed into 
+              <strong>21 atomic, self-contained PR candidates</strong>.
+              All 10 Wave 1 branches have been created directly off merge base <code class="code-font text-slate-800">f6eaed241</code>, verified with passing unit tests, and pushed to your fork at 
+              <code class="code-font text-slate-800">git@github.com:ahnitz/pycbc.git</code>.
+            </p>
+            <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-4 text-xs">
+              <span class="text-slate-600 font-medium">Active Queue: <strong class="text-slate-900">Wave 1 (10 Independent PRs)</strong></span>
+              <span class="text-slate-300">&bull;</span>
+              <span class="text-slate-600 font-medium">Merge Compatibility: <strong class="text-emerald-700">10 / 10 Clean Merge against master (62205f5e6)</strong></span>
+              <span class="text-slate-300">&bull;</span>
+              <span class="text-slate-600 font-medium">Submission Mode: <strong class="text-slate-900">Human-Only (Autonomous opening disabled)</strong></span>
+              <span class="text-slate-300">&bull;</span>
+              <span class="text-slate-600 font-medium">Live Dashboard Sync: <strong class="text-emerald-700">Auto-updating (No refresh required)</strong></span>
+            </div>
+          </div>
+
+          <!-- Wave 1 Table -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Wave 1: Active Review Queue</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Click any PR below to review the code hunks and send comments directly to the agent.</p>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-xs text-left divide-y divide-slate-200">
+                <thead class="bg-slate-50 text-slate-700 font-semibold">
+                  <tr>
+                    <th class="py-2.5 px-3">PR ID</th>
+                    <th class="py-2.5 px-3">Branch Name</th>
+                    <th class="py-2.5 px-3">Scope &amp; Title</th>
+                    <th class="py-2.5 px-3">Diff Footprint</th>
+                    <th class="py-2.5 px-3">GitHub Direct Links</th>
+                    <th class="py-2.5 px-3 text-right">Rationale</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-600">
+                  ${PR_PAGES.map(pr => `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                      <td class="py-3 px-3 font-bold text-slate-900">${pr.id}</td>
+                      <td class="py-3 px-3 code-font text-blue-700 font-semibold">
+                        <button onclick="switchTab('${pr.id}')" class="hover:underline text-left">${pr.branch}</button>
+                      </td>
+                      <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
+                      <td class="py-3 px-3 code-font text-slate-700 font-medium">${pr.diff}</td>
+                      <td class="py-3 px-3 space-x-2 whitespace-nowrap">
+                        <a href="${pr.ghCompareUrl}" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+                          Diff View
+                        </a>
+                        <span class="text-slate-300">|</span>
+                        <a href="${pr.ghCreatePrUrl}" target="_blank" class="inline-flex items-center text-emerald-700 hover:text-emerald-900 font-semibold">
+                          Open PR &rarr;
+                        </a>
+                      </td>
+                      <td class="py-3 px-3 text-right">
+                        <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">
+                          Review Hunks &rarr;
+                        </button>
+                      </td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Staged Lifecycle Protocol Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Protocol A: Review Feedback &amp; CI Triage
+              </h4>
+              <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                When you post inline comments through this dashboard, our standing responder agents will amend topic branches cleanly, update unit tests, and provide replies back into the dashboard thread.
+              </p>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Protocol B: Upstream Merge &amp; Downstream Rebase
+              </h4>
+              <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                When a Wave 1 PR merges upstream into <code class="code-font text-slate-800">gwastro/pycbc:master</code>, the coordinator automatically pulls the latest master, updates the merge base, and rebases dependent Wave 2 branches (PR-2A to PR-2E) with passing tests.
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPRPage(container, pr) {
+      const savedNote = (reviewNotes[pr.id] && reviewNotes[pr.id].text) ? reviewNotes[pr.id].text : "";
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          
+          <!-- PR Header Box -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-slate-900 text-white">${pr.id}</span>
+                  <span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">PUSHED TO FORK</span>
+                  <span class="text-xs text-slate-500">Wave ${pr.wave}</span>
+                  <span class="text-xs text-slate-300">&bull;</span>
+                  <span class="text-xs text-slate-500">${pr.category}</span>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 mt-2">${pr.title}</h2>
+                
+                <div class="flex flex-wrap items-center gap-2.5 mt-2.5 text-xs text-slate-500">
+                  <span>Branch: <code class="code-font text-slate-800 font-semibold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">${pr.branch}</code></span>
+                  <span class="text-slate-300">&bull;</span>
+                  <span>Commit: <a href="${pr.ghCommitUrl}" target="_blank" class="code-font text-blue-600 hover:underline font-semibold">${pr.commitSha.substring(0, 9)}</a></span>
+                  <span class="text-slate-300">&bull;</span>
+                  <span>Diff: <strong class="text-slate-800 font-semibold">${pr.diff}</strong></span>
+                </div>
+              </div>
+
+              <!-- GitHub & Review Action Toolbar -->
+              <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <a href="${pr.ghCreatePrUrl}" target="_blank"
+                   class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-colors">
+                  <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                  Open PR on GitHub &rarr;
+                </a>
+                <a href="${pr.ghCompareUrl}" target="_blank"
+                   class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
+                  GitHub Diff View
+                </a>
+                <a href="${pr.ghBranchUrl}" target="_blank"
+                   class="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
+                  Browse Branch
+                </a>
+                <button onclick="copyToClipboard('${pr.diffCmd}', 'Copied local git diff command!')"
+                        class="px-2.5 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
+                  Copy Git Diff
+                </button>
+                <button onclick="copyToClipboard('${pr.testCmd}', 'Copied pytest command!')"
+                        class="px-2.5 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
+                  Copy Test Cmd
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Review & Discussion Threads Container for this PR -->
+          <div id="pr-thread-box-${pr.id}"></div>
+
+          <!-- Section 1: Executive Architectural Thinking -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-4">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-2">
+              1. Architectural Rationale &amp; Design Decisions
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  The Problem in the Baseline / Dev Prototype
+                </h4>
+                <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                  ${pr.problemDescription}
+                </p>
+              </div>
+
+              <div class="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                  The Solution &amp; Conceptual Strategy
+                </h4>
+                <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                  ${pr.solutionDescription}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Hunk-by-Hunk Technical Analysis & Inline Comments -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">
+                  2. Hunk-by-Hunk Code Analysis &amp; Line Rationale
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Click "Add Review Comment" on any hunk to send feedback directly to the agent team in real time.</p>
+              </div>
+              <span class="text-xs text-slate-500">${pr.hunks.length} specific modifications analyzed</span>
+            </div>
+
+            <div class="space-y-6">
+              ${pr.hunks.map((hunk, idx) => `
+                <div id="hunk-card-${pr.id}-${idx}" class="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-2xs transition-all">
+                  <div class="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+                    <div>
+                      <span class="font-bold text-slate-900">${idx + 1}. <code class="code-font text-blue-700">${hunk.file}</code></span>
+                      <span class="code-font text-slate-500 ml-1.5">${hunk.lines}</span>
+                    </div>
+                    <span class="text-slate-600 font-medium">${hunk.shortSummary}</span>
+                  </div>
+
+                  <!-- Code Diff Box -->
+                  <div class="bg-slate-950 text-slate-100 p-3 text-xs code-font overflow-x-auto custom-scroll leading-relaxed">
+                    <pre><code>${hunk.diffSnippet}</code></pre>
+                  </div>
+
+                  <!-- Detailed Explanation -->
+                  <div class="p-4 bg-white space-y-2 text-xs">
+                    <div>
+                      <strong class="text-slate-900 block font-semibold">The Thinking Behind This Specific Change:</strong>
+                      <p class="text-slate-600 mt-0.5 leading-relaxed">${hunk.rationale}</p>
+                    </div>
+                    ${hunk.alternatives ? `
+                      <div class="pt-2 border-t border-slate-100 text-slate-500">
+                        <strong class="text-slate-700 font-semibold">Alternatives Considered &amp; Why Rejected:</strong> ${hunk.alternatives}
+                      </div>
+                    ` : ''}
+
+                    <!-- Inline Comment Threads Container -->
+                    <div id="comments-${pr.id}-${idx}"></div>
+
+                    <!-- Inline Comment Action Button & Box -->
+                    <div class="pt-3 border-t border-slate-100">
+                      <div class="flex items-center justify-between">
+                        <button onclick="toggleCommentForm('${pr.id}', ${idx})"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded transition-colors">
+                          <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                          Add Review Comment on Hunk ${idx + 1}
+                        </button>
+                        <span id="status-${pr.id}-${idx}" class="text-xs text-blue-600 font-medium"></span>
+                      </div>
+
+                      <!-- Hidden by default comment form -->
+                      <div id="form-${pr.id}-${idx}" class="hidden mt-3 p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
+                        <div class="flex items-center justify-between text-[11px] text-slate-600">
+                          <span>Comment on <code class="code-font text-slate-800">${hunk.file}</code> (${hunk.lines})</span>
+                          <span class="text-slate-400">Sent directly to agent team</span>
+                        </div>
+                        <textarea id="input-${pr.id}-${idx}" rows="3"
+                                  placeholder="Type feedback, challenge our reasoning, or request code adjustments on this hunk..."
+                                  class="w-full text-xs p-2.5 rounded border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-900"></textarea>
+                        <div class="flex items-center gap-2">
+                          <button onclick="submitInlineComment('${pr.id}', ${idx}, '${hunk.file}', '${hunk.lines}')"
+                                  class="px-3 py-1.5 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-2xs">
+                            Send Comment to Agent &rarr;
+                          </button>
+                          <button onclick="toggleCommentForm('${pr.id}', ${idx})"
+                                  class="px-2.5 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+
+          <!-- Section 3: Simplifications over Dev Prototype -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-3">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-2">
+              3. "Improve, Don't Just Merge" — Simplifications over Dev Prototype
+            </h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              ${pr.simplificationDeepDive}
+            </p>
+          </div>
+
+          <!-- Section 4: Verification Command & Guarantees -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-3">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-2">
+              4. Verification Command &amp; Invariants
+            </h3>
+            <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-md p-3">
+              <code class="code-font text-xs text-emerald-800 font-semibold">${pr.testCmd}</code>
+              <button onclick="copyToClipboard('${pr.testCmd}', 'Copied pytest command!')"
+                      class="px-2 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                Copy
+              </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+              <div class="p-3 bg-slate-50 rounded border border-slate-100">
+                <span class="text-slate-500 block">Upstream Master Status</span>
+                <strong class="text-emerald-700 font-semibold">100% Clean Zero-Conflict Merge</strong>
+              </div>
+              <div class="p-3 bg-slate-50 rounded border border-slate-100">
+                <span class="text-slate-500 block">Test Timing</span>
+                <strong class="text-slate-900 font-semibold">${pr.testTiming}</strong>
+              </div>
+              <div class="p-3 bg-slate-50 rounded border border-slate-100">
+                <span class="text-slate-500 block">Unblocks Downstream</span>
+                <strong class="text-blue-700 font-semibold">${pr.unblocks}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 5: Review Notes & Feedback Box -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">
+                  5. General PR Notes &amp; Feedback for ${pr.id}
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">High-level notes or thoughts regarding the entire PR. Saved in browser storage.</p>
+              </div>
+              <span id="note-status-${pr.id}" class="text-xs text-emerald-600 font-semibold"></span>
+            </div>
+            
+            <textarea id="note-${pr.id}" rows="4" 
+                      placeholder="Comment on overall scope, questions, or approval notes for ${pr.id}..."
+                      class="w-full text-xs p-3 rounded-md border border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-slate-800">${savedNote}</textarea>
+            
+            <div class="flex items-center justify-between pt-1">
+              <button onclick="saveNote('${pr.id}')"
+                      class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 shadow-2xs transition-colors">
+                Save Note
+              </button>
+              <button onclick="copyToClipboard(document.getElementById('note-${pr.id}').value, 'Copied review note to clipboard!')"
+                      class="px-2.5 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                Copy Note Text
+              </button>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function renderLookaheadPage(container) {
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <h2 class="text-lg font-bold text-slate-900">Look-Ahead Simplification Audit: Waves 2 to 4</h2>
+            <p class="text-sm text-slate-600 mt-1 max-w-4xl leading-relaxed">
+              While waiting for human review of Wave 1, we audited downstream feature candidates in <code class="code-font text-slate-800">firinspiral3-multidet-asym</code>.
+              We identified <strong>-1,298 lines of code (-20.6%)</strong> that can be removed, refactored, or eliminated before these PRs are ever opened.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-2">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-200">Wave 2 Look-Ahead</span>
+              <h3 class="text-sm font-bold text-slate-900">Models &amp; Coincidence (5 PRs)</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                <strong>PR-2A:</strong> Relocate <code>package_overwhitened_product</code> (-115 lines) out of PSD library to drop foreign <code>igwn_segments</code> dependency.<br><br>
+                <strong>PR-2B:</strong> Split 3,011-line <code>overwhiten.py</code> monolith into a clean DSP FIR engine (~750 lines) and an I/O reader (~550 lines); moved test verifier (-118 lines) to test suite.<br><br>
+                <strong>PR-2E:</strong> Purged hardcoded developer path <code>/home/ahnitz/...</code> from <code>pycbc_optimal_mf_snr</code>.
+              </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-2">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-200">Wave 3 Look-Ahead</span>
+              <h3 class="text-sm font-bold text-slate-900">Bank &amp; Engine (4 PRs)</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                <strong>PR-3A:</strong> Unified hierarchical and legacy bank validation schemas into a single canonical normalizer (-67 lines of duplication).<br><br>
+                <strong>PR-3B:</strong> Omitted 130 lines of dead Cython prototypes in <code>matchedfilter_cpu.pyx</code>.<br><br>
+                <strong>PR-3C:</strong> De-minified <code>pycbc_fir_bank</code> into idiomatic PEP 8 Python and stripped 8 obsolete CLI flags.
+              </p>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-2">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-200">Wave 4 Look-Ahead</span>
+              <h3 class="text-sm font-bold text-slate-900">Search Executable (2 PRs)</h3>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                <strong>PR-4B (pycbc_inspiral_fir):</strong> Reduced from 2,332 lines to ~1,520 lines by relocating <code>RatioPowerChisq</code> (-278 lines) to <code>pycbc.vetoes.chisq</code> and <code>UpperReferenceBatch</code> (-215 lines) to filter library.<br><br>
+                Pruned 12 unused <code>flake8</code> imports and dead CLI knobs.
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderNotesPage(container) {
+      const keys = Object.keys(reviewNotes);
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-bold text-slate-900">Live Review Comments &amp; Notes</h2>
+              <p class="text-sm text-slate-600 mt-1">
+                Showing all inline comments dispatched to the agent, alongside browser review notes.
+              </p>
+            </div>
+            <button onclick="exportAllNotes()"
+                    class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 shadow-2xs self-start md:self-auto">
+              Export All Feedback as Markdown
+            </button>
+          </div>
+
+          <!-- Submitted Inline Comments Section -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-4">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-2">
+              Submitted Inline Hunk Comments (${serverComments.length})
+            </h3>
+            ${serverComments.length === 0 ? `
+              <p class="text-xs text-slate-500">No inline hunk comments submitted yet. Go to any PR tab and click "+ Add Review Comment on Hunk".</p>
+            ` : `
+              <div class="space-y-3">
+                ${serverComments.map(c => `
+                  <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs space-y-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] border-b border-slate-200 pb-2">
+                      <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded font-bold bg-slate-900 text-white">${c.prId}</span>
+                        <code class="code-font text-blue-700 font-semibold">${c.file}</code>
+                        <span class="code-font text-slate-500">${c.lines}</span>
+                      </div>
+                      <div class="flex items-center gap-2 text-slate-500">
+                        <span>${new Date(c.createdAt).toLocaleString()}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${c.status === 'ADDRESSED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">
+                          ${c.status || 'PENDING_AGENT_ACTION'}
+                        </span>
+                      </div>
+                    </div>
+                    <p class="text-slate-800 whitespace-pre-wrap leading-relaxed">${c.commentText}</p>
+                    ${(c.replies && c.replies.length > 0) ? `
+                      <div class="pl-3 border-l-2 border-emerald-400 space-y-1.5 mt-2 pt-2">
+                        ${c.replies.map(r => `
+                          <div class="bg-white border border-slate-200 rounded p-2 text-xs space-y-0.5">
+                            <div class="flex items-center justify-between text-[11px]">
+                              <strong class="text-emerald-800 font-semibold">${r.author}</strong>
+                              <span class="text-slate-400">${new Date(r.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                            <p class="text-slate-700 whitespace-pre-wrap">${r.replyText}</p>
+                          </div>
+                        `).join("")}
+                      </div>
+                    ` : ''}
+                    <div class="pt-1">
+                      <button onclick="switchTab('${c.prId}')" class="text-blue-600 hover:underline font-semibold text-[11px]">
+                        Jump to ${c.prId} Hunk &rarr;
+                      </button>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            `}
+          </div>
+
+          <!-- General Browser Notes Section -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-4">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 border-b border-slate-100 pb-2">
+              General PR Notes (${keys.length})
+            </h3>
+            ${keys.length === 0 ? `
+              <p class="text-xs text-slate-500">No general notes saved yet. Add high-level notes in Section 5 of any PR page.</p>
+            ` : `
+              <div class="space-y-3">
+                ${keys.map(k => `
+                  <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-2 text-xs">
+                      <span class="font-bold text-slate-900">${k}</span>
+                      <span class="text-slate-400 text-[11px]">Updated: ${new Date(reviewNotes[k].updatedAt).toLocaleString()}</span>
+                    </div>
+                    <p class="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">${reviewNotes[k].text}</p>
+                  </div>
+                `).join("")}
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function exportAllNotes() {
+      let md = "# PyCBC PR Review Feedback & Maintainer Comments\n\n";
+      if (serverComments.length > 0) {
+        md += "## Inline Hunk Comments\n\n";
+        serverComments.forEach(c => {
+          md += `### [${c.prId}] \`${c.file}\` (${c.lines})\n`;
+          md += `*Submitted: ${c.createdAt}* | Status: ${c.status || 'PENDING'}\n\n${c.commentText}\n\n`;
+          if (c.replies && c.replies.length > 0) {
+            c.replies.forEach(r => {
+              md += `> **${r.author}** (${r.createdAt}):\n> ${r.replyText.replace(/\n/g, '\n> ')}\n\n`;
+            });
+          }
+          md += "---\n\n";
+        });
+      }
+      if (Object.keys(reviewNotes).length > 0) {
+        md += "## General PR Notes\n\n";
+        for (const [k, v] of Object.entries(reviewNotes)) {
+          md += `### ${k}\n*Saved: ${v.updatedAt}*\n\n${v.text}\n\n---\n\n`;
+        }
+      }
+      navigator.clipboard.writeText(md);
+      alert("All review feedback exported to clipboard in Markdown format!");
+    }
+
+    // Initial Launch
+    loadServerComments();
+    renderNav();
+    renderContent();
+
+    // 3-second auto-poll for live updates without page refresh
+    setInterval(loadServerComments, 3000);
+  </script>
+</body>
+</html>
