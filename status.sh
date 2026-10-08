@@ -20,8 +20,10 @@ if [ -f "$SERVER_PID_FILE" ]; then
     else
         echo "Review Server:  STALE PID ($PID not running)"
     fi
+elif pgrep -f "review_server.py" >/dev/null 2>&1; then
+    echo "Review Server:  RUNNING (PID: $(pgrep -f "review_server.py" | head -n1))"
 else
-    echo "Review Server:  NO LOCAL PID FILE"
+    echo "Review Server:  STOPPED"
 fi
 
 # Check auto-responder process

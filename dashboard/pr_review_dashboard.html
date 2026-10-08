@@ -88,6 +88,33 @@
     let serverComments = [];
     let isPolling = false;
 
+    async function syncLivePRHunks(prId) {
+      if (!prId || !prId.startsWith("PR-")) return;
+      try {
+        const res = await fetch('/api/pr/' + prId + '/hunks?t=' + Date.now());
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'ok' && data.hunks && data.hunks.length > 0) {
+            const pr = PR_PAGES.find(p => p.id === prId);
+            if (pr) {
+              const newSig = JSON.stringify(data.hunks.map(h => h.file + h.lines));
+              const oldSig = JSON.stringify((pr.hunks || []).map(h => h.file + h.lines));
+              if (newSig !== oldSig || (data.commitSha && data.commitSha !== pr.commitSha)) {
+                pr.hunks = data.hunks;
+                if (data.commitSha) pr.commitSha = data.commitSha;
+                if (data.diffStat) pr.diff = data.diffStat;
+                if (currentTab === prId) {
+                  renderContent();
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.debug("Could not sync live hunks:", e);
+      }
+    }
+
     async function loadServerComments() {
       if (isPolling) return;
       isPolling = true;
@@ -101,6 +128,9 @@
             renderNav();
             renderActiveComments();
           }
+        }
+        if (currentTab.startsWith("PR-")) {
+          await syncLivePRHunks(currentTab);
         }
       } catch (err) {
         console.warn("Could not poll server comments:", err);
@@ -143,6 +173,9 @@
       renderNav();
       renderContent();
       window.scrollTo({ top: 0, behavior: "smooth" });
+      if (tabId.startsWith("PR-")) {
+        syncLivePRHunks(tabId);
+      }
     }
 
     function toggleCommentForm(prId, hunkIdx) {
