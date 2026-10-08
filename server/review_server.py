@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Custom review server for PyCBC PR Review Dashboard.
-Serves static project files and handles real-time two-way code-review comments API.
+Custom review server for Reviewer / PyCBC PR Review Dashboard.
+Serves static project files and handles real-time two-way code-review comments API,
+dynamic git hunk extraction, and continuous upstream rebase status.
 """
 
 import os
@@ -9,15 +10,78 @@ import sys
 import json
 import time
 import uuid
+import argparse
+import subprocess
+import re
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-PORT = 8080
-ROOT_DIR = "/home/ahnitz/projects/claude/searchdev"
-FEEDBACK_FILE = os.path.join(ROOT_DIR, "search_dev_notes", "reviewer_feedback.json")
+SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_CONFIG_PATH = os.path.abspath(os.path.join(SERVER_DIR, "..", "config.json"))
+
+def load_config(config_path=None):
+    path = config_path or DEFAULT_CONFIG_PATH
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"[ReviewServer WARN] Could not parse config file {path}: {e}", file=sys.stderr)
+    return {}
+
+# Initial load from config
+CFG = load_config()
+
+PORT = int(os.environ.get("REVIEWER_PORT", CFG.get("server", {}).get("port", 8080)))
+HOST = os.environ.get("REVIEWER_HOST", CFG.get("server", {}).get("host", "0.0.0.0"))
+
+# Auto-detect ROOT_DIR (where dashboard HTML and static files live)
+ROOT_DIR = os.environ.get("REVIEWER_ROOT_DIR")
+if not ROOT_DIR:
+    candidates = [
+        os.path.abspath(os.path.join(SERVER_DIR, "..")),
+        os.path.abspath(os.path.join(SERVER_DIR, "..", "..")),
+        os.getcwd()
+    ]
+    for cand in candidates:
+        if os.path.exists(os.path.join(cand, "dashboard", "pr_review_dashboard.html")) or os.path.exists(os.path.join(cand, "pr_review_dashboard.html")):
+            ROOT_DIR = cand
+            break
+ROOT_DIR = ROOT_DIR or os.path.abspath(os.path.join(SERVER_DIR, ".."))
+
+# Auto-detect REPO_DIR (the target git repository being reviewed)
+REPO_DIR = os.environ.get("REVIEWER_REPO_DIR") or CFG.get("project", {}).get("working_tree_path")
+if not REPO_DIR or not os.path.exists(REPO_DIR):
+    candidates = [
+        os.path.abspath(os.path.join(SERVER_DIR, "..", "..", "pycbc-work", "apogee")),
+        os.path.abspath(os.path.join(SERVER_DIR, "..", "..", "pycbc")),
+        os.path.abspath(os.path.join(SERVER_DIR, "..")),
+        os.getcwd()
+    ]
+    for cand in candidates:
+        if os.path.exists(os.path.join(cand, ".git")):
+            REPO_DIR = cand
+            break
+REPO_DIR = os.path.abspath(REPO_DIR or os.getcwd())
+
+# Auto-detect FEEDBACK_FILE
+FEEDBACK_FILE = os.environ.get("REVIEWER_FEEDBACK_FILE") or CFG.get("storage", {}).get("feedback_file")
+if not FEEDBACK_FILE or not os.path.isabs(FEEDBACK_FILE):
+    rel_path = FEEDBACK_FILE or "data/reviewer_feedback.json"
+    FEEDBACK_FILE = os.path.abspath(os.path.join(SERVER_DIR, "..", rel_path))
+
 TEAMWORK_FEEDBACK_FILE = os.path.join(ROOT_DIR, ".agents", "teamwork", "REVIEWER_FEEDBACK.json")
 
+UPSTREAM_REMOTE = CFG.get("project", {}).get("upstream_remote", "upstream")
+UPSTREAM_BRANCH = CFG.get("project", {}).get("upstream_branch", "master")
+MERGE_BASE = CFG.get("project", {}).get("target_merge_base", "f6eaed241")
+MAINTAINER_FORK = CFG.get("project", {}).get("maintainer_fork", "ahnitz/pycbc")
+
 os.makedirs(os.path.dirname(FEEDBACK_FILE), exist_ok=True)
-os.makedirs(os.path.dirname(TEAMWORK_FEEDBACK_FILE), exist_ok=True)
+if os.path.dirname(TEAMWORK_FEEDBACK_FILE):
+    try:
+        os.makedirs(os.path.dirname(TEAMWORK_FEEDBACK_FILE), exist_ok=True)
+    except Exception:
+        pass
 
 def load_feedback():
     if os.path.exists(FEEDBACK_FILE):
@@ -37,10 +101,7 @@ def save_feedback(data):
     except Exception:
         pass
 
-import subprocess
-import re
-
-PR_BRANCH_MAP = {
+DEFAULT_PR_BRANCH_MAP = {
     "PR-1A": "pr-fix-core-numpy2-optparse",
     "PR-1B": "pr-fix-io-dictarray-indexing",
     "PR-1C": "pr-fix-events-numpy2-zerolag",
@@ -52,19 +113,60 @@ PR_BRANCH_MAP = {
     "PR-1I": "pr-feat-psd-robust-estimators",
     "PR-1J": "pr-feat-strain-regularized-inpainting",
 }
-REPO_DIR = "/home/ahnitz/projects/claude/searchdev/pycbc-work/apogee"
-MERGE_BASE = "f6eaed241"
+
+PR_BRANCH_MAP = dict(CFG.get("project", {}).get("branch_map", DEFAULT_PR_BRANCH_MAP))
+
+def resolve_branch(pr_id):
+    if not pr_id:
+        return None
+    # 1. Exact match in configured PR_BRANCH_MAP
+    if pr_id.upper() in PR_BRANCH_MAP:
+        return PR_BRANCH_MAP[pr_id.upper()]
+    # 2. Check if pr_id matches a local git branch directly
+    p = subprocess.run(["git", "rev-parse", "--verify", pr_id], cwd=REPO_DIR, capture_output=True, text=True)
+    if p.returncode == 0:
+        return pr_id
+    # 3. Check common naming variations
+    for candidate in [pr_id.lower(), f"pr-{pr_id.lower()}", f"pr_{pr_id.lower()}", f"pr/{pr_id.lower()}"]:
+        p = subprocess.run(["git", "rev-parse", "--verify", candidate], cwd=REPO_DIR, capture_output=True, text=True)
+        if p.returncode == 0:
+            return candidate
+    return None
+
+def find_rebase_status_file():
+    candidates = [
+        os.path.join(SERVER_DIR, "..", "data", "rebase_status.json"),
+        os.path.join(ROOT_DIR, "agent-dual-review", "data", "rebase_status.json"),
+        os.path.join(ROOT_DIR, "data", "rebase_status.json"),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return os.path.abspath(c)
+    return os.path.abspath(os.path.join(SERVER_DIR, "..", "data", "rebase_status.json"))
+
+def find_rebase_script():
+    candidates = [
+        os.path.join(SERVER_DIR, "..", "sentinel", "rebase_monitor.py"),
+        os.path.join(ROOT_DIR, "agent-dual-review", "sentinel", "rebase_monitor.py"),
+        os.path.join(ROOT_DIR, "sentinel", "rebase_monitor.py"),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return os.path.abspath(c)
+    return None
 
 def get_live_pr_hunks(pr_id):
-    branch = PR_BRANCH_MAP.get(pr_id.upper())
+    branch = resolve_branch(pr_id)
     if not branch:
-        return {"status": "error", "message": f"Unknown PR ID: {pr_id}"}
+        return {"status": "error", "message": f"Unknown PR ID or branch: {pr_id}"}
     
     cmd_sha = ["git", "rev-parse", branch]
     p_sha = subprocess.run(cmd_sha, cwd=REPO_DIR, capture_output=True, text=True)
     commit_sha = p_sha.stdout.strip() if p_sha.returncode == 0 else ""
 
-    p_mb = subprocess.run(["git", "merge-base", "upstream/master", branch], cwd=REPO_DIR, capture_output=True, text=True)
+    p_mb = subprocess.run(["git", "merge-base", f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}", branch], cwd=REPO_DIR, capture_output=True, text=True)
+    if p_mb.returncode != 0 or not p_mb.stdout.strip():
+        p_mb = subprocess.run(["git", "merge-base", "upstream/master", branch], cwd=REPO_DIR, capture_output=True, text=True)
     if p_mb.returncode != 0 or not p_mb.stdout.strip():
         p_mb = subprocess.run(["git", "merge-base", "master", branch], cwd=REPO_DIR, capture_output=True, text=True)
     base_commit = p_mb.stdout.strip() if p_mb.returncode == 0 and p_mb.stdout.strip() else MERGE_BASE
@@ -104,10 +206,12 @@ def get_live_pr_hunks(pr_id):
                 "lines": f"lines 1-{len(body_lines)}",
                 "shortSummary": f"File modification: {file_name}",
                 "diffSnippet": snippet,
-                "githubUrl": f"https://github.com/ahnitz/pycbc/blob/{commit_sha or branch}/{file_name}",
+                "githubUrl": f"https://github.com/{MAINTAINER_FORK}/blob/{commit_sha or branch}/{file_name}",
                 "localFileUrl": f"file://{REPO_DIR}/{file_name}",
+                "vscodeUrl": f"vscode://file/{REPO_DIR}/{file_name}:1",
+                "filePathLine": f"{file_name}:1",
                 "rationale": f"Derived from branch {branch}.",
-                "alternatives": f"Merge base {MERGE_BASE}."
+                "alternatives": f"Targeting upstream merge base ({base_commit[:9]})."
             })
             continue
 
@@ -130,7 +234,7 @@ def get_live_pr_hunks(pr_id):
 
             line_str = f"lines {start_line}-{end_line}" if end_line > start_line else f"line {start_line}"
             line_hash = f"#L{start_line}-L{end_line}" if end_line > start_line else f"#L{start_line}"
-            gh_url = f"https://github.com/ahnitz/pycbc/blob/{commit_sha or branch}/{file_name}{line_hash}"
+            gh_url = f"https://github.com/{MAINTAINER_FORK}/blob/{commit_sha or branch}/{file_name}{line_hash}"
             local_url = f"file://{REPO_DIR}/{file_name}{line_hash}"
             vscode_url = f"vscode://file/{REPO_DIR}/{file_name}:{start_line}"
             path_line = f"{file_name}:{start_line}"
@@ -198,6 +302,18 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        # Auto-redirect root to dashboard if index.html is absent or user requests dashboard
+        if self.path in ("/", ""):
+            dashboard_file = os.path.join(ROOT_DIR, "dashboard", "pr_review_dashboard.html")
+            if not os.path.exists(dashboard_file):
+                dashboard_file = os.path.join(ROOT_DIR, "pr_review_dashboard.html")
+            if os.path.exists(dashboard_file) and not os.path.exists(os.path.join(ROOT_DIR, "index.html")):
+                self.send_response(302)
+                target_url = "/dashboard/pr_review_dashboard.html" if os.path.exists(os.path.join(ROOT_DIR, "dashboard", "pr_review_dashboard.html")) else "/pr_review_dashboard.html"
+                self.send_header("Location", target_url)
+                self.end_headers()
+                return
+
         if self.path == "/api/health":
             comments = load_feedback()
             pending = sum(1 for c in comments if c.get("status") != "ADDRESSED")
@@ -206,7 +322,9 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                 "totalComments": len(comments),
                 "pendingComments": pending,
                 "dataFile": FEEDBACK_FILE,
-                "rootDir": ROOT_DIR
+                "rootDir": ROOT_DIR,
+                "repoDir": REPO_DIR,
+                "upstream": f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}"
             })
             return
 
@@ -217,13 +335,36 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
 
         if self.path == "/api/prs" or self.path.startswith("/api/prs?"):
             results = {}
-            for pid in PR_BRANCH_MAP.keys():
+            tracked = dict(PR_BRANCH_MAP)
+            # Dynamically discover all active pr-* and topic branches in local git
+            p_br = subprocess.run(["git", "branch", "--list", "pr-*"], cwd=REPO_DIR, capture_output=True, text=True)
+            if p_br.returncode == 0:
+                for line in p_br.stdout.splitlines():
+                    b = line.strip().lstrip("* ").strip()
+                    if b and b not in tracked.values():
+                        key = b.upper()
+                        if not key.startswith("PR-"):
+                            key = f"PR-{key}"
+                        tracked[key] = b
+
+            for pid in tracked.keys():
                 results[pid] = get_live_pr_hunks(pid)
             self._send_json({"status": "ok", "prs": results})
             return
 
+        if self.path == "/api/branches" or self.path.startswith("/api/branches?"):
+            p_br = subprocess.run(["git", "branch", "--format=%(refname:short) %(objectname:short)"], cwd=REPO_DIR, capture_output=True, text=True)
+            branches = []
+            if p_br.returncode == 0:
+                for line in p_br.stdout.splitlines():
+                    parts = line.strip().split()
+                    if len(parts) >= 2:
+                        branches.append({"branch": parts[0], "sha": parts[1]})
+            self._send_json({"status": "ok", "branches": branches})
+            return
+
         if self.path == "/api/rebase/status" or self.path.startswith("/api/rebase/status?"):
-            rebase_file = os.path.join(ROOT_DIR, "agent-dual-review", "data", "rebase_status.json")
+            rebase_file = find_rebase_status_file()
             if os.path.exists(rebase_file):
                 try:
                     with open(rebase_file, "r", encoding="utf-8") as f:
@@ -247,11 +388,11 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         if self.path == "/api/rebase/sync":
-            rebase_script = os.path.join(ROOT_DIR, "agent-dual-review", "sentinel", "rebase_monitor.py")
-            if os.path.exists(rebase_script):
+            rebase_script = find_rebase_script()
+            if rebase_script and os.path.exists(rebase_script):
                 try:
                     p = subprocess.run([sys.executable, rebase_script, "--once"], capture_output=True, text=True, timeout=120)
-                    rebase_file = os.path.join(ROOT_DIR, "agent-dual-review", "data", "rebase_status.json")
+                    rebase_file = find_rebase_status_file()
                     if os.path.exists(rebase_file):
                         with open(rebase_file, "r", encoding="utf-8") as f:
                             data = json.load(f)
@@ -264,6 +405,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                     return
             self._send_json({"status": "error", "message": "Rebase script not found"}, status=404)
             return
+
         if self.path == "/api/comments":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
@@ -281,7 +423,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                 "file": data.get("file", ""),
                 "lines": data.get("lines", ""),
                 "commentText": data.get("commentText", "").strip(),
-                "author": data.get("author", "Maintainer (Alex)"),
+                "author": data.get("author", "Maintainer"),
                 "status": "PENDING_AGENT_ACTION",
                 "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "timestamp": time.time(),
@@ -319,7 +461,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                 if c["id"] == comment_id:
                     c.setdefault("replies", []).append({
                         "id": "r_" + str(int(time.time())) + "_" + uuid.uuid4().hex[:4],
-                        "author": data.get("author", "Antigravity AI Team"),
+                        "author": data.get("author", "AI Review Responder"),
                         "replyText": reply_text,
                         "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
                     })
@@ -336,9 +478,14 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
 
         super().do_POST()
 
-def run():
-    server = HTTPServer(("0.0.0.0", PORT), ReviewRequestHandler)
-    print(f"Review server running on http://0.0.0.0:{PORT} (Serving {ROOT_DIR})", flush=True)
+def run(host=HOST, port=PORT):
+    server = HTTPServer((host, port), ReviewRequestHandler)
+    print(f"===========================================================", flush=True)
+    print(f"  Reviewer Server Running on http://{host}:{port}", flush=True)
+    print(f"  Static Root: {ROOT_DIR}", flush=True)
+    print(f"  Target Repo: {REPO_DIR}", flush=True)
+    print(f"  Feedback:    {FEEDBACK_FILE}", flush=True)
+    print(f"===========================================================", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -346,5 +493,23 @@ def run():
     finally:
         server.server_close()
 
+def main():
+    parser = argparse.ArgumentParser(description="Reviewer Web Server & Comment API")
+    parser.add_argument("--host", default=HOST, help="Host address to bind")
+    parser.add_argument("--port", type=int, default=PORT, help="Port to listen on")
+    parser.add_argument("--root-dir", default=ROOT_DIR, help="Static web root directory")
+    parser.add_argument("--repo-dir", default=REPO_DIR, help="Target git repository directory")
+    parser.add_argument("--data-file", default=FEEDBACK_FILE, help="Path to feedback JSON file")
+    args = parser.parse_args()
+
+    global HOST, PORT, ROOT_DIR, REPO_DIR, FEEDBACK_FILE
+    HOST = args.host
+    PORT = args.port
+    ROOT_DIR = os.path.abspath(args.root_dir)
+    REPO_DIR = os.path.abspath(args.repo_dir)
+    FEEDBACK_FILE = os.path.abspath(args.data_file)
+
+    run(HOST, PORT)
+
 if __name__ == "__main__":
-    run()
+    main()

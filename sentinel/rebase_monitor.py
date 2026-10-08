@@ -38,15 +38,36 @@ DEFAULT_BRANCH_TEST_MAP = {
     "pr-feat-strain-regularized-inpainting": ["pytest", "test/test_gate_and_paint.py"],
 }
 
+def load_config(config_file=DEFAULT_CONFIG_FILE):
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
 class UpstreamRebaseMonitor:
-    def __init__(self, repo_dir=None, upstream_remote="upstream", upstream_branch="master",
-                 origin_remote="origin", status_file=None, interval=60, auto_push=True):
-        self.repo_dir = os.path.abspath(repo_dir or "/home/ahnitz/projects/claude/searchdev/pycbc-work/apogee")
-        self.upstream_remote = upstream_remote
-        self.upstream_branch = upstream_branch
-        self.origin_remote = origin_remote
-        self.status_file = os.path.abspath(status_file or DEFAULT_STATUS_FILE)
-        self.interval = interval
+    def __init__(self, repo_dir=None, upstream_remote=None, upstream_branch=None,
+                 origin_remote=None, status_file=None, interval=None, auto_push=True):
+        cfg = load_config()
+        self.repo_dir = repo_dir or os.environ.get("REVIEWER_REPO_DIR") or cfg.get("project", {}).get("working_tree_path")
+        if not self.repo_dir or not os.path.exists(self.repo_dir):
+            for cand in [
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "pycbc-work", "apogee")),
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "pycbc")),
+                os.getcwd()
+            ]:
+                if os.path.exists(os.path.join(cand, ".git")):
+                    self.repo_dir = cand
+                    break
+        self.repo_dir = os.path.abspath(self.repo_dir or os.getcwd())
+
+        self.upstream_remote = upstream_remote or os.environ.get("UPSTREAM_REMOTE") or cfg.get("project", {}).get("upstream_remote", "upstream")
+        self.upstream_branch = upstream_branch or os.environ.get("UPSTREAM_BRANCH") or cfg.get("project", {}).get("upstream_branch", "master")
+        self.origin_remote = origin_remote or os.environ.get("ORIGIN_REMOTE") or cfg.get("project", {}).get("origin_remote", "origin")
+        self.interval = interval or int(os.environ.get("REBASE_INTERVAL", cfg.get("rebase", {}).get("interval_seconds", 60)))
+        self.status_file = os.path.abspath(status_file or os.environ.get("REBASE_STATUS_FILE") or cfg.get("storage", {}).get("rebase_status_file", DEFAULT_STATUS_FILE))
         self.auto_push = auto_push
         self.last_upstream_sha = None
         os.makedirs(os.path.dirname(self.status_file), exist_ok=True)

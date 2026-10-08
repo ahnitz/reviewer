@@ -1,5 +1,5 @@
 {
-  "last_check": "2026-10-08T17:17:23.112301",
+  "last_check": "2026-10-08T17:22:24.443730",
   "upstream_head": "7158cda72def0c7803ca0779a69469fc48d1f577",
   "branches": {
     "pr-fix-core-numpy2-optparse": {
@@ -7,91 +7,91 @@
       "commit_sha": "a51feed1755ac5d84caf759f1cf7ac525a83e0f8",
       "ahead": 3,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.132097"
+      "last_verified": "2026-10-08T17:22:24.463712"
     },
     "pr-fix-io-dictarray-indexing": {
       "status": "UP_TO_DATE",
       "commit_sha": "99266a1bd93ca721a8c5cacd74175b96a3757461",
       "ahead": 3,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.135566"
+      "last_verified": "2026-10-08T17:22:24.466869"
     },
     "pr-fix-events-numpy2-zerolag": {
       "status": "UP_TO_DATE",
       "commit_sha": "91238780e199ca122298f8c2a57e3092f50fcfeb",
       "ahead": 2,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.139770"
+      "last_verified": "2026-10-08T17:22:24.470070"
     },
     "pr-perf-waveform-compress": {
       "status": "UP_TO_DATE",
       "commit_sha": "5c4ab0b4592f92650702ec8495a2fe99595a6f29",
       "ahead": 3,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.143215"
+      "last_verified": "2026-10-08T17:22:24.472571"
     },
     "pr-feat-vetoes-chisq-slicing": {
       "status": "UP_TO_DATE",
       "commit_sha": "996570d8183aa93e1f9dce12f3fd1af4f942ad24",
       "ahead": 4,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.146353"
+      "last_verified": "2026-10-08T17:22:24.476295"
     },
     "pr-feat-events-eventmgr-multi": {
       "status": "UP_TO_DATE",
       "commit_sha": "f4ee39b5fcbc432dd2e9ee4f3076e6291ca8f8c0",
       "ahead": 3,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.149654"
+      "last_verified": "2026-10-08T17:22:24.479487"
     },
     "pr-feat-filter-dynamic-snr-renorm": {
       "status": "UP_TO_DATE",
       "commit_sha": "8e1160ee03794ca1f569c22b5af08443cc2f8410",
       "ahead": 1,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.152636"
+      "last_verified": "2026-10-08T17:22:24.482543"
     },
     "pr-feat-inject-injfilter-optimal-snr": {
       "status": "UP_TO_DATE",
       "commit_sha": "7ce029f2cd307377d8ad400138fe801da5d4ceee",
       "ahead": 1,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.155490"
+      "last_verified": "2026-10-08T17:22:24.485762"
     },
     "pr-feat-psd-robust-estimators": {
       "status": "UP_TO_DATE",
       "commit_sha": "639133d2487bebc792ccafef7095596725bb0c4f",
       "ahead": 2,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.158174"
+      "last_verified": "2026-10-08T17:22:24.488637"
     },
     "pr-feat-strain-regularized-inpainting": {
       "status": "UP_TO_DATE",
       "commit_sha": "f42505847ad2c1ffc6d7a81a087a0e0a3ae1f49d",
       "ahead": 4,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.160790"
+      "last_verified": "2026-10-08T17:22:24.491259"
     },
     "pr-5392": {
       "status": "UP_TO_DATE",
       "commit_sha": "c9b643fd4444c9da533d05e2ebe50114070a1a23",
       "ahead": 16,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.163623"
+      "last_verified": "2026-10-08T17:22:24.494711"
     },
     "pr-5438": {
       "status": "UP_TO_DATE",
       "commit_sha": "824d52a3f1c6f55b6454207b85cdf0a6bed7b19c",
       "ahead": 5,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.166323"
+      "last_verified": "2026-10-08T17:22:24.497588"
     },
     "pr-5457": {
       "status": "UP_TO_DATE",
       "commit_sha": "f42505847ad2c1ffc6d7a81a087a0e0a3ae1f49d",
       "ahead": 4,
       "behind": 0,
-      "last_verified": "2026-10-08T17:17:23.170332"
+      "last_verified": "2026-10-08T17:22:24.499968"
     }
   },
   "upstream_remote": "upstream",

@@ -1,6 +1,6 @@
 # Logs and runtime PIDs
-.review_server.pid
-.review_server.log
+.*.pid
+.*.log
 *.tmp.*
 
 # Python caches
