@@ -22,6 +22,10 @@ This document establishes the governing engineering standards, numerical safety 
 9. [Rule 9: Upstream Root-Cause Resolution vs. Inner-Loop Bandaids](#rule-9-upstream-root-cause-resolution-vs-inner-loop-bandaids)
 10. [Rule 10: Canonical Reference Code Isolation](#rule-10-canonical-reference-code-isolation)
 11. [Rule 11: Domain-Accurate Parameter Naming in Storage Hierarchies](#rule-11-domain-accurate-parameter-naming-in-storage-hierarchies)
+12. [Rule 12: Avoid Namespace Redundancy / Stuttering in Function and Class Names](#rule-12-avoid-namespace-redundancy--stuttering-in-function-and-class-names)
+13. [Rule 13: Upstream PR Auditing & Rebase Synchronization](#rule-13-upstream-pr-auditing--rebase-synchronization)
+14. [Rule 14: Continuous Upstream Rebase Tracking & Multi-Branch Synchronization](#rule-14-continuous-upstream-rebase-tracking--multi-branch-synchronization)
+15. [Rule 15: Comprehensive Review Hunk Visibility, Dynamic Test Discovery & Context Linking](#rule-15-comprehensive-review-hunk-visibility-dynamic-test-discovery--context-linking)
 
 ---
 
@@ -265,5 +269,47 @@ Before proposing a new topic PR or branching a feature, audit active PRs and com
 
 ---
 
+## Rule 14: Continuous Upstream Rebase Tracking & Multi-Branch Synchronization
+
+### Core Rationale
+In an active open-source project like PyCBC, `gwastro/pycbc:master` advances asynchronously as peer pull requests merge. PR topic branches cannot remain anchored to stale historical merge bases (e.g. `f6eaed241`). If branches sit un-rebased:
+1. Reviewers cannot evaluate code against current master semantics.
+2. File collisions occur when files modified or added in upstream PRs are touched.
+3. CI workflows on upstream will test against outdated base commits.
+4. When `gwastro/master` moves, all branches across the repository tree (not just currently open PRs) must be kept cleanly rebased with 0 commits behind master.
+
+### Implementation Standard
+1. **Automated Rebase Sentinel**: Run `sentinel/rebase_monitor.py` as a standing daemon or triggerable endpoint (`POST /api/rebase/sync`).
+2. **Periodic Upstream Tracking**: Periodically execute `git fetch upstream master` to detect new upstream commit hashes.
+3. **Automated Non-Destructive Rebase**: When upstream advances:
+   - For every topic branch (`pr-*`, `feat/*`, `fix/*`), calculate commits behind upstream (`git rev-list --count <branch>..<upstream_sha>`).
+   - If behind > 0, rebase the branch onto `upstream/master`.
+4. **Isolated Test Verification**: Immediately after rebase, run the isolated test suite for that branch (e.g. `pytest test/test_*.py` with `PYTHONPATH=.`).
+5. **Verified Force-Push**: Only if all tests pass, force-push the rebased branch to `origin` (`git push -f origin <branch>`).
+6. **Graceful Conflict Abort**: If a rebase conflict occurs, immediately abort (`git rebase --abort`), record `CONFLICT` in `data/rebase_status.json`, and alert maintainers/agents without leaving the repository in a detached or dirty state.
+
+---
+
+## Rule 15: Comprehensive Review Hunk Visibility, Dynamic Test Discovery & Context Linking
+
+### Core Rationale
+A code review dashboard is only effective if 100% of code modifications are reviewable:
+1. **Zero Omission**: Newly created unit tests, auxiliary fixtures, helper modules, and config files created in response to feedback must appear as first-class, commentable hunks on the review dashboard.
+2. **Surrounding Context Access**: Reviewers evaluating a 30-line hunk often need to inspect surrounding classes, caller signatures, and file scope. Hunk cards must provide direct, unambiguous links to the file at those lines.
+3. **Dynamic Discovery**: As agents amend branches in response to review comments, new commits, modified lines, and new test files must appear automatically in the reviewer UI without requiring manual dashboard code edits or full page reloads.
+
+### Implementation Standard
+1. **Dynamic Git Diff Ingestion**: The review server (`/api/prs` and `/api/pr/{id}/hunks`) must dynamically compute git diffs against the true merge base (`git merge-base upstream/master <branch>`), parsing every file block and hunk header (`@@ -X,Y +A,B @@`).
+2. **Quad-Action Hunk Links**: Every hunk header must render 4 distinct links/actions:
+   - **GitHub Link**: `https://github.com/{maintainer_fork}/blob/{commitSha}/{file}#L{start}-L{end}` (opens exact lines in fork).
+   - **Local File Link**: `file://{REPO_DIR}/{file}#L{start}-L{end}` (opens local file directly in browser).
+   - **IDE Deep Link**: `vscode://file/{REPO_DIR}/{file}:{start}` (opens file and cursor position in editor).
+   - **Copy Path:Line**: Copies `{file}:{start}` to clipboard for instant CLI navigation.
+3. **Eager Pre-fetching & Polling**: The dashboard must eagerly load live hunks for all PRs on startup (`syncAllPRHunks()`) and poll the server periodically to reflect new changes seamlessly.
+4. **Universal Commentability**: Every hunk—whether a 1-line bugfix, a refactored DSP kernel, or a 300-line new test file—must include an inline review comment form dispatching directly to the agent feedback ledger.
+
+---
+
 *Document maintained autonomously by the Antigravity Dual-Review Sentinel system.*
+
 

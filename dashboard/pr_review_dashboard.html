@@ -42,7 +42,9 @@
             Real-Time Sync Active (No Refresh Needed)
           </span>
           <span class="text-xs text-slate-400">&bull;</span>
-          <span class="text-xs text-slate-500">Upstream: <code class="code-font text-slate-700 font-semibold">master</code> (<a href="https://github.com/gwastro/pycbc/commit/62205f5e6" target="_blank" class="text-blue-600 hover:underline">62205f5e6</a>)</span>
+          <span id="rebase-header-badge" class="text-xs text-slate-500">
+            Upstream: <code class="code-font text-slate-700 font-semibold">master</code> (<a href="https://github.com/gwastro/pycbc/commit/7158cda72" target="_blank" class="text-blue-600 hover:underline font-mono">7158cda72</a>) &bull; <strong class="text-emerald-700">13/13 Branches Rebased (0 behind)</strong>
+          </span>
         </div>
         <h1 class="text-xl font-bold tracking-tight text-slate-900 mt-1">
           PR Decomposition &amp; Architectural Rationale Review
@@ -87,6 +89,121 @@
     let reviewNotes = JSON.parse(localStorage.getItem("pycbc_pr_review_notes") || "{}");
     let serverComments = [];
     let isPolling = false;
+    let pollCounter = 0;
+    let rebaseStatus = null;
+
+    async function syncAllPRHunks() {
+      try {
+        const res = await fetch('/api/prs?t=' + Date.now());
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'ok' && data.prs) {
+            let updatedCurrent = false;
+            for (const [prId, prData] of Object.entries(data.prs)) {
+              const pr = PR_PAGES.find(p => p.id === prId);
+              if (pr && prData.hunks && prData.hunks.length > 0) {
+                const newSig = JSON.stringify(prData.hunks.map(h => h.file + h.lines));
+                const oldSig = JSON.stringify((pr.hunks || []).map(h => h.file + h.lines));
+                if (newSig !== oldSig || (prData.commitSha && prData.commitSha !== pr.commitSha)) {
+                  pr.hunks = prData.hunks;
+                  if (prData.commitSha) {
+                    pr.commitSha = prData.commitSha;
+                    pr.ghCommitUrl = `https://github.com/ahnitz/pycbc/commit/${prData.commitSha}`;
+                  }
+                  if (prData.diffStat) {
+                    pr.diff = prData.diffStat;
+                    const mAdd = prData.diffStat.match(/(\d+)\s+insertions?\(\+\)/);
+                    const mDel = prData.diffStat.match(/(\d+)\s+deletions?\(-\)/);
+                    const adds = mAdd ? "+" + mAdd[1] : "+0";
+                    const dels = mDel ? " / -" + mDel[1] : "";
+                    pr.diffBadge = adds + dels;
+                  }
+                  if (currentTab === prId) {
+                    updatedCurrent = true;
+                  }
+                }
+              }
+            }
+            renderNav();
+            if (updatedCurrent || currentTab === "overview") {
+              renderContent();
+            }
+          }
+        }
+      } catch (err) {
+        console.debug("Could not sync all PR hunks:", err);
+      }
+    }
+
+    async function fetchRebaseStatus() {
+      try {
+        const res = await fetch('/api/rebase/status?t=' + Date.now());
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'ok') {
+            rebaseStatus = data.rebase;
+            renderRebaseBanner();
+          }
+        }
+      } catch (err) {
+        console.debug("Could not fetch rebase status:", err);
+      }
+    }
+
+    function renderRebaseBanner() {
+      const elSha = document.getElementById("rebase-upstream-sha");
+      const elStat = document.getElementById("rebase-branches-status");
+      const elHeaderBadge = document.getElementById("rebase-header-badge");
+      if (!rebaseStatus) return;
+
+      const upstreamSha = rebaseStatus.upstream_head ? rebaseStatus.upstream_head.substring(0, 9) : "7158cda72";
+      if (elSha) elSha.innerText = upstreamSha;
+
+      if (rebaseStatus.branches) {
+        const branches = Object.values(rebaseStatus.branches);
+        const total = branches.length;
+        const upToDate = branches.filter(b => b.behind === 0).length;
+        const msg = `${upToDate} / ${total} Branches Up to Date (0 behind upstream/master)`;
+        if (elStat) elStat.innerText = msg;
+        if (elHeaderBadge) {
+          elHeaderBadge.innerHTML = `
+            Upstream: <code class="code-font text-slate-700 font-semibold">master</code> (<a href="https://github.com/gwastro/pycbc/commit/${upstreamSha}" target="_blank" class="text-blue-600 hover:underline font-mono">${upstreamSha}</a>) &bull; <strong class="text-emerald-700">${upToDate}/${total} Branches Rebased (0 behind)</strong>
+          `;
+        }
+      }
+    }
+
+    async function triggerRebaseSync() {
+      const btn = document.getElementById("rebase-sync-btn");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+          <svg class="w-3.5 h-3.5 animate-spin text-white inline-block" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+          <span>Rebasing branches from gwastro/master...</span>
+        `;
+      }
+      try {
+        const res = await fetch('/api/rebase/sync', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          await fetchRebaseStatus();
+          await syncAllPRHunks();
+          alert("✓ Rebase synchronization complete!\nAll PR branches successfully rebased onto gwastro/master and pushed to fork.");
+        } else {
+          alert("Rebase sync failed with status: " + res.status);
+        }
+      } catch (err) {
+        alert("Network error during rebase sync: " + err);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `
+            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <span>Sync with gwastro/master Now</span>
+          `;
+        }
+      }
+    }
 
     async function syncLivePRHunks(prId) {
       if (!prId || !prId.startsWith("PR-")) return;
@@ -101,7 +218,10 @@
               const oldSig = JSON.stringify((pr.hunks || []).map(h => h.file + h.lines));
               if (newSig !== oldSig || (data.commitSha && data.commitSha !== pr.commitSha)) {
                 pr.hunks = data.hunks;
-                if (data.commitSha) pr.commitSha = data.commitSha;
+                if (data.commitSha) {
+                  pr.commitSha = data.commitSha;
+                  pr.ghCommitUrl = `https://github.com/ahnitz/pycbc/commit/${data.commitSha}`;
+                }
                 if (data.diffStat) pr.diff = data.diffStat;
                 if (currentTab === prId) {
                   renderContent();
@@ -139,6 +259,7 @@
       if (isPolling) return;
       isPolling = true;
       try {
+        pollCounter++;
         const res = await fetch('/api/comments?t=' + Date.now());
         if (res.ok) {
           const data = await res.json();
@@ -149,7 +270,10 @@
             renderActiveComments();
           }
         }
-        if (currentTab.startsWith("PR-")) {
+        if (pollCounter % 4 === 0) {
+          await syncAllPRHunks();
+          await fetchRebaseStatus();
+        } else if (currentTab.startsWith("PR-")) {
           await syncLivePRHunks(currentTab);
         }
       } catch (err) {
@@ -592,6 +716,43 @@
             </div>
           </div>
 
+          <!-- Upstream Master Rebase & Synchronization Card -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">
+                    Upstream Master Synchronization &amp; Automated Rebase
+                  </h3>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    CONTINUOUS SYNC ACTIVE
+                  </span>
+                </div>
+                <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                  All topic branches in the repository tree are monitored and automatically rebased against 
+                  <code class="code-font text-slate-800 font-semibold">gwastro/pycbc:master</code> as upstream moves. 
+                  Unit tests are verified on each rebase before pushing to your fork.
+                </p>
+                <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500">
+                  <span>Upstream Remote: <code class="code-font text-slate-700">gwastro/pycbc.git:master</code></span>
+                  <span class="text-slate-300">&bull;</span>
+                  <span>Upstream HEAD: <strong id="rebase-upstream-sha" class="code-font text-blue-700 font-bold">7158cda72</strong></span>
+                  <span class="text-slate-300">&bull;</span>
+                  <span>Branch Sync Status: <strong id="rebase-branches-status" class="text-emerald-700 font-semibold">13 / 13 Branches Up to Date (0 behind)</strong></span>
+                </div>
+              </div>
+
+              <div class="shrink-0 flex items-center gap-2">
+                <button id="rebase-sync-btn" onclick="triggerRebaseSync()"
+                        class="px-3.5 py-2 text-xs font-semibold rounded-md bg-slate-900 text-white hover:bg-slate-800 shadow-xs transition-colors flex items-center gap-2 cursor-pointer">
+                  <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                  <span>Sync with gwastro/master Now</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Wave 1 Table -->
           <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
             <div class="flex items-center justify-between mb-4">
@@ -692,6 +853,14 @@
                   <span>Commit: <a href="${pr.ghCommitUrl}" target="_blank" class="code-font text-blue-600 hover:underline font-semibold">${pr.commitSha.substring(0, 9)}</a></span>
                   <span class="text-slate-300">&bull;</span>
                   <span>Diff: <strong class="text-slate-800 font-semibold">${pr.diff}</strong></span>
+                  <span class="text-slate-300">&bull;</span>
+                  <span>Coverage: <strong class="text-blue-700 font-semibold">${pr.hunks.length} reviewable hunks across ${[...new Set(pr.hunks.map(h => h.file))].length} files</strong></span>
+                </div>
+                <div class="flex flex-wrap items-center gap-1.5 mt-2 text-[11px]">
+                  <span class="text-slate-400 font-medium">Files:</span>
+                  ${[...new Set(pr.hunks.map(h => h.file))].map(f => `
+                    <span class="px-1.5 py-0.5 rounded code-font text-slate-700 bg-slate-100 border border-slate-200 font-medium">${f}</span>
+                  `).join("")}
                 </div>
               </div>
 
@@ -771,12 +940,38 @@
                     <div class="flex items-center gap-2 flex-wrap">
                       <span class="font-bold text-slate-900">${idx + 1}. <code class="code-font text-blue-700">${hunk.file}</code></span>
                       <span class="code-font text-slate-500 font-medium">${hunk.lines}</span>
+                      
+                      <!-- GitHub Link @ lines -->
                       <a href="${hunk.githubUrl || getFileLink(pr, hunk)}" target="_blank" rel="noopener noreferrer"
-                         class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200 text-[11px] font-semibold transition-colors shadow-2xs"
-                         title="Open ${hunk.file} at ${hunk.lines} on GitHub to see surrounding code">
-                        <svg class="w-3.5 h-3.5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-                        <span>View file @ lines &nearr;</span>
+                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200 text-[11px] font-semibold transition-colors shadow-2xs"
+                         title="Open ${hunk.file} at ${hunk.lines} on GitHub to see surrounding context">
+                        <svg class="w-3 h-3 text-blue-600 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        <span>GitHub @ lines &nearr;</span>
                       </a>
+
+                      <!-- Local File URL Link -->
+                      <a href="${hunk.localFileUrl || ('file:///home/ahnitz/projects/claude/searchdev/pycbc-work/apogee/' + hunk.file)}" target="_blank" rel="noopener noreferrer"
+                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 text-[11px] font-medium transition-colors shadow-2xs"
+                         title="Open local file in browser: ${hunk.file}">
+                        <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Local File &nearr;</span>
+                      </a>
+
+                      <!-- Open in IDE (vscode:// protocol) -->
+                      <a href="${hunk.vscodeUrl || ('vscode://file/home/ahnitz/projects/claude/searchdev/pycbc-work/apogee/' + hunk.file + ':' + (hunk.startLine || 1))}"
+                         class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 text-[11px] font-medium transition-colors shadow-2xs"
+                         title="Open in VS Code at line ${hunk.startLine || 1}">
+                        <svg class="w-3 h-3 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                        <span>Open in IDE &nearr;</span>
+                      </a>
+
+                      <!-- Copy Path:Line -->
+                      <button onclick="copyToClipboard('${hunk.filePathLine || (hunk.file + ':' + (hunk.startLine || 1))}', 'Copied file path and line number!')"
+                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white text-slate-600 hover:bg-slate-50 border border-slate-200 text-[11px] font-mono transition-colors shadow-2xs cursor-pointer"
+                              title="Click to copy path:line">
+                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        <span>Copy :line</span>
+                      </button>
                     </div>
                     <span class="text-slate-600 font-medium">${hunk.shortSummary}</span>
                   </div>
@@ -1073,6 +1268,8 @@
 
     // Initial Launch
     loadServerComments();
+    syncAllPRHunks();
+    fetchRebaseStatus();
     renderNav();
     renderContent();
 

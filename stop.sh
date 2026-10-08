@@ -23,6 +23,22 @@ if [ -n "$PIDS" ]; then
 fi
 echo "✓ Auto-responder stopped."
 
+# Stop Rebase Monitor
+REBASE_PID_FILE="$SCRIPT_DIR/.rebase_monitor.pid"
+if [ -f "$REBASE_PID_FILE" ]; then
+    REBASE_PID=$(cat "$REBASE_PID_FILE")
+    if [ -n "$REBASE_PID" ] && kill -0 "$REBASE_PID" 2>/dev/null; then
+        echo "Stopping rebase monitor (PID: $REBASE_PID)..."
+        kill -15 "$REBASE_PID" 2>/dev/null || true
+    fi
+    rm -f "$REBASE_PID_FILE"
+fi
+PIDS=$(pgrep -f "sentinel/rebase_monitor.py" || true)
+if [ -n "$PIDS" ]; then
+    kill -15 $PIDS 2>/dev/null || true
+fi
+echo "✓ Rebase monitor stopped."
+
 # Stop Review Server
 if [ -f "$SERVER_PID_FILE" ]; then
     PID=$(cat "$SERVER_PID_FILE")

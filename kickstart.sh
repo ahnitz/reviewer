@@ -14,6 +14,9 @@ SERVER_PID_FILE="$ROOT_DIR/.review_server.pid"
 SERVER_LOG_FILE="$ROOT_DIR/.review_server.log"
 RESPONDER_PID_FILE="$ROOT_DIR/.auto_responder.pid"
 RESPONDER_LOG_FILE="$ROOT_DIR/.auto_responder.log"
+REBASE_SCRIPT="$ROOT_DIR/sentinel/rebase_monitor.py"
+REBASE_PID_FILE="$ROOT_DIR/.rebase_monitor.pid"
+REBASE_LOG_FILE="$ROOT_DIR/.rebase_monitor.log"
 
 PORT="${PORT:-8080}"
 HOST="${HOST:-0.0.0.0}"
@@ -98,7 +101,33 @@ else
     echo "✓ Automated responder is already active"
 fi
 
-# 5. Output Summary and Usage Instructions
+# 5. Check / Start Automated Upstream Rebase Monitor Daemon
+REBASE_RUNNING=0
+if [ -f "$REBASE_PID_FILE" ]; then
+    OLD_REBASE_PID=$(cat "$REBASE_PID_FILE" 2>/dev/null || echo "")
+    if [ -n "$OLD_REBASE_PID" ] && kill -0 "$OLD_REBASE_PID" 2>/dev/null; then
+        REBASE_RUNNING=1
+    fi
+fi
+
+if [ "$REBASE_RUNNING" -eq 0 ]; then
+    echo "Starting automated rebase monitor in background..."
+    nohup python3 "$REBASE_SCRIPT" --interval 60 > "$REBASE_LOG_FILE" 2>&1 &
+    NEW_REBASE_PID=$!
+    echo "$NEW_REBASE_PID" > "$REBASE_PID_FILE"
+    sleep 1
+
+    if kill -0 "$NEW_REBASE_PID" 2>/dev/null; then
+        echo "✓ Automated rebase monitor started successfully (PID: $NEW_REBASE_PID)"
+    else
+        echo "❌ Rebase monitor failed to start. Last log lines:" >&2
+        tail -n 20 "$REBASE_LOG_FILE" >&2
+    fi
+else
+    echo "✓ Automated rebase monitor is already active"
+fi
+
+# 6. Output Summary and Usage Instructions
 echo ""
 echo "=================================================================="
 echo "✨ SYSTEM IS LIVE AND OPERATIONAL"
@@ -106,10 +135,12 @@ echo "=================================================================="
 echo "Dashboard UI:        http://localhost:$PORT/dashboard/pr_review_dashboard.html"
 echo "Root Auto-Redirect:  http://localhost:$PORT/"
 echo "REST API:            http://localhost:$PORT/api/comments"
+echo "Rebase Status API:   http://localhost:$PORT/api/rebase/status"
 echo "Healthcheck:         http://localhost:$PORT/api/health"
 echo ""
 echo "Helpful Management Commands:"
-echo "  ./status.sh                  # Check status of server and auto-responder"
+echo "  ./status.sh                  # Check status of server, responder, and rebase monitor"
 echo "  ./stop.sh                    # Stop all review services"
+echo "  python3 sentinel/rebase_monitor.py --once   # Run immediate upstream check & rebase"
 echo "  python3 sentinel/feedback_cli.py list --pending-only"
 echo "=================================================================="

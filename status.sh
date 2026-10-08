@@ -40,6 +40,21 @@ else
     echo "Auto-Responder: STOPPED"
 fi
 
+# Check rebase monitor process
+REBASE_PID_FILE="$SCRIPT_DIR/.rebase_monitor.pid"
+if [ -f "$REBASE_PID_FILE" ]; then
+    REBASE_PID=$(cat "$REBASE_PID_FILE")
+    if kill -0 "$REBASE_PID" 2>/dev/null; then
+        echo "Rebase Monitor: RUNNING (PID: $REBASE_PID)"
+    else
+        echo "Rebase Monitor: STALE PID ($REBASE_PID not running)"
+    fi
+elif pgrep -f "sentinel/rebase_monitor.py" >/dev/null 2>&1; then
+    echo "Rebase Monitor: RUNNING (PID: $(pgrep -f "sentinel/rebase_monitor.py" | head -n1))"
+else
+    echo "Rebase Monitor: STOPPED"
+fi
+
 # Check HTTP Health
 echo -n "HTTP API:       "
 HEALTH_OUT=$(curl -s -m 2 "http://localhost:$PORT/api/health" 2>/dev/null || true)

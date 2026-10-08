@@ -132,6 +132,8 @@ def get_live_pr_hunks(pr_id):
             line_hash = f"#L{start_line}-L{end_line}" if end_line > start_line else f"#L{start_line}"
             gh_url = f"https://github.com/ahnitz/pycbc/blob/{commit_sha or branch}/{file_name}{line_hash}"
             local_url = f"file://{REPO_DIR}/{file_name}{line_hash}"
+            vscode_url = f"vscode://file/{REPO_DIR}/{file_name}:{start_line}"
+            path_line = f"{file_name}:{start_line}"
 
             if is_new and is_test:
                 summary = f"New test suite: {file_name}"
@@ -158,6 +160,8 @@ def get_live_pr_hunks(pr_id):
                 "diffSnippet": snippet,
                 "githubUrl": gh_url,
                 "localFileUrl": local_url,
+                "vscodeUrl": vscode_url,
+                "filePathLine": path_line,
                 "rationale": rationale,
                 "alternatives": f"Targeting upstream merge base ({base_commit[:9]})."
             })
@@ -211,6 +215,27 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"status": "ok", "comments": comments})
             return
 
+        if self.path == "/api/prs" or self.path.startswith("/api/prs?"):
+            results = {}
+            for pid in PR_BRANCH_MAP.keys():
+                results[pid] = get_live_pr_hunks(pid)
+            self._send_json({"status": "ok", "prs": results})
+            return
+
+        if self.path == "/api/rebase/status" or self.path.startswith("/api/rebase/status?"):
+            rebase_file = os.path.join(ROOT_DIR, "agent-dual-review", "data", "rebase_status.json")
+            if os.path.exists(rebase_file):
+                try:
+                    with open(rebase_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    self._send_json({"status": "ok", "rebase": data})
+                    return
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, status=500)
+                    return
+            self._send_json({"status": "ok", "rebase": {"status": "NOT_INITIALIZED"}})
+            return
+
         if self.path.startswith("/api/pr/") and self.path.endswith("/hunks"):
             parts = self.path.split("/")
             pr_id = parts[3].upper()
@@ -221,6 +246,24 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
+        if self.path == "/api/rebase/sync":
+            rebase_script = os.path.join(ROOT_DIR, "agent-dual-review", "sentinel", "rebase_monitor.py")
+            if os.path.exists(rebase_script):
+                try:
+                    p = subprocess.run([sys.executable, rebase_script, "--once"], capture_output=True, text=True, timeout=120)
+                    rebase_file = os.path.join(ROOT_DIR, "agent-dual-review", "data", "rebase_status.json")
+                    if os.path.exists(rebase_file):
+                        with open(rebase_file, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                        self._send_json({"status": "ok", "rebase": data, "log": p.stdout})
+                        return
+                    self._send_json({"status": "ok", "log": p.stdout})
+                    return
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, status=500)
+                    return
+            self._send_json({"status": "error", "message": "Rebase script not found"}, status=404)
+            return
         if self.path == "/api/comments":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
