@@ -326,7 +326,7 @@ class DualReviewServer:
                         self._send_json({"status": "error", "message": f"Invalid JSON: {e}"}, status=400)
                         return
 
-                    comment_id = data.get("commentId")
+                    comment_id = data.get("commentId") or data.get("id")
                     reply_text = data.get("replyText", "").strip()
                     new_status = data.get("status", "ADDRESSED")
 
