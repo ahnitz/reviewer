@@ -102,32 +102,75 @@ class DualReviewServer:
             is_new = any('new file mode' in l for l in lines[:5])
             is_test = file_name.startswith('test/') or 'test_' in file_name
             
-            body_lines = [l for l in lines[1:] if not (l.startswith('index ') or l.startswith('--- ') or l.startswith('+++ ') or l.startswith('new file mode'))]
-            snippet = '\n'.join(body_lines[:35])
-            if len(body_lines) > 35:
-                snippet += f'\n... (+{len(body_lines) - 35} more lines in diff)'
+            # Split by @@ hunk headers
+            hunk_splits = re.split(r'(@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@.*)', block)
+            if len(hunk_splits) <= 1:
+                body_lines = [l for l in lines[1:] if not (l.startswith('index ') or l.startswith('--- ') or l.startswith('+++ ') or l.startswith('new file mode'))]
+                snippet = '\n'.join(body_lines[:35])
+                hunks.append({
+                    "file": file_name,
+                    "startLine": 1,
+                    "endLine": len(body_lines),
+                    "lines": f"lines 1-{len(body_lines)}",
+                    "shortSummary": f"File modification: {file_name}",
+                    "diffSnippet": snippet,
+                    "githubUrl": f"https://github.com/ahnitz/pycbc/blob/{commit_sha or branch}/{file_name}",
+                    "localFileUrl": f"file://{repo_dir}/{file_name}",
+                    "rationale": f"Derived from branch {branch}.",
+                    "alternatives": f"Merge base {self.merge_base}."
+                })
+                continue
 
-            if is_new and is_test:
-                summary = "Newly added unit test suite"
-                rationale = "Created in response to maintainer review feedback to comprehensively test new behavior and invariant guarantees."
-            elif is_test:
-                summary = "Updated unit test coverage"
-                rationale = "Extended unit test assertions to validate fixes requested in review."
-            elif is_new:
-                summary = "Newly added module"
-                rationale = "Added module implementing required functionality."
-            else:
-                summary = "Core implementation update"
-                rationale = "Implementation refactoring and fixes applied to topic branch."
+            for i in range(1, len(hunk_splits), 2):
+                header = hunk_splits[i]
+                body = hunk_splits[i+1] if i+1 < len(hunk_splits) else ''
+                
+                m = re.search(r'@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)', header)
+                if not m:
+                    continue
+                start_line = int(m.group(3))
+                count = int(m.group(4) or 1)
+                end_line = start_line + max(count - 1, 0)
+                func_ctx = m.group(5).strip()
+                
+                body_lines = [l for l in (header + '\n' + body).splitlines() if not (l.startswith('index ') or l.startswith('--- ') or l.startswith('+++ ') or l.startswith('new file mode'))]
+                snippet = '\n'.join(body_lines[:40])
+                if len(body_lines) > 40:
+                    snippet += f'\n... (+{len(body_lines) - 40} more lines in hunk)'
 
-            hunks.append({
-                "file": file_name,
-                "lines": f"{len(body_lines)} lines in diff",
-                "shortSummary": summary,
-                "diffSnippet": snippet,
-                "rationale": rationale,
-                "alternatives": f"Derived directly from git diff against upstream master merge base ({self.merge_base})."
-            })
+                line_str = f"lines {start_line}-{end_line}" if end_line > start_line else f"line {start_line}"
+                line_hash = f"#L{start_line}-L{end_line}" if end_line > start_line else f"#L{start_line}"
+                gh_url = f"https://github.com/ahnitz/pycbc/blob/{commit_sha or branch}/{file_name}{line_hash}"
+                local_url = f"file://{repo_dir}/{file_name}{line_hash}"
+
+                if is_new and is_test:
+                    summary = f"New test suite: {file_name}"
+                    rationale = "Created in response to maintainer review feedback to comprehensively test invariant guarantees."
+                elif is_test:
+                    summary = f"Unit test verification ({file_name})"
+                    rationale = "Extended unit test assertions to validate fixes requested in review."
+                elif is_new:
+                    summary = f"New module: {file_name}"
+                    rationale = "Added module implementing required functionality."
+                elif func_ctx:
+                    summary = f"{func_ctx}"
+                    rationale = f"Implementation update around {func_ctx}."
+                else:
+                    summary = "Core implementation update"
+                    rationale = "Implementation refactoring and fixes applied to topic branch."
+
+                hunks.append({
+                    "file": file_name,
+                    "startLine": start_line,
+                    "endLine": end_line,
+                    "lines": line_str,
+                    "shortSummary": summary,
+                    "diffSnippet": snippet,
+                    "githubUrl": gh_url,
+                    "localFileUrl": local_url,
+                    "rationale": rationale,
+                    "alternatives": f"Targeting upstream master merge base ({self.merge_base})."
+                })
 
         return {
             "status": "ok",
