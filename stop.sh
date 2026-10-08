@@ -5,33 +5,39 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-PID_FILE="$SCRIPT_DIR/.review_server.pid"
+SERVER_PID_FILE="$SCRIPT_DIR/.review_server.pid"
+RESPONDER_PID_FILE="$SCRIPT_DIR/.auto_responder.pid"
 
-if [ ! -f "$PID_FILE" ]; then
-    echo "No PID file found ($PID_FILE). Searching for running review_server.py..."
-    PIDS=$(pgrep -f "server/review_server.py" || true)
-    if [ -n "$PIDS" ]; then
-        echo "Terminating review server PID(s): $PIDS"
-        kill -15 $PIDS 2>/dev/null || true
-        echo "✓ Stopped."
-    else
-        echo "No review server processes found."
+# Stop Auto-Responder
+if [ -f "$RESPONDER_PID_FILE" ]; then
+    R_PID=$(cat "$RESPONDER_PID_FILE")
+    if [ -n "$R_PID" ] && kill -0 "$R_PID" 2>/dev/null; then
+        echo "Stopping automated responder (PID: $R_PID)..."
+        kill -15 "$R_PID" 2>/dev/null || true
     fi
-    exit 0
+    rm -f "$RESPONDER_PID_FILE"
 fi
+PIDS=$(pgrep -f "sentinel/auto_responder.py" || true)
+if [ -n "$PIDS" ]; then
+    kill -15 $PIDS 2>/dev/null || true
+fi
+echo "✓ Auto-responder stopped."
 
-PID=$(cat "$PID_FILE")
-if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
-    echo "Stopping review server (PID: $PID)..."
-    kill -15 "$PID" 2>/dev/null || true
-    sleep 1
-    if kill -0 "$PID" 2>/dev/null; then
-        echo "Process still alive, forcing termination..."
-        kill -9 "$PID" 2>/dev/null || true
+# Stop Review Server
+if [ -f "$SERVER_PID_FILE" ]; then
+    PID=$(cat "$SERVER_PID_FILE")
+    if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
+        echo "Stopping review server (PID: $PID)..."
+        kill -15 "$PID" 2>/dev/null || true
+        sleep 1
+        if kill -0 "$PID" 2>/dev/null; then
+            kill -9 "$PID" 2>/dev/null || true
+        fi
     fi
-    echo "✓ Review server stopped."
-else
-    echo "Review server PID $PID was not running."
+    rm -f "$SERVER_PID_FILE"
 fi
-
-rm -f "$PID_FILE"
+PIDS=$(pgrep -f "server/review_server.py" || true)
+if [ -n "$PIDS" ]; then
+    kill -15 $PIDS 2>/dev/null || true
+fi
+echo "✓ Review server stopped."

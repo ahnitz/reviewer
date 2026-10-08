@@ -7,10 +7,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 ROOT_DIR="$SCRIPT_DIR"
 SERVER_SCRIPT="$ROOT_DIR/server/review_server.py"
+RESPONDER_SCRIPT="$ROOT_DIR/sentinel/auto_responder.py"
 DATA_DIR="$ROOT_DIR/data"
 DATA_FILE="$DATA_DIR/reviewer_feedback.json"
-PID_FILE="$ROOT_DIR/.review_server.pid"
-LOG_FILE="$ROOT_DIR/.review_server.log"
+SERVER_PID_FILE="$ROOT_DIR/.review_server.pid"
+SERVER_LOG_FILE="$ROOT_DIR/.review_server.log"
+RESPONDER_PID_FILE="$ROOT_DIR/.auto_responder.pid"
+RESPONDER_LOG_FILE="$ROOT_DIR/.auto_responder.log"
 
 PORT="${PORT:-8080}"
 HOST="${HOST:-0.0.0.0}"
@@ -39,47 +42,61 @@ else
     echo "✓ Existing feedback ledger found: $DATA_FILE ($(grep -c '"id":' "$DATA_FILE" 2>/dev/null || echo 0) comments)"
 fi
 
-# 3. Check If Server Already Running
-RUNNING=0
-if [ -f "$PID_FILE" ]; then
-    OLD_PID=$(cat "$PID_FILE" 2>/dev/null || echo "")
+# 3. Check / Start Review Server
+SERVER_RUNNING=0
+if [ -f "$SERVER_PID_FILE" ]; then
+    OLD_PID=$(cat "$SERVER_PID_FILE" 2>/dev/null || echo "")
     if [ -n "$OLD_PID" ] && kill -0 "$OLD_PID" 2>/dev/null; then
-        RUNNING=1
+        SERVER_RUNNING=1
     fi
 fi
 
-# Also check if port is currently responding
 if curl -s -m 1 "http://localhost:$PORT/api/health" &>/dev/null || curl -s -m 1 "http://localhost:$PORT/api/comments" &>/dev/null; then
     echo "✓ Review server is already actively responding on http://localhost:$PORT"
-    RUNNING=1
+    SERVER_RUNNING=1
 fi
 
-if [ "$RUNNING" -eq 0 ]; then
+if [ "$SERVER_RUNNING" -eq 0 ]; then
     echo "Starting review server in background..."
-    nohup python3 "$SERVER_SCRIPT" --host "$HOST" --port "$PORT" --root-dir "$ROOT_DIR" --data-file "$DATA_FILE" > "$LOG_FILE" 2>&1 &
+    nohup python3 "$SERVER_SCRIPT" --host "$HOST" --port "$PORT" --root-dir "$ROOT_DIR" --data-file "$DATA_FILE" > "$SERVER_LOG_FILE" 2>&1 &
     NEW_PID=$!
-    echo "$NEW_PID" > "$PID_FILE"
+    echo "$NEW_PID" > "$SERVER_PID_FILE"
     sleep 1
 
-    # Verify server startup
     if kill -0 "$NEW_PID" 2>/dev/null; then
         echo "✓ Server started successfully (PID: $NEW_PID)"
     else
         echo "❌ Server failed to start. Last log lines:" >&2
-        tail -n 20 "$LOG_FILE" >&2
+        tail -n 20 "$SERVER_LOG_FILE" >&2
         exit 1
     fi
 fi
 
-# 4. Verify HTTP Response
-echo -n "Checking server health... "
-for i in {1..5}; do
-    if curl -s -m 2 "http://localhost:$PORT/api/comments" &>/dev/null; then
-        echo "OK"
-        break
+# 4. Check / Start Automated Responder Daemon
+RESPONDER_RUNNING=0
+if [ -f "$RESPONDER_PID_FILE" ]; then
+    OLD_R_PID=$(cat "$RESPONDER_PID_FILE" 2>/dev/null || echo "")
+    if [ -n "$OLD_R_PID" ] && kill -0 "$OLD_R_PID" 2>/dev/null; then
+        RESPONDER_RUNNING=1
     fi
-    sleep 0.5
-done
+fi
+
+if [ "$RESPONDER_RUNNING" -eq 0 ]; then
+    echo "Starting automated review responder in background..."
+    nohup python3 "$RESPONDER_SCRIPT" --api-url "http://localhost:$PORT/api/comments" --data-file "$DATA_FILE" --interval 2 > "$RESPONDER_LOG_FILE" 2>&1 &
+    NEW_R_PID=$!
+    echo "$NEW_R_PID" > "$RESPONDER_PID_FILE"
+    sleep 1
+
+    if kill -0 "$NEW_R_PID" 2>/dev/null; then
+        echo "✓ Automated responder started successfully (PID: $NEW_R_PID)"
+    else
+        echo "❌ Responder failed to start. Last log lines:" >&2
+        tail -n 20 "$RESPONDER_LOG_FILE" >&2
+    fi
+else
+    echo "✓ Automated responder is already active"
+fi
 
 # 5. Output Summary and Usage Instructions
 echo ""
@@ -90,11 +107,9 @@ echo "Dashboard UI:        http://localhost:$PORT/dashboard/pr_review_dashboard.
 echo "Root Auto-Redirect:  http://localhost:$PORT/"
 echo "REST API:            http://localhost:$PORT/api/comments"
 echo "Healthcheck:         http://localhost:$PORT/api/health"
-echo "Log File:            $LOG_FILE"
 echo ""
 echo "Helpful Management Commands:"
-echo "  ./status.sh                  # Check server status and pending comments"
-echo "  ./stop.sh                    # Stop the background review server"
+echo "  ./status.sh                  # Check status of server and auto-responder"
+echo "  ./stop.sh                    # Stop all review services"
 echo "  python3 sentinel/feedback_cli.py list --pending-only"
-echo "  python3 sentinel/feedback_sentinel.py    # Run live watcher daemon"
 echo "=================================================================="
