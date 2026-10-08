@@ -16,10 +16,24 @@ import re
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_CONFIG_PATH = os.path.abspath(os.path.join(SERVER_DIR, "..", "config.json"))
+
+def find_config_path(config_path=None):
+    if config_path and os.path.exists(config_path):
+        return os.path.abspath(config_path)
+    candidates = [
+        os.path.abspath(os.path.join(SERVER_DIR, "..", "config.json")),
+        os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "config.json")),
+        os.path.abspath(os.path.join(SERVER_DIR, "..", "search_dev_notes", "tools", "reviewer", "config.json")),
+        os.path.abspath(os.path.join(os.getcwd(), "agent-dual-review", "config.json")),
+        os.path.abspath(os.path.join(os.getcwd(), "config.json")),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+    return candidates[0]
 
 def load_config(config_path=None):
-    path = config_path or DEFAULT_CONFIG_PATH
+    path = find_config_path(config_path)
     if os.path.exists(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -52,6 +66,7 @@ ROOT_DIR = ROOT_DIR or os.path.abspath(os.path.join(SERVER_DIR, ".."))
 REPO_DIR = os.environ.get("REVIEWER_REPO_DIR") or CFG.get("project", {}).get("working_tree_path")
 if not REPO_DIR or not os.path.exists(REPO_DIR):
     candidates = [
+        os.path.abspath(os.path.join(SERVER_DIR, "..", "pycbc-work", "apogee")),
         os.path.abspath(os.path.join(SERVER_DIR, "..", "..", "pycbc-work", "apogee")),
         os.path.abspath(os.path.join(SERVER_DIR, "..", "..", "pycbc")),
         os.path.abspath(os.path.join(SERVER_DIR, "..")),
@@ -67,7 +82,18 @@ REPO_DIR = os.path.abspath(REPO_DIR or os.getcwd())
 FEEDBACK_FILE = os.environ.get("REVIEWER_FEEDBACK_FILE") or CFG.get("storage", {}).get("feedback_file")
 if not FEEDBACK_FILE or not os.path.isabs(FEEDBACK_FILE):
     rel_path = FEEDBACK_FILE or "data/reviewer_feedback.json"
-    FEEDBACK_FILE = os.path.abspath(os.path.join(SERVER_DIR, "..", rel_path))
+    candidates = [
+        os.path.abspath(os.path.join(SERVER_DIR, "..", "search_dev_notes", "reviewer_feedback.json")),
+        os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "reviewer_feedback.json")),
+        os.path.abspath(os.path.join(SERVER_DIR, "..", rel_path)),
+        os.path.abspath(os.path.join(os.getcwd(), rel_path)),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            FEEDBACK_FILE = c
+            break
+    if not FEEDBACK_FILE or not os.path.exists(FEEDBACK_FILE):
+        FEEDBACK_FILE = candidates[0]
 
 TEAMWORK_FEEDBACK_FILE = os.path.join(ROOT_DIR, ".agents", "teamwork", "REVIEWER_FEEDBACK.json")
 
@@ -155,10 +181,14 @@ def find_rebase_script():
             return os.path.abspath(c)
     return None
 
-def get_live_pr_hunks(pr_id):
-    branch = resolve_branch(pr_id)
-    if not branch:
-        return {"status": "error", "message": f"Unknown PR ID or branch: {pr_id}"}
+def get_live_pr_hunks(branch_or_id):
+    branch = resolve_branch(branch_or_id) or branch_or_id
+    p_check = subprocess.run(["git", "rev-parse", "--verify", branch], cwd=REPO_DIR, capture_output=True, text=True)
+    if p_check.returncode != 0:
+        return {"status": "error", "message": f"Unknown PR ID or branch: {branch_or_id}"}
+
+    inv_map = {v: k for k, v in PR_BRANCH_MAP.items()}
+    pr_id = inv_map.get(branch) or (branch_or_id if branch_or_id.startswith("PR-") else f"PR-{branch_or_id}").upper().replace('/', '-')
     
     cmd_sha = ["git", "rev-parse", branch]
     p_sha = subprocess.run(cmd_sha, cwd=REPO_DIR, capture_output=True, text=True)
@@ -336,19 +366,20 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
         if self.path == "/api/prs" or self.path.startswith("/api/prs?"):
             results = {}
             tracked = dict(PR_BRANCH_MAP)
-            # Dynamically discover all active pr-* and topic branches in local git
-            p_br = subprocess.run(["git", "branch", "--list", "pr-*"], cwd=REPO_DIR, capture_output=True, text=True)
-            if p_br.returncode == 0:
-                for line in p_br.stdout.splitlines():
-                    b = line.strip().lstrip("* ").strip()
-                    if b and b not in tracked.values():
-                        key = b.upper()
-                        if not key.startswith("PR-"):
-                            key = f"PR-{key}"
-                        tracked[key] = b
+            patterns = CFG.get("project", {}).get("branch_patterns", ["pr-*", "feat/*", "fix/*", "perf/*"])
+            for pat in patterns:
+                p_br = subprocess.run(["git", "branch", "--list", pat], cwd=REPO_DIR, capture_output=True, text=True)
+                if p_br.returncode == 0:
+                    for line in p_br.stdout.splitlines():
+                        b = line.strip().lstrip("*+ ").strip()
+                        if b and b not in tracked.values():
+                            key = b.upper().replace("/", "-")
+                            if not key.startswith("PR-"):
+                                key = f"PR-{key}"
+                            tracked[key] = b
 
-            for pid in tracked.keys():
-                results[pid] = get_live_pr_hunks(pid)
+            for pid, branch in tracked.items():
+                results[pid] = get_live_pr_hunks(branch)
             self._send_json({"status": "ok", "prs": results})
             return
 
@@ -494,6 +525,7 @@ def run(host=HOST, port=PORT):
         server.server_close()
 
 def main():
+    global HOST, PORT, ROOT_DIR, REPO_DIR, FEEDBACK_FILE
     parser = argparse.ArgumentParser(description="Reviewer Web Server & Comment API")
     parser.add_argument("--host", default=HOST, help="Host address to bind")
     parser.add_argument("--port", type=int, default=PORT, help="Port to listen on")
@@ -502,7 +534,6 @@ def main():
     parser.add_argument("--data-file", default=FEEDBACK_FILE, help="Path to feedback JSON file")
     args = parser.parse_args()
 
-    global HOST, PORT, ROOT_DIR, REPO_DIR, FEEDBACK_FILE
     HOST = args.host
     PORT = args.port
     ROOT_DIR = os.path.abspath(args.root_dir)

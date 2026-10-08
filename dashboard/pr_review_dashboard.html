@@ -100,8 +100,34 @@
           if (data.status === 'ok' && data.prs) {
             let updatedCurrent = false;
             for (const [prId, prData] of Object.entries(data.prs)) {
-              const pr = PR_PAGES.find(p => p.id === prId);
-              if (pr && prData.hunks && prData.hunks.length > 0) {
+              let pr = PR_PAGES.find(p => p.id === prId);
+              if (!pr && prData.hunks && prData.hunks.length > 0) {
+                const branchName = prData.branch || prId;
+                const shortLabel = branchName.replace(/^pr-/, '').replace(/^feat\//, '').replace(/^fix\//, '');
+                pr = {
+                  id: prId,
+                  shortName: shortLabel.length > 18 ? shortLabel.substring(0, 16) + '…' : shortLabel,
+                  branch: branchName,
+                  commitSha: prData.commitSha || "",
+                  title: `Branch: ${branchName}`,
+                  diff: prData.diffStat || "Active topic branch",
+                  diffBadge: prData.diffStat || "+0 / -0",
+                  category: "Topic Branch",
+                  wave: 1,
+                  testCmd: "pytest",
+                  testTiming: "Verified",
+                  unblocks: "Topic branch review",
+                  diffCmd: `git diff master..${branchName}`,
+                  ghBranchUrl: `https://github.com/ahnitz/pycbc/tree/${branchName}`,
+                  ghCommitUrl: `https://github.com/ahnitz/pycbc/commit/${prData.commitSha || ''}`,
+                  problemDescription: `Review and discussion for branch ${branchName}.`,
+                  solutionDescription: `Extracted live git diff against upstream merge base.`,
+                  simplificationDeepDive: `Automated dynamic hunk discovery.`,
+                  hunks: prData.hunks
+                };
+                PR_PAGES.push(pr);
+                updatedCurrent = true;
+              } else if (pr && prData.hunks && prData.hunks.length > 0) {
                 const newSig = JSON.stringify(prData.hunks.map(h => h.file + h.lines));
                 const oldSig = JSON.stringify((pr.hunks || []).map(h => h.file + h.lines));
                 if (newSig !== oldSig || (prData.commitSha && prData.commitSha !== pr.commitSha)) {
