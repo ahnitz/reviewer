@@ -235,8 +235,33 @@ In HDF5 storage structures, scoping datasets under a detector prefix (`/H1` or `
 ### Implementation Standard
 1. **Accurate Domain Terminology**: Name HDF5 group parameters `group`, not `prefix`.
 2. **Universal Defaults**: Use `mode='a'` as the default in file writing helpers (`H5FileSyntSugar`), which universally handles both initial creation and multi-detector appending without overwriting sibling detector groups.
-3. **Deprecate Non-Breakingly**: Always retain legacy parameter names (`prefix=None`) as backwards-compatibility aliases.
+---
+
+## Rule 12: Avoid Namespace Redundancy / Stuttering in Function and Class Names
+
+### Core Rationale
+When a function or class lives inside a descriptive module or package (such as `pycbc.psd.estimate`), repeating the module or package name in the function identifier (e.g. `estimate_psd_trimmed_welch`) introduces redundant "stuttering" (`pycbc.psd.estimate.estimate_psd_trimmed_welch`). The module and package already establish clear context. Functions should be concisely named (e.g. `welch`, `trimmed_welch`, `multitaper`), matching existing conventions within the file.
+
+### Implementation Standard
+1. **Omit Redundant Prefixes**: Strip module/package prefixes from function names inside specialized subpackages (use `trimmed_welch`, not `estimate_psd_trimmed_welch`; use `multitaper`, not `estimate_psd_multitaper`).
+2. **Harmonize with Existing Conventions**: Match the established naming style in the target module (e.g. `pycbc.psd.estimate.welch`).
+3. **Preserve Backwards Compatibility**: Always retain legacy verbose names as aliases (`estimate_psd_trimmed_welch = trimmed_welch`) so external scripts and downstream pipelines do not break.
+4. **Clean Subpackage Exports**: Export both concise names and compatibility aliases in `pycbc/<subpackage>/__init__.py`.
+
+---
+
+## Rule 13: Upstream PR Auditing & Rebase Synchronization
+
+### Core Rationale
+Before proposing a new topic PR or branching a feature, audit active PRs and commits on `gwastro/pycbc` (`upstream/master` and `upstream/pr/*`). If an upstream PR already addresses the same core issue (e.g., PR #5457 for regularized Cholesky inpainting and gating numerical stability), branching a new duplicate PR (e.g. PR-1J) fragments reviewer feedback, duplicates review effort, and risks conflicting solutions. Furthermore, feature branches must always be rebased against current `upstream/master` to avoid file collisions (e.g. PR-1G collision on `matched_filter_ratio.py`).
+
+### Implementation Standard
+1. **Audit Upstream PRs First**: Run `git fetch upstream` and check existing branches and PRs (`upstream/pr/*`) before decomposing new topic branches.
+2. **Adopt Canonical Upstream PRs**: If an upstream PR covers the required feature, recommend adopting/merging the upstream PR directly rather than creating a competing duplicate. Align local topic branch pointers to the upstream PR commit.
+3. **Continuous Rebase onto Master**: Always rebase topic branches onto latest `upstream/master` prior to maintainer review, eliminating accidental recreation of files merged upstream.
+4. **Modular Isolation for Subsystem Extensions**: When extending or refactoring subsystems, place new algorithmic logic in dedicated modules (e.g., `pycbc/filter/dynamic_snr_renorm.py`) and use backwards-compatible re-exports, leaving existing master engines intact.
 
 ---
 
 *Document maintained autonomously by the Antigravity Dual-Review Sentinel system.*
+
