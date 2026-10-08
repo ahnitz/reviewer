@@ -235,6 +235,8 @@ In HDF5 storage structures, scoping datasets under a detector prefix (`/H1` or `
 ### Implementation Standard
 1. **Accurate Domain Terminology**: Name HDF5 group parameters `group`, not `prefix`.
 2. **Universal Defaults**: Use `mode='a'` as the default in file writing helpers (`H5FileSyntSugar`), which universally handles both initial creation and multi-detector appending without overwriting sibling detector groups.
+3. **Deprecate Non-Breakingly**: Always retain legacy parameter names (`prefix=None`) as backwards-compatibility aliases.
+
 ---
 
 ## Rule 12: Avoid Namespace Redundancy / Stuttering in Function and Class Names
