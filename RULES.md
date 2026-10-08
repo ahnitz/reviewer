@@ -19,6 +19,9 @@ This document establishes the governing engineering standards, numerical safety 
 6. [Rule 6: Discrete Grid Resolution & Interval Singularity Guards](#rule-6-discrete-grid-resolution--interval-singularity-guards)
 7. [Rule 7: Proactive Unit Test Coverage for Core Algorithmic Components](#rule-7-proactive-unit-test-coverage-for-core-algorithmic-components)
 8. [Rule 8: Early Slicing & Transient Memory Spikes in Precomputed Kernels](#rule-8-early-slicing--transient-memory-spikes-in-precomputed-kernels)
+9. [Rule 9: Upstream Root-Cause Resolution vs. Inner-Loop Bandaids](#rule-9-upstream-root-cause-resolution-vs-inner-loop-bandaids)
+10. [Rule 10: Canonical Reference Code Isolation](#rule-10-canonical-reference-code-isolation)
+11. [Rule 11: Domain-Accurate Parameter Naming in Storage Hierarchies](#rule-11-domain-accurate-parameter-naming-in-storage-hierarchies)
 
 ---
 
@@ -198,6 +201,41 @@ In search executables (`pycbc_inspiral_fir`, `pycbc_single_template`), inner-loo
    - **Peak Memory**: Reduces memory from **344 MB to 33 MB (10.2x reduction)** per template.
    - **FLOPs & Cache**: Eliminates $3.3 \times 10^7$ redundant multiplications, saving 20–25% overall runtime.
    - **Backwards Compatibility**: Defaults to `None` so existing callers retain full `TimeSeries` outputs.
+
+---
+
+## Rule 9: Upstream Root-Cause Resolution vs. Inner-Loop Bandaids
+
+### Core Rationale
+Defensive guards placed inside high-throughput inner execution loops (such as skipping $k_\text{max} \le k_\text{min}$ inside FFT loops) often treat the symptom of degenerate data rather than the root cause. If an algorithm generates invalid parameters (such as duplicate $\chi^2$ bin edges), masking the defect downstream corrupts statistical assumptions (e.g. altering test degrees of freedom) and hides upstream bugs.
+
+### Implementation Standard
+1. **No Silent Inner-Loop Bandaids**: Do not place silent workarounds inside core execution kernels.
+2. **Validate at Data Generation**: Validate, deduplicate, or clamp parameters upstream where they are created (e.g. in `power_chisq_bins`), preserving clean execution semantics in downstream consumers.
+
+---
+
+## Rule 10: Canonical Reference Code Isolation
+
+### Core Rationale
+Flagship production executables (such as `bin/pycbc_inspiral`) represent the trusted, stable baseline for the collaboration and astrophysical observational runs. Modifying canonical reference scripts to add experimental memory management or branching logic introduces regression risk into standard analyses.
+
+### Implementation Standard
+1. **Keep Canonical Executables Static**: Treat `bin/pycbc_inspiral` as largely static reference code.
+2. **Dedicated Modular Executables**: Implement architectural innovations (such as hierarchical FIR filtering, ratio template searches, or custom GPU pipelines) in dedicated executables (e.g. `bin/pycbc_inspiral_fir`).
+3. **Library-Level Reusability**: Factor shared functionality into general-purpose library modules (`pycbc/events/eventmgr.py`) rather than mutating reference binaries.
+
+---
+
+## Rule 11: Domain-Accurate Parameter Naming in Storage Hierarchies
+
+### Core Rationale
+In HDF5 storage structures, scoping datasets under a detector prefix (`/H1` or `/L1`) is fundamentally an HDF5 group path, not a string prefix. In addition, forcing callers to choose low-level file modes when a safe, universal default exists adds unnecessary cognitive overhead.
+
+### Implementation Standard
+1. **Accurate Domain Terminology**: Name HDF5 group parameters `group`, not `prefix`.
+2. **Universal Defaults**: Use `mode='a'` as the default in file writing helpers (`H5FileSyntSugar`), which universally handles both initial creation and multi-detector appending without overwriting sibling detector groups.
+3. **Deprecate Non-Breakingly**: Always retain legacy parameter names (`prefix=None`) as backwards-compatibility aliases.
 
 ---
 
