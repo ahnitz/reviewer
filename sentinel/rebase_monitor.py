@@ -119,52 +119,81 @@ class UpstreamRebaseMonitor:
         except Exception as e:
             print(f"[WARN] Failed saving status file: {e}", flush=True)
 
+    def get_worktree_map(self):
+        res = self.run_cmd(["git", "worktree", "list", "--porcelain"])
+        wt_map = {}
+        current_wt = None
+        for line in res.stdout.splitlines():
+            if line.startswith("worktree "):
+                current_wt = line.split(" ", 1)[1].strip()
+            elif line.startswith("branch "):
+                ref = line.split(" ", 1)[1].strip()
+                branch = ref.replace("refs/heads/", "")
+                if current_wt:
+                    wt_map[branch] = current_wt
+        return wt_map
+
     def get_tracked_branches(self):
         # Return all predefined branches plus any active pr-* branches in local git
-        branches = list(DEFAULT_BRANCH_TEST_MAP.keys())
+        branches = []
+        for b in DEFAULT_BRANCH_TEST_MAP.keys():
+            if b not in branches:
+                branches.append(b)
         res = self.run_cmd(["git", "branch", "--list", "pr-*"])
         if res.returncode == 0:
             for line in res.stdout.splitlines():
-                b = line.strip().lstrip("* ").strip()
+                b = line.strip().lstrip("*+ ").strip()
                 if b and b not in branches:
                     branches.append(b)
         return branches
 
-    def run_tests_for_branch(self, branch):
+    def run_tests_for_branch(self, branch, work_dir=None):
         test_args = DEFAULT_BRANCH_TEST_MAP.get(branch)
         if not test_args:
             # Default fallback: look for test matching branch name
             return True, "No specific unit tests registered"
 
-        cmd = [self.pytest_bin] + test_args[1:]
+        target_dir = work_dir or self.repo_dir
+        # Use igwn-py311 pytest which has full LALSuite and PyCBC dependencies
+        igwn_pytest = "/home/ahnitz/miniconda3/envs/igwn-py311/bin/pytest"
+        venv_python = os.path.join(self.repo_dir, "..", "venv-apogee", "bin", "python")
+        if os.path.exists(igwn_pytest):
+            cmd = [igwn_pytest] + test_args[1:]
+        elif os.path.exists(venv_python):
+            cmd = [venv_python, "-m", "pytest"] + test_args[1:]
+        else:
+            cmd = [self.pytest_bin] + test_args[1:]
+
         env = os.environ.copy()
         env["PYTHONPATH"] = "."
-        
-        print(f"   Running tests: {' '.join(cmd)}...", flush=True)
+
+        print(f"   Running tests in {target_dir}: {' '.join(cmd)}...", flush=True)
         t0 = time.time()
-        res = subprocess.run(cmd, cwd=self.repo_dir, env=env, capture_output=True, text=True)
+        res = subprocess.run(cmd, cwd=target_dir, env=env, capture_output=True, text=True)
         elapsed = time.time() - t0
         passed = (res.returncode == 0)
         out_summary = res.stdout.strip().splitlines()[-1] if res.stdout.strip() else res.stderr.strip()
         msg = f"{out_summary} in {elapsed:.2f}s"
         return passed, msg
 
-    def rebase_branch(self, branch, upstream_sha):
-        print(f"\n⚡ Rebasing {branch} onto {self.upstream_remote}/{self.upstream_branch} ({upstream_sha[:9]})...", flush=True)
-        
-        # Check commits behind upstream
-        res_behind = self.run_cmd(["git", "rev-list", "--count", f"{branch}..{upstream_sha}"])
-        behind_count = int(res_behind.stdout.strip()) if res_behind.returncode == 0 else 0
+    def rebase_branch(self, branch, upstream_sha, work_dir=None):
+        target_dir = work_dir or self.repo_dir
+        print(f"\n⚡ Rebasing {branch} in {target_dir} onto {self.upstream_remote}/{self.upstream_branch} ({upstream_sha[:9]})...", flush=True)
 
-        res_ahead = self.run_cmd(["git", "rev-list", "--count", f"{upstream_sha}..{branch}"])
-        ahead_count = int(res_ahead.stdout.strip()) if res_ahead.returncode == 0 else 0
+        # Check commits behind upstream
+        res_behind = subprocess.run(["git", "rev-list", "--count", f"{branch}..{upstream_sha}"], cwd=target_dir, capture_output=True, text=True)
+        behind_count = int(res_behind.stdout.strip()) if res_behind.returncode == 0 and res_behind.stdout.strip().isdigit() else 0
+
+        res_ahead = subprocess.run(["git", "rev-list", "--count", f"{upstream_sha}..{branch}"], cwd=target_dir, capture_output=True, text=True)
+        ahead_count = int(res_ahead.stdout.strip()) if res_ahead.returncode == 0 and res_ahead.stdout.strip().isdigit() else 0
 
         if behind_count == 0:
             print(f"   ✓ {branch} is already up-to-date with upstream ({ahead_count} commits ahead).", flush=True)
+            p_sha = subprocess.run(["git", "rev-parse", branch], cwd=target_dir, capture_output=True, text=True)
             return {
                 "status": "UP_TO_DATE",
                 "branch": branch,
-                "commit_sha": self.run_cmd(["git", "rev-parse", branch]).stdout.strip(),
+                "commit_sha": p_sha.stdout.strip() if p_sha.returncode == 0 else "",
                 "ahead": ahead_count,
                 "behind": 0,
                 "rebased_at": datetime.now().isoformat()
@@ -172,11 +201,25 @@ class UpstreamRebaseMonitor:
 
         # Perform rebase
         rebase_target = f"{self.upstream_remote}/{self.upstream_branch}"
-        res_rebase = self.run_cmd(["git", "rebase", rebase_target, branch])
+        if work_dir and os.path.exists(work_dir):
+            # When inside worktree where branch is checked out, rebase current HEAD
+            res_rebase = subprocess.run(["git", "rebase", rebase_target], cwd=work_dir, capture_output=True, text=True)
+        else:
+            # Check if repo_dir has unstaged changes
+            p_dirty = subprocess.run(["git", "status", "--porcelain"], cwd=self.repo_dir, capture_output=True, text=True)
+            if p_dirty.returncode == 0 and p_dirty.stdout.strip():
+                print(f"   ⚠️ Cannot rebase detached branch {branch} in main repo: working tree has local changes.", flush=True)
+                return {
+                    "status": "SKIPPED_DIRTY_TREE",
+                    "branch": branch,
+                    "error": "Main working directory has unstaged modifications; skipping rebase",
+                    "timestamp": datetime.now().isoformat()
+                }
+            res_rebase = subprocess.run(["git", "rebase", rebase_target, branch], cwd=self.repo_dir, capture_output=True, text=True)
 
         if res_rebase.returncode != 0:
             print(f"   ❌ Conflict during rebase of {branch}! Aborting...", flush=True)
-            self.run_cmd(["git", "rebase", "--abort"])
+            subprocess.run(["git", "rebase", "--abort"], cwd=target_dir, capture_output=True, text=True)
             return {
                 "status": "CONFLICT",
                 "branch": branch,
@@ -184,11 +227,11 @@ class UpstreamRebaseMonitor:
                 "timestamp": datetime.now().isoformat()
             }
 
-        new_sha = self.run_cmd(["git", "rev-parse", branch]).stdout.strip()
+        new_sha = subprocess.run(["git", "rev-parse", branch], cwd=target_dir, capture_output=True, text=True).stdout.strip()
         print(f"   ✓ Rebase successful! New HEAD: {new_sha[:9]}", flush=True)
 
         # Run verification tests
-        test_passed, test_msg = self.run_tests_for_branch(branch)
+        test_passed, test_msg = self.run_tests_for_branch(branch, work_dir=target_dir)
         if not test_passed:
             print(f"   ❌ Tests failed for {branch}: {test_msg}", flush=True)
             return {
@@ -205,7 +248,7 @@ class UpstreamRebaseMonitor:
         push_ok = False
         if self.auto_push:
             print(f"   Pushing {branch} to {self.origin_remote}...", flush=True)
-            res_push = self.run_cmd(["git", "push", "-f", self.origin_remote, branch])
+            res_push = subprocess.run(["git", "push", "-f", self.origin_remote, branch], cwd=target_dir, capture_output=True, text=True)
             push_ok = (res_push.returncode == 0)
             if push_ok:
                 print(f"   ✓ Pushed to {self.origin_remote}/{branch}", flush=True)
@@ -216,7 +259,7 @@ class UpstreamRebaseMonitor:
             "status": "REBASED_AND_PUSHED" if push_ok else "REBASED_LOCAL",
             "branch": branch,
             "commit_sha": new_sha,
-            "ahead": int(self.run_cmd(["git", "rev-list", "--count", f"{upstream_sha}..{branch}"]).stdout.strip() or 0),
+            "ahead": int(subprocess.run(["git", "rev-list", "--count", f"{upstream_sha}..{branch}"], cwd=target_dir, capture_output=True, text=True).stdout.strip() or 0),
             "behind": 0,
             "tests": test_msg,
             "pushed": push_ok,
@@ -249,20 +292,24 @@ class UpstreamRebaseMonitor:
             print(f"Upstream {self.upstream_remote}/{self.upstream_branch} at {upstream_sha[:9]} (no change). Checking branches...", flush=True)
 
         branches = self.get_tracked_branches()
+        wt_map = self.get_worktree_map()
         rebased_any = False
 
         try:
             for branch in branches:
-                res_behind = self.run_cmd(["git", "rev-list", "--count", f"{branch}..{upstream_sha}"])
-                behind = int(res_behind.stdout.strip()) if res_behind.returncode == 0 else 0
+                work_dir = wt_map.get(branch)
+                target_dir = work_dir or self.repo_dir
+                res_behind = subprocess.run(["git", "rev-list", "--count", f"{branch}..{upstream_sha}"], cwd=target_dir, capture_output=True, text=True)
+                behind = int(res_behind.stdout.strip()) if res_behind.returncode == 0 and res_behind.stdout.strip().isdigit() else 0
                 
                 if behind > 0 or force:
-                    branch_status = self.rebase_branch(branch, upstream_sha)
+                    branch_status = self.rebase_branch(branch, upstream_sha, work_dir=work_dir)
                     status["branches"][branch] = branch_status
                     rebased_any = True
                 else:
-                    sha = self.run_cmd(["git", "rev-parse", branch]).stdout.strip()
-                    ahead = int(self.run_cmd(["git", "rev-list", "--count", f"{upstream_sha}..{branch}"]).stdout.strip() or 0)
+                    sha = subprocess.run(["git", "rev-parse", branch], cwd=target_dir, capture_output=True, text=True).stdout.strip()
+                    ahead_str = subprocess.run(["git", "rev-list", "--count", f"{upstream_sha}..{branch}"], cwd=target_dir, capture_output=True, text=True).stdout.strip()
+                    ahead = int(ahead_str) if ahead_str.isdigit() else 0
                     status["branches"][branch] = {
                         "status": "UP_TO_DATE",
                         "commit_sha": sha,

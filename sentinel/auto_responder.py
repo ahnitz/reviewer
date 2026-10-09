@@ -83,13 +83,13 @@ class AutoResponder:
         print(f"   Context: {file_path} ({lines})", flush=True)
         print(f"   Request: \"{text}\"", flush=True)
 
-        # 1. Immediately acknowledge and flip status to IN_PROGRESS
+        # 1. Immediately acknowledge and mark as ACKNOWLEDGED (queued for agent)
         ack_message = (
-            f"⚡ Automatically triaging review request on {pr_id} ({file_path}). "
-            f"Analyzing code context, verifying test invariants, and preparing resolution..."
+            f"⚡ Automatically queued review request on {pr_id} ({file_path}). "
+            f"Triage agent notified to verify test invariants and prepare resolution..."
         )
-        self.set_status(cid, "IN_PROGRESS", reply_text=ack_message)
-        print(f"[AutoResponder] ✓ Status transitioned to IN_PROGRESS", flush=True)
+        self.set_status(cid, "ACKNOWLEDGED", reply_text=ack_message)
+        print(f"[AutoResponder] ✓ Status transitioned to ACKNOWLEDGED", flush=True)
 
         # 2. If a custom hook script exists, execute it
         if self.hook_script and os.path.exists(self.hook_script):
