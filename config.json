@@ -35,9 +35,15 @@
       "PR-1J": "pr-feat-strain-regularized-inpainting",
       "PR-1K": "pr-feat-frame-gwosc-hdf",
       "PR-1L": "pr-fix-filter-qtransform",
-      "PR-1M": "pr-fix-filter-resample-copy"
+      "PR-1M": "pr-fix-filter-resample-copy",
+      "PR-FIX-MISC-ROBUSTNESS": "fix/misc-robustness"
     },
-    "user_requested_branches": []
+    "user_requested_branches": [
+      {
+        "prId": "PR-FIX-MISC-ROBUSTNESS",
+        "branch": "fix/misc-robustness"
+      }
+    ]
   },
   "sentinel": {
     "poll_interval_seconds": 3,
