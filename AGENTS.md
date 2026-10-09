@@ -58,7 +58,10 @@ flowchart TD
 6. **Mandatory Architectural Rationale (MANDATORY)**: Whenever an AI agent refactors code, decomposes PRs, addresses maintainer feedback, or modifies implementations, the agent **must** provide the actual architectural explanation for every hunk (Problem, Logic & Rationale, Alternatives Considered & Rejected). Generic placeholders (`"Implementation update around..."`, `"Refactored code"`) are strictly forbidden. All hunks must be registered in `server/rationale_catalog.py`.
 7. **Strict Triple-Dot Upstream Diffs**: When branches rebase, diffs must strictly reflect the differences against the current `upstream/master` (`git diff upstream/master...<branch>`), never against stale historical merge bases (`f6eaed241`).
 8. **Stable Comment-to-Hunk Anchoring**: Inline review comments must remain pinned to their exact file and line context even after branch rebases, never drifting across files.
-9. **Codified Engineering Standards**: 17 governing rules (`RULES.md`) inferred from maintainer review feedback.
+9. **Upstream PR Merge Tracking & Downstream Cascade (Protocol B)**: Continuously monitors `upstream/master` to detect when PRs merge, promotes dependent `STAGED_DEPENDENT` branches to `READY_TO_OPEN`, automatically rebases sibling branches, and recalibrates the developer branch merge base.
+10. **Physical Signal Duration Containment & Fast Unified Test Setup**: Guarantees $\Delta f \le 1 / T_{\text{signal}}$ in frequency-domain tests to avoid time-domain aliasing, and pre-generates shared waveforms in `@classmethod setUpClass` to eliminate redundant generation overhead.
+11. **Terminal Review Statuses**: Recognizes both `ADDRESSED` and `RESOLVED` as terminal non-pending statuses across all APIs, daemons, and dashboard UI counters.
+12. **Codified Engineering Standards**: 19 governing rules (`RULES.md`) inferred from maintainer review feedback.
 
 ---
 

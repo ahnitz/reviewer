@@ -272,17 +272,38 @@ As the human developer continues coding on `dev_branch`:
 4. It updates `data/wave_roadmap.json`.
 5. The review dashboard front page displays the updated roadmap, total candidate count, and live commit absorption feed in real time.
 
-### Phase 7: Operating the Upstream Rebase & Merge Cascade
-1. When upstream `gwastro/pycbc:master` advances:
-   - `sentinel/rebase_monitor.py` automatically detects upstream HEAD movement.
-   - It iterates through active topic branches.
-   - Executes `git rebase upstream/master <branch>`.
-   - Runs `pytest` on the rebased branch.
-   - If green, force-pushes with lease to `origin`.
-   - If a conflict occurs, aborts safely (`git rebase --abort`), marks `CONFLICT`, and alerts the AI agent.
-2. When a Wave 1 PR merges upstream:
-   - The coordinator agent pulls `upstream/master`.
-   - Dependent Wave 2 branches (PR-2A to PR-2F) are immediately created off the new master base and tested.
+### Phase 7: Operating the Upstream Merge Tracking & Downstream Reaction Cascade (Protocol B)
+
+The review system actively monitors `gwastro/pycbc:master` to detect when PRs merge and immediately trigger downstream updates:
+
+1. **Continuous Merge Detection Loop**:
+   - `sentinel/rebase_monitor.py` polls `upstream/master` every 60 seconds (`git fetch upstream master`).
+   - When `upstream_head` advances, the monitor inspects the incoming commits and queries GitHub PR status (`/repos/gwastro/pycbc/pulls?state=closed`).
+   - If an open PR has merged (e.g. PR #5473):
+     - The PR lifecycle state transitions: `OPEN_UPSTREAM` $\rightarrow$ `MERGED`.
+     - The merge event is recorded in `data/wave_roadmap.json` and `data/rebase_status.json`.
+     - The dashboard immediately moves the PR into the `MERGED` swimlane.
+
+2. **Sibling Branch Rebase & Test Invariant Protection**:
+   - All other active branches on `origin` (open PRs and staged candidates) are now behind `upstream/master`.
+   - `sentinel/rebase_monitor.py` iterates through all tracked branches:
+     - Runs `git rebase upstream/master <branch>`.
+     - Executes the registered unit tests (`DEFAULT_BRANCH_TEST_MAP`) with `PYTHONPATH=.`.
+     - Only if tests pass with 100% success, it force-pushes with lease to `origin`.
+     - If a rebase conflict occurs, it aborts cleanly (`git rebase --abort`), sets `CONFLICT` in `data/rebase_status.json`, and alerts the AI agent.
+
+3. **Protocol B: Downstream Dependency Unlocking & Promotion**:
+   - `sentinel/dev_reconciler.py` evaluates the PR dependency DAG in `data/wave_roadmap.json`.
+   - Any downstream PR previously in `STAGED_DEPENDENT` status (e.g. Wave 2 or Wave 3 PRs like `PR-3A` or `PR-3C` that declare prerequisites in `dependencies: [...]`):
+     - Checks if **all** prerequisite PRs are now `MERGED`.
+     - If satisfied, automatically **promotes** the downstream PR: `STAGED_DEPENDENT` $\rightarrow$ `READY_TO_OPEN`.
+     - The AI agent or reconciler checks out the new `upstream/master` base, cherry-picks or branches the unblocked subsystem, runs unit tests, registers the rationale in `server/rationale_catalog.py`, and pushes to `origin`.
+     - The dashboard highlights the newly unlocked PR as `READY_TO_OPEN` (or prompts the maintainer to open upstream).
+
+4. **Dev Branch Merge Base Advancement & Wave Recalibration**:
+   - `dev_reconciler.py` updates the merge base (`upstream_base = new_upstream_head`).
+   - Recalculates the remaining diff between `dev_branch` (`firinspiral3-multidet-asym`) and the new `upstream/master`.
+   - As features land upstream, the total remaining diff shrinks, and downstream wave candidate file lists and line counts are automatically recalibrated in real time.
 
 ---
 

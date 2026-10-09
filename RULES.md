@@ -351,6 +351,59 @@ When branches rebase onto `upstream/master`, the review dashboard must display O
 
 ---
 
+## Rule 18: Upstream PR Merge Tracking, Lifecycle State Machine & Downstream Dependency Cascade (Protocol B)
+
+### Core Rationale
+When PRs are opened upstream on `gwastro/pycbc:master` (e.g. PR #5473, #5474, #5475, #5476), the review system must actively track them across their full lifecycle:
+`STAGED_DEPENDENT` $\rightarrow$ `READY_TO_OPEN` $\rightarrow$ `OPEN_UPSTREAM` $\rightarrow$ `MERGED`.
+When an upstream PR merges into `upstream/master`, it has immediate ripple effects across the entire dependency graph:
+1. **Sibling Topic Rebasing**: All active open and ready branches on `origin` must be rebased onto the new `upstream/master` HEAD with 0 commits behind, verifying test invariants.
+2. **Downstream Unblocking (Protocol B)**: Downstream dependent PRs (e.g. Wave 2/3 branches depending on Wave 1 PRs) are unblocked once their prerequisite merges.
+3. **Merge Base Advancement**: The developer branch merge base (`upstream_base`) advances to the new master HEAD, shrinking overall diff volume and recalibrating future wave candidates.
+
+### Implementation Standard
+1. **Continuous Upstream Polling**: `sentinel/rebase_monitor.py` polls `upstream/master` every 60s (`git fetch upstream master`).
+2. **Merge Detection**: When `upstream_head` advances, the monitor cross-references merge commit SHAs and GitHub PR API states (`/repos/gwastro/pycbc/pulls?state=closed`) to identify which PR merged.
+3. **Lifecycle Transition to `MERGED`**:
+   - The merged PR is marked `MERGED` in `data/wave_roadmap.json`.
+   - The PR card moves to the `MERGED` section on the dashboard.
+4. **Sibling Branch Rebase & Test Execution**:
+   - Every active branch on `origin` is rebased onto the new `upstream/master`.
+   - Automated tests (`DEFAULT_BRANCH_TEST_MAP`) execute immediately with `PYTHONPATH=.`.
+   - On green tests, force-push to `origin`.
+   - On conflict, abort gracefully (`git rebase --abort`) and record `CONFLICT` in `data/rebase_status.json`.
+5. **Downstream Dependency Promotion (Protocol B)**:
+   - `sentinel/dev_reconciler.py` evaluates the dependency DAG in `data/wave_roadmap.json`.
+   - Any PR previously marked `STAGED_DEPENDENT` whose prerequisites are all `MERGED` is promoted to `READY_TO_OPEN`.
+   - The branch is created or rebased on the new master base, verified with tests, registered in `server/rationale_catalog.py`, and pushed to `origin`.
+6. **Dashboard Lifecycle Alignment**:
+   - The dashboard dynamically displays PR cards in prioritized swimlanes:
+     `NEEDS_ATTENTION` (unaddressed review comments or rebase conflicts) $\rightarrow$
+     `OPEN_UPSTREAM` (open on `gwastro/pycbc`) $\rightarrow$
+     `READY_TO_OPEN` (rebased, 100% tests pass, 0 pending comments) $\rightarrow$
+     `STAGED_DEPENDENT` (waiting for upstream prerequisite) $\rightarrow$
+     `MERGED`.
+
+---
+
+## Rule 19: Physical Signal Duration Containment & Fast Unified Test Setup (`setUpClass`)
+
+### Core Rationale
+In frequency-domain gravitational wave tests (such as waveform compression, matched filtering, PSD estimation, and inpainting):
+1. **Time-Domain Aliasing Prevention**: A frequency series with sample spacing $\Delta f$ corresponds to a periodic time-domain duration $T = 1 / \Delta f$. If the physical signal duration from $f_{\text{lower}}$ exceeds $T$ ($T_{\text{signal}} > 1 / \Delta f$), the waveform wraps around in time, inducing severe aliasing distortion and corrupting compression or filtering tests.
+2. **Redundant Waveform Generation Elimination**: Frequency-domain waveform generation (`get_fd_waveform`) can take hundreds of milliseconds per call. Generating waveforms inside individual test methods balloons test runtimes.
+
+### Implementation Standard
+1. **Physical Containment Invariant**: Always ensure:
+   $$\Delta f \le \frac{1}{T_{\text{signal}}(m_1, m_2, f_{\text{lower}})}$$
+   - For BNS ($1.4 + 1.4\,M_\odot$, $f_{\text{low}} = 30\,\text{Hz}$): duration is $\sim 58.9\,\text{s}$, requiring $\Delta f \le 1/64 = 0.015625\,\text{Hz}$ ($T = 64\,\text{s}$).
+   - For BBH ($30 + 30\,M_\odot$, $f_{\text{low}} = 20\,\text{Hz}$): duration is $\sim 1.1\,\text{s}$, requiring $\Delta f \le 1/4 = 0.25\,\text{Hz}$ ($T = 4\,\text{s}$).
+2. **Unified `setUpClass` Initialization**: Pre-generate test waveforms once per test class in `@classmethod def setUpClass(cls)`, storing `cls.hp_bns` and `cls.hp_bbh`. Test methods must reuse these shared fixtures, keeping execution times under 3 seconds.
+3. **Sanitized Sample Points**: Any utility accepting external sample frequencies (such as `compress_waveform`) must defensively sort and deduplicate inputs (`numpy.sort(numpy.unique(numpy.asarray(points, dtype=float)))`) to prevent out-of-order indexing failures.
+4. **Explicit Exception Chaining**: Always use `raise ... from err` (to preserve traceback) or `raise ... from None` (to cleanly reject invalid values) per PEP 3134.
+
+---
+
 *Document maintained autonomously by the Antigravity Dual-Review Sentinel system.*
 
 
