@@ -1294,5 +1294,135 @@
     "resolution": "Deduplicated segment injection timing and extraction logic in template_segment_checker by extracting seg_injections once.",
     "resolvedAt": "2026-10-09T19:41:11Z",
     "resolvedCommit": "265e93bcd"
+  },
+  {
+    "id": "c_1791574990_c04e4b",
+    "prId": "PR-1F",
+    "hunkIndex": 0,
+    "file": "pycbc/events/eventmgr.py",
+    "lines": "lines 182-229",
+    "commentText": "Why not simplify then and simply not have a mode option?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T19:43:10Z",
+    "timestamp": 1791574990.112499,
+    "replies": [
+      {
+        "id": "r_1791574991_5720",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1F (pycbc/events/eventmgr.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T19:43:11Z"
+      },
+      {
+        "id": "r_1791574990_resolved",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 72dbfe33c: Removed the mode option from H5FileSyntSugar completely; it now opens with 'a' by default, naturally supporting single and multi-detector use.",
+        "createdAt": "2026-10-09T19:52:06Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791575033_12317c",
+    "prId": "PR-1F",
+    "hunkIndex": 1,
+    "file": "pycbc/events/eventmgr.py",
+    "lines": "lines 298-306",
+    "commentText": "Shoulnd' the EventManager just have an ifo keyword it can accept?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T19:43:53Z",
+    "timestamp": 1791575033.2253637,
+    "replies": [
+      {
+        "id": "r_1791575033_51d7",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1F (pycbc/events/eventmgr.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T19:43:53Z"
+      },
+      {
+        "id": "r_1791575033_resolved",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 72dbfe33c: Added ifo=None parameter to EventManager.__init__ and updated from_multi_ifo_interface to pass ifo directly.",
+        "createdAt": "2026-10-09T19:52:06Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791575076_066bb0",
+    "prId": "PR-1F",
+    "hunkIndex": 2,
+    "file": "pycbc/events/eventmgr.py",
+    "lines": "lines 519-531",
+    "commentText": "If we pass the ifo, then a lot this part shouldn't be here.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T19:44:36Z",
+    "timestamp": 1791575076.6276124,
+    "replies": [
+      {
+        "id": "r_1791575077_41b1",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1F (pycbc/events/eventmgr.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T19:44:37Z"
+      },
+      {
+        "id": "r_1791575076_resolved",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 72dbfe33c: Simplified write_to_hdf to use self.ifo (falling back to channel_name[0:2] for single-detector runs), eliminating the dictionary type-inspection block.",
+        "createdAt": "2026-10-09T19:52:06Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791575096_c87ec0",
+    "prId": "PR-1F",
+    "hunkIndex": 3,
+    "file": "pycbc/events/eventmgr.py",
+    "lines": "lines 647-656",
+    "commentText": "non threshold time is not a concept yet",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T19:44:56Z",
+    "timestamp": 1791575096.2594545,
+    "replies": [
+      {
+        "id": "r_1791575097_8471",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1F (pycbc/events/eventmgr.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T19:44:57Z"
+      },
+      {
+        "id": "r_1791575096_resolved",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 72dbfe33c: Removed search/non_threshold_time block completely.",
+        "createdAt": "2026-10-09T19:52:06Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791575140_a55606",
+    "prId": "PR-1F",
+    "hunkIndex": 6,
+    "file": "test/test_eventmgr.py",
+    "lines": "lines 1-39",
+    "commentText": "The test if htere is one, should be to use EventMangager roughly as it would be, no? This seemes to bypass by directly writing to an interval opbject.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T19:45:40Z",
+    "timestamp": 1791575140.901938,
+    "replies": [
+      {
+        "id": "r_1791575141_1712",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1F (test/test_eventmgr.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T19:45:41Z"
+      },
+      {
+        "id": "r_1791575140_resolved",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 72dbfe33c: Rewrote test/test_eventmgr.py to test EventManager end-to-end (adding templates and events, finalizing, writing HDF5 output, and asserting multi-detector datasets coexist under H1/ and L1/).",
+        "createdAt": "2026-10-09T19:52:06Z"
+      }
+    ]
   }
 ]
