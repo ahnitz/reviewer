@@ -164,10 +164,22 @@ CURATED_HUNKS = {
     # -------------------------------------------------------------
     ("PR-1D", "pycbc/waveform/compress.py"): [
         {
-            "symbol": "compress_waveform",
-            "shortSummary": "Relax knot deduplication constraint in greedy spline compression",
-            "rationale": "In high-mass and high-mass-ratio binaries, merger-ringdown exhibits rapid phase acceleration where the second derivative changes sign over 1-2 samples. Relaxing the knot deduplication constraint from <= 2 to <= 0 allows greedy knot pairs across steep boundaries, dropping interpolation mismatch below 1e-4 without increasing overall knot count.",
-            "alternatives": "Increasing spline polynomial order from cubic to quintic was rejected because it slows down decompression in the inner search loop."
+            "symbol": "_vecdiff",
+            "shortSummary": "Guard zero-length frequency slices in _vecdiff (kmax <= kmin + 1)",
+            "rationale": "When candidate segments have 1 or fewer discrete frequency samples (kmax <= kmin + 1), overlap_cplx cannot compute a meaningful inner product or subdivide further. Returning 0.0 avoids division by zero and informs the greedy bisection loop that the segment is at fundamental frequency resolution.",
+            "alternatives": "Raising an exception halts compression prematurely; returning 0.0 allows other wide segments to proceed."
+        },
+        {
+            "symbol": "added_set",
+            "shortSummary": "Fast O(N) duplicate knot rejection via set membership",
+            "rationale": "In greedy spline subdivision, candidate bisection midpoints that have already been added in earlier iterations must be pruned. Replacing the quadratic 2D broadcasting matrix subtraction and ambiguous abs(...) <= 0 comparison with a clean Python set membership check (idx not in added_set) makes the deduplication mathematically unambiguous and O(N) fast.",
+            "alternatives": "Broadcasting abs(new_addidxs[:, None] - added_points) <= 0 was mathematically awkward and slower for large knot sets."
+        },
+        {
+            "symbol": "numpy.asarray",
+            "shortSummary": "Standardize array input coercion via numpy.asarray in fd_decompress",
+            "rationale": "Coerces sample_frequencies, amplitude, and phase to numpy.ndarray instances using standard numpy.asarray(), seamlessly accepting Python lists, NumPy arrays, and PyCBC series without an ad-hoc hasattr(..., 'numpy') ternary.",
+            "alternatives": "Inline duck-typing (hasattr) added unnecessary complexity and code smell."
         }
     ],
     ("PR-1D", "test/test_waveform_compress.py"): [
