@@ -25,13 +25,64 @@
       background: #cbd5e1;
       border-radius: 3px;
     }
+
+    /* GitHub Diff Styling */
+    .diff-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 20px;
+    }
+    .diff-line-add {
+      background-color: #e6ffec;
+      color: #1f2328;
+    }
+    .diff-gutter-add {
+      background-color: #ccffd8;
+      color: #1a7f37;
+      border-right: 1px solid #dafbe1;
+    }
+    .diff-line-del {
+      background-color: #ffebe9;
+      color: #1f2328;
+    }
+    .diff-gutter-del {
+      background-color: #ffd7d5;
+      color: #cf222e;
+      border-right: 1px solid #ffebe9;
+    }
+    .diff-line-ctx {
+      background-color: #ffffff;
+      color: #1f2328;
+    }
+    .diff-gutter-ctx {
+      background-color: #f6f8fa;
+      color: #6e7781;
+      border-right: 1px solid #e1e4e8;
+    }
+    .diff-line-hunk {
+      background-color: #f1f8ff;
+      color: #0969da;
+      border-top: 1px solid #d0d7de;
+      border-bottom: 1px solid #d0d7de;
+    }
+    .diff-row:hover .diff-line-add {
+      background-color: #dafbe1;
+    }
+    .diff-row:hover .diff-line-del {
+      background-color: #ffdce0;
+    }
+    .diff-row:hover .diff-line-ctx {
+      background-color: #f6f8fa;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
 
   <!-- Top Global Header -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>
         <div class="flex items-center gap-2">
           <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200">
@@ -58,7 +109,7 @@
         </a>
         <button onclick="switchTab('notes')" 
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
           Review Threads (<span id="total-comments-badge">0</span>)
         </button>
       </div>
@@ -66,14 +117,14 @@
 
     <!-- Navigation Tabs Bar -->
     <div class="border-t border-slate-200 bg-white overflow-x-auto custom-scroll">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 py-1.5" id="nav-tabs">
+      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 py-1.5" id="nav-tabs">
         <!-- Dynamically rendered tabs -->
       </div>
     </div>
   </header>
 
   <!-- Main Body Content -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full" id="content-container">
+  <main class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full" id="content-container">
     <!-- Active Tab Page Content Injected Here -->
   </main>
 
@@ -700,6 +751,142 @@
       return fileHunks[0];
     }
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    const threadCollapsedState = {};
+
+    function toggleThread(prId, hunkIdx, forceState) {
+      const key = `${prId}-${hunkIdx}`;
+      if (typeof forceState === 'boolean') {
+        threadCollapsedState[key] = forceState;
+      } else {
+        threadCollapsedState[key] = !threadCollapsedState[key];
+      }
+      renderActiveComments();
+    }
+
+    function setAllThreadsCollapsed(collapsed) {
+      const pr = PR_PAGES.find(p => p.id === currentTab);
+      if (!pr || !pr.hunks) return;
+      pr.hunks.forEach((h, idx) => {
+        threadCollapsedState[`${pr.id}-${idx}`] = collapsed;
+      });
+      renderActiveComments();
+    }
+
+    function renderGitHubStyleDiff(diffSnippet, fallbackStartLine) {
+      if (!diffSnippet) {
+        return '<div class="p-4 text-slate-400 text-xs italic bg-white">No diff available for this hunk.</div>';
+      }
+
+      const rawLines = diffSnippet.split('\n');
+      let oldLine = 1;
+      let newLine = fallbackStartLine || 1;
+      let inHunk = false;
+
+      const rows = [];
+
+      for (let i = 0; i < rawLines.length; i++) {
+        const line = rawLines[i];
+        if (!line && i === rawLines.length - 1) continue; // skip trailing empty line
+
+        // Skip git command headers
+        if (line.startsWith('diff --git') || line.startsWith('index ') || line.startsWith('--- a/') || line.startsWith('+++ b/')) {
+          continue;
+        }
+
+        // Hunk header: @@ -oldStart,oldCount +newStart,newCount @@ context
+        const hunkMatch = line.match(/^@@\s+-(\d+)(?:,(\d+))?\s+\+(\d+)(?:,(\d+))?\s+@@(.*)$/);
+        if (hunkMatch) {
+          oldLine = parseInt(hunkMatch[1], 10);
+          newLine = parseInt(hunkMatch[3], 10);
+          inHunk = true;
+          const context = hunkMatch[5] ? escapeHtml(hunkMatch[5]) : '';
+          rows.push(`
+            <tr class="diff-row diff-line-hunk select-none">
+              <td class="w-10 px-2 py-0.5 text-right font-mono text-[10px] text-blue-400 border-r border-blue-200/60 bg-blue-50/80">...</td>
+              <td class="w-10 px-2 py-0.5 text-right font-mono text-[10px] text-blue-400 border-r border-blue-200/60 bg-blue-50/80">...</td>
+              <td class="w-4 px-1 py-0.5 text-center text-blue-500 font-bold select-none text-[12px]"></td>
+              <td class="px-2 py-0.5 text-blue-700 font-semibold whitespace-pre overflow-x-visible">
+                <span class="font-mono text-[11px]">@@ -${hunkMatch[1]} +${hunkMatch[3]} @@</span>
+                <span class="text-slate-500 font-sans ml-2 text-[11px] font-normal">${context}</span>
+              </td>
+            </tr>
+          `);
+          continue;
+        }
+
+        if (line.startsWith('+') && !line.startsWith('+++')) {
+          const curNew = inHunk ? newLine++ : (newLine++);
+          const code = escapeHtml(line.substring(1));
+          rows.push(`
+            <tr class="diff-row text-[12px] leading-5">
+              <td class="diff-gutter-add w-10 px-2 py-0 text-right select-none text-[11px] font-mono"></td>
+              <td class="diff-gutter-add w-10 px-2 py-0 text-right select-none text-[11px] font-mono font-semibold">${curNew}</td>
+              <td class="diff-line-add w-4 px-1 py-0 text-center text-emerald-800 font-bold select-none text-[12px]">+</td>
+              <td class="diff-line-add px-2 py-0 whitespace-pre font-mono overflow-x-visible">${code || '&nbsp;'}</td>
+            </tr>
+          `);
+        } else if (line.startsWith('-') && !line.startsWith('---')) {
+          const curOld = inHunk ? oldLine++ : (oldLine++);
+          const code = escapeHtml(line.substring(1));
+          rows.push(`
+            <tr class="diff-row text-[12px] leading-5">
+              <td class="diff-gutter-del w-10 px-2 py-0 text-right select-none text-[11px] font-mono font-semibold">${curOld}</td>
+              <td class="diff-gutter-del w-10 px-2 py-0 text-right select-none text-[11px] font-mono"></td>
+              <td class="diff-line-del w-4 px-1 py-0 text-center text-rose-800 font-bold select-none text-[12px]">-</td>
+              <td class="diff-line-del px-2 py-0 whitespace-pre font-mono overflow-x-visible">${code || '&nbsp;'}</td>
+            </tr>
+          `);
+        } else if (line.startsWith('... (+')) {
+          rows.push(`
+            <tr class="diff-row bg-slate-50 text-slate-500 font-mono text-[11px] border-t border-slate-200">
+              <td colspan="4" class="px-4 py-1 text-center italic text-slate-400 bg-slate-50 select-none">
+                ${escapeHtml(line)}
+              </td>
+            </tr>
+          `);
+        } else {
+          // Context line
+          const curOld = inHunk ? oldLine++ : '';
+          const curNew = inHunk ? newLine++ : '';
+          const code = line.startsWith(' ') ? escapeHtml(line.substring(1)) : escapeHtml(line);
+          rows.push(`
+            <tr class="diff-row text-[12px] leading-5">
+              <td class="diff-gutter-ctx w-10 px-2 py-0 text-right select-none text-[11px] font-mono">${curOld}</td>
+              <td class="diff-gutter-ctx w-10 px-2 py-0 text-right select-none text-[11px] font-mono">${curNew}</td>
+              <td class="diff-line-ctx w-4 px-1 py-0 text-center select-none text-[12px]"></td>
+              <td class="diff-line-ctx px-2 py-0 whitespace-pre font-mono overflow-x-visible">${code || '&nbsp;'}</td>
+            </tr>
+          `);
+        }
+      }
+
+      return `
+        <div class="diff-scroll-box overflow-x-auto custom-scroll w-full border-b border-slate-200 lg:border-b-0 bg-white">
+          <table class="diff-table">
+            <colgroup>
+              <col style="width: 44px;">
+              <col style="width: 44px;">
+              <col style="width: 20px;">
+              <col style="width: auto;">
+            </colgroup>
+            <tbody>
+              ${rows.join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
     function renderActiveComments() {
       const pr = PR_PAGES.find(p => p.id === currentTab);
       if (!pr) return;
@@ -728,55 +915,91 @@
           return;
         }
 
-        threadEl.innerHTML = `
-          <div class="mt-3 space-y-3 pt-3 border-t border-slate-200">
-            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-              <span class="flex items-center gap-1.5 text-blue-700">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                Review Thread (${hunkComments.length}) &bull; <span class="font-mono text-slate-600">${hunk.file}</span>
-              </span>
-              <span class="text-[10px] text-slate-400">Live 2-Way Sync</span>
-            </div>
+        const isCollapsed = threadCollapsedState[`${pr.id}-${idx}`] === true;
 
-            ${hunkComments.map(c => `
-              <div class="bg-slate-50 border border-slate-200 rounded-md p-3.5 text-xs space-y-2.5">
-                <!-- Maintainer Comment -->
-                <div class="space-y-1">
-                  <div class="flex items-center justify-between text-[11px]">
-                    <div class="flex items-center gap-1.5">
-                      <strong class="text-slate-900 font-semibold">${c.author}</strong>
-                      <span class="text-slate-400">&bull;</span>
-                      <span class="text-slate-500">${new Date(c.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                      ${c.lines ? `<span class="text-slate-400 font-mono text-[10px]">(${c.lines})</span>` : ''}
-                    </div>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${c.status === 'ADDRESSED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">
-                      ${c.status || 'PENDING_AGENT_ACTION'}
-                    </span>
-                  </div>
-                  <p class="text-slate-800 leading-relaxed font-normal whitespace-pre-wrap">${c.commentText}</p>
+        if (isCollapsed) {
+          const isAllAddressed = hunkComments.every(c => c.status === 'ADDRESSED');
+          const lastComment = hunkComments[hunkComments.length - 1];
+          const hasReplies = hunkComments.some(c => c.replies && c.replies.length > 0);
+          
+          threadEl.innerHTML = `
+            <div class="mt-2 bg-blue-50/60 border border-blue-200/80 rounded-md p-2.5 text-xs flex items-center justify-between gap-2 shadow-2xs">
+              <div class="flex items-center gap-2 min-w-0">
+                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                <div class="truncate text-[11px]">
+                  <strong class="text-slate-800 font-semibold">${hunkComments.length} review comment${hunkComments.length > 1 ? 's' : ''}</strong>
+                  ${hasReplies ? '<span class="text-emerald-700 font-medium ml-1">· Agent replied</span>' : ''}
+                  <span class="text-slate-500 ml-1 truncate">(${escapeHtml(lastComment.author)}: "${escapeHtml(lastComment.commentText.substring(0, 35))}...")</span>
                 </div>
-
-                <!-- Agent Replies (if any) -->
-                ${(c.replies && c.replies.length > 0) ? `
-                  <div class="pl-3 border-l-2 border-emerald-400 space-y-2 mt-2 pt-2">
-                    ${c.replies.map(r => `
-                      <div class="bg-white border border-slate-200 rounded p-2.5 text-xs space-y-1">
-                        <div class="flex items-center justify-between text-[11px]">
-                          <span class="font-semibold text-emerald-800 flex items-center gap-1">
-                            <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            ${r.author}
-                          </span>
-                          <span class="text-slate-400">${new Date(r.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                        </div>
-                        <p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${r.replyText}</p>
-                      </div>
-                    `).join("")}
-                  </div>
-                ` : ''}
               </div>
-            `).join("")}
-          </div>
-        `;
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold ${isAllAddressed ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">
+                  ${isAllAddressed ? 'ADDRESSED' : 'ACTIVE'}
+                </span>
+                <button onclick="toggleThread('${pr.id}', ${idx}, false)" 
+                        class="px-2 py-0.5 text-[11px] font-semibold text-blue-700 hover:text-blue-900 bg-white border border-blue-200 rounded shadow-2xs hover:bg-blue-50 cursor-pointer">
+                  Expand &darr;
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          // Expanded view with scrollable comments box
+          threadEl.innerHTML = `
+            <div class="mt-2 space-y-2 pt-2 border-t border-slate-200">
+              <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center justify-between">
+                <span class="flex items-center gap-1.5 text-blue-700">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                  Review Thread (${hunkComments.length}) &bull; <span class="font-mono text-slate-600 text-[10px]">${hunk.file}</span>
+                </span>
+                <button onclick="toggleThread('${pr.id}', ${idx}, true)" 
+                        class="px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded hover:bg-slate-50 cursor-pointer shadow-2xs">
+                  Collapse &uarr;
+                </button>
+              </div>
+
+              <div class="max-h-[360px] overflow-y-auto custom-scroll space-y-2 pr-0.5">
+                ${hunkComments.map(c => `
+                  <div class="bg-white border border-slate-200 rounded-md p-3 text-xs space-y-2 shadow-2xs">
+                    <!-- Maintainer Comment -->
+                    <div class="space-y-1">
+                      <div class="flex items-center justify-between text-[11px]">
+                        <div class="flex items-center gap-1.5">
+                          <strong class="text-slate-900 font-semibold">${escapeHtml(c.author)}</strong>
+                          <span class="text-slate-400">&bull;</span>
+                          <span class="text-slate-500">${new Date(c.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                          ${c.lines ? `<span class="text-slate-400 font-mono text-[10px]">(${c.lines})</span>` : ''}
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${c.status === 'ADDRESSED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">
+                          ${c.status || 'PENDING_AGENT_ACTION'}
+                        </span>
+                      </div>
+                      <p class="text-slate-800 leading-relaxed font-normal whitespace-pre-wrap">${escapeHtml(c.commentText)}</p>
+                    </div>
+
+                    <!-- Agent Replies (if any) -->
+                    ${(c.replies && c.replies.length > 0) ? `
+                      <div class="pl-2.5 border-l-2 border-emerald-500 space-y-2 mt-2 pt-1">
+                        ${c.replies.map(r => `
+                          <div class="bg-emerald-50/50 border border-emerald-100 rounded p-2.5 text-xs space-y-1">
+                            <div class="flex items-center justify-between text-[11px]">
+                              <span class="font-semibold text-emerald-800 flex items-center gap-1">
+                                <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                ${escapeHtml(r.author)}
+                              </span>
+                              <span class="text-slate-400">${new Date(r.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                            <p class="text-slate-700 whitespace-pre-wrap leading-relaxed">${escapeHtml(r.replyText)}</p>
+                          </div>
+                        `).join("")}
+                      </div>
+                    ` : ''}
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          `;
+        }
       });
 
       // 2. Render PR-level Discussion Thread Box
@@ -1647,24 +1870,54 @@
 
           <!-- Section 2: Hunk-by-Hunk Technical Analysis & Inline Comments -->
           <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-5">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
               <div>
-                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                   2. Hunk-by-Hunk Code Analysis &amp; Line Rationale
                 </h3>
-                <p class="text-xs text-slate-500 mt-0.5">Click "Add Review Comment" on any hunk to send feedback directly to the agent team in real time.</p>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  Two-column view: GitHub diff on left, architectural rationale and live review thread on right.
+                </p>
               </div>
-              <span class="text-xs text-slate-500">${pr.hunks.length} specific modifications analyzed</span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="setAllThreadsCollapsed(false)" 
+                        class="px-2.5 py-1 text-[11px] font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded shadow-2xs transition-colors cursor-pointer"
+                        title="Expand all review comment threads in this PR">
+                  Expand All Threads
+                </button>
+                <button onclick="setAllThreadsCollapsed(true)" 
+                        class="px-2.5 py-1 text-[11px] font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded shadow-2xs transition-colors cursor-pointer"
+                        title="Collapse all review comment threads to compact summaries">
+                  Collapse All Threads
+                </button>
+                <span class="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded border border-slate-200 font-medium">
+                  ${pr.hunks.length} hunks analyzed
+                </span>
+              </div>
             </div>
 
             <div class="space-y-6">
-              ${pr.hunks.map((hunk, idx) => `
-                <div id="hunk-card-${pr.id}-${idx}" class="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-2xs transition-all">
-                  <div class="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              ${pr.hunks.map((hunk, idx) => {
+                const addCount = (hunk.diffSnippet ? (hunk.diffSnippet.match(/^\+[^\+]/gm) || []).length : 0);
+                const delCount = (hunk.diffSnippet ? (hunk.diffSnippet.match(/^-[^-]/gm) || []).length : 0);
+
+                return `
+                <div id="hunk-card-${pr.id}-${idx}" class="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-2xs transition-all hover:border-slate-400">
+                  
+                  <!-- GitHub-Style File Header -->
+                  <div class="bg-[#f6f8fa] px-4 py-2 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                     <div class="flex items-center gap-2 flex-wrap">
-                      <span class="font-bold text-slate-900">${idx + 1}. <code class="code-font text-blue-700">${hunk.file}</code></span>
-                      <span class="code-font text-slate-500 font-medium">${hunk.lines}</span>
+                      <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                      <span class="font-bold text-slate-900">${idx + 1}. <code class="code-font text-blue-700 font-semibold">${hunk.file}</code></span>
+                      <span class="code-font text-slate-500 font-medium text-[11px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">${hunk.lines}</span>
                       
+                      <!-- Line Additions / Deletions Counters -->
+                      <div class="inline-flex items-center gap-1 font-mono text-[11px] font-semibold">
+                        ${addCount > 0 ? `<span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">+${addCount}</span>` : ''}
+                        ${delCount > 0 ? `<span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">-${delCount}</span>` : ''}
+                      </div>
+
                       <!-- GitHub Link @ lines -->
                       <a href="${hunk.githubUrl || getFileLink(pr, hunk)}" target="_blank" rel="noopener noreferrer"
                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200 text-[11px] font-semibold transition-colors shadow-2xs"
@@ -1697,65 +1950,87 @@
                         <span>Copy :line</span>
                       </button>
                     </div>
-                    <span class="text-slate-600 font-medium">${hunk.shortSummary}</span>
+                    <span class="text-slate-600 font-medium text-[11px] truncate max-w-xs" title="${escapeHtml(hunk.shortSummary)}">${escapeHtml(hunk.shortSummary)}</span>
                   </div>
 
-                  <!-- Code Diff Box -->
-                  <div class="bg-slate-950 text-slate-100 p-3 text-xs code-font overflow-x-auto custom-scroll leading-relaxed">
-                    <pre><code>${hunk.diffSnippet}</code></pre>
-                  </div>
-
-                  <!-- Detailed Explanation -->
-                  <div class="p-4 bg-white space-y-2 text-xs">
-                    <div>
-                      <strong class="text-slate-900 block font-semibold">The Thinking Behind This Specific Change:</strong>
-                      <p class="text-slate-600 mt-0.5 leading-relaxed">${hunk.rationale}</p>
+                  <!-- Two-Column Side-by-Side: Diff on Left, Logic & Comments on Right -->
+                  <div class="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 items-start">
+                    
+                    <!-- LEFT COLUMN: Code Diff (Col 7 / 12) -->
+                    <div class="lg:col-span-7 xl:col-span-7 overflow-x-auto custom-scroll bg-white">
+                      ${renderGitHubStyleDiff(hunk.diffSnippet, hunk.startLine, hunk.endLine)}
                     </div>
-                    ${hunk.alternatives ? `
-                      <div class="pt-2 border-t border-slate-100 text-slate-500">
-                        <strong class="text-slate-700 font-semibold">Alternatives Considered &amp; Why Rejected:</strong> ${hunk.alternatives}
-                      </div>
-                    ` : ''}
 
-                    <!-- Inline Comment Threads Container -->
-                    <div id="comments-${pr.id}-${idx}"></div>
-
-                    <!-- Inline Comment Action Button & Box -->
-                    <div class="pt-3 border-t border-slate-100">
-                      <div class="flex items-center justify-between">
-                        <button onclick="toggleCommentForm('${pr.id}', ${idx})"
-                                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded transition-colors">
-                          <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                          Add Review Comment on Hunk ${idx + 1}
-                        </button>
-                        <span id="status-${pr.id}-${idx}" class="text-xs text-blue-600 font-medium"></span>
-                      </div>
-
-                      <!-- Hidden by default comment form -->
-                      <div id="form-${pr.id}-${idx}" class="hidden mt-3 p-3 bg-slate-50 border border-slate-200 rounded-md space-y-2">
-                        <div class="flex items-center justify-between text-[11px] text-slate-600">
-                          <span>Comment on <code class="code-font text-slate-800">${hunk.file}</code> (${hunk.lines})</span>
-                          <span class="text-slate-400">Sent directly to agent team</span>
+                    <!-- RIGHT COLUMN: Architectural Logic & Review Thread (Col 5 / 12) -->
+                    <div class="lg:col-span-5 xl:col-span-5 p-4 bg-slate-50/50 flex flex-col space-y-3">
+                      
+                      <!-- Architectural Rationale Card -->
+                      <div class="bg-white border border-slate-200 rounded-md p-3.5 shadow-2xs space-y-2">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                            The Thinking Behind This Change
+                          </span>
+                          <span class="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded font-medium">Hunk ${idx + 1}</span>
                         </div>
-                        <textarea id="input-${pr.id}-${idx}" rows="3"
-                                  placeholder="Type feedback, challenge our reasoning, or request code adjustments on this hunk..."
-                                  class="w-full text-xs p-2.5 rounded border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-900"></textarea>
-                        <div class="flex items-center gap-2">
-                          <button onclick="submitInlineComment('${pr.id}', ${idx}, '${hunk.file}', '${hunk.lines}')"
-                                  class="px-3 py-1.5 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-2xs">
-                            Send Comment to Agent &rarr;
-                          </button>
+                        
+                        <p class="text-xs text-slate-700 leading-relaxed font-normal">${hunk.rationale}</p>
+
+                        ${hunk.alternatives ? `
+                          <details class="pt-2 border-t border-slate-100 text-xs text-slate-600 group">
+                            <summary class="font-semibold text-slate-600 cursor-pointer text-[11px] select-none hover:text-slate-900 flex items-center gap-1">
+                              <span class="text-slate-400 group-open:rotate-90 transition-transform inline-block">▸</span>
+                              Alternatives Considered &amp; Trade-offs
+                            </summary>
+                            <div class="mt-1.5 text-[11px] text-slate-600 leading-relaxed bg-slate-50 p-2.5 rounded border border-slate-200">
+                              ${hunk.alternatives}
+                            </div>
+                          </details>
+                        ` : ''}
+                      </div>
+
+                      <!-- Review Comments Thread Container -->
+                      <div id="comments-${pr.id}-${idx}"></div>
+
+                      <!-- Inline Comment Action Box -->
+                      <div class="pt-2 border-t border-slate-200/80">
+                        <div class="flex items-center justify-between">
                           <button onclick="toggleCommentForm('${pr.id}', ${idx})"
-                                  class="px-2.5 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
-                            Cancel
+                                  class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded shadow-2xs transition-colors cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Review Comment on Hunk ${idx + 1}
                           </button>
+                          <span id="status-${pr.id}-${idx}" class="text-xs text-blue-600 font-medium"></span>
+                        </div>
+
+                        <!-- Hidden by default comment form -->
+                        <div id="form-${pr.id}-${idx}" class="hidden mt-3 p-3 bg-white border border-slate-300 rounded-md shadow-xs space-y-2">
+                          <div class="flex items-center justify-between text-[11px] text-slate-600">
+                            <span class="font-medium">Comment on <code class="code-font text-slate-800 font-semibold">${hunk.file}</code></span>
+                            <span class="text-slate-400 font-mono text-[10px]">${hunk.lines}</span>
+                          </div>
+                          <textarea id="input-${pr.id}-${idx}" rows="3"
+                                    placeholder="Type feedback, challenge our reasoning, or request code adjustments on this hunk..."
+                                    class="w-full text-xs p-2.5 rounded border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-900 shadow-2xs"></textarea>
+                          <div class="flex items-center gap-2">
+                            <button onclick="submitInlineComment('${pr.id}', ${idx}, '${hunk.file}', '${hunk.lines}')"
+                                    class="px-3 py-1.5 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-2xs cursor-pointer">
+                              Send Comment to Agent &rarr;
+                            </button>
+                            <button onclick="toggleCommentForm('${pr.id}', ${idx})"
+                                    class="px-2.5 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer">
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       </div>
+
                     </div>
 
                   </div>
                 </div>
-              `).join("")}
+              `;
+              }).join("")}
             </div>
           </div>
 

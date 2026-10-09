@@ -1,5 +1,5 @@
 {
-  "last_check": "2026-10-09T00:50:41.317261",
+  "last_check": "2026-10-09T00:58:43.565491",
   "upstream_head": "7158cda72def0c7803ca0779a69469fc48d1f577",
   "branches": {
     "pr-fix-core-numpy2-optparse": {
@@ -7,91 +7,98 @@
       "commit_sha": "a51feed1755ac5d84caf759f1cf7ac525a83e0f8",
       "ahead": 3,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.346623"
+      "last_verified": "2026-10-09T00:58:43.588719"
     },
     "pr-fix-io-dictarray-indexing": {
       "status": "UP_TO_DATE",
       "commit_sha": "99266a1bd93ca721a8c5cacd74175b96a3757461",
       "ahead": 3,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.350421"
+      "last_verified": "2026-10-09T00:58:43.594041"
     },
     "pr-fix-events-numpy2-zerolag": {
       "status": "UP_TO_DATE",
       "commit_sha": "91238780e199ca122298f8c2a57e3092f50fcfeb",
       "ahead": 2,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.354075"
+      "last_verified": "2026-10-09T00:58:43.597719"
     },
     "pr-perf-waveform-compress": {
       "status": "UP_TO_DATE",
       "commit_sha": "578a65ecffdd5a79e51e671066e49e008d90e807",
       "ahead": 4,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.357685"
+      "last_verified": "2026-10-09T00:58:43.600928"
     },
     "pr-feat-vetoes-chisq-slicing": {
       "status": "UP_TO_DATE",
       "commit_sha": "996570d8183aa93e1f9dce12f3fd1af4f942ad24",
       "ahead": 4,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.361361"
+      "last_verified": "2026-10-09T00:58:43.603840"
     },
     "pr-feat-events-eventmgr-multi": {
       "status": "UP_TO_DATE",
       "commit_sha": "f4ee39b5fcbc432dd2e9ee4f3076e6291ca8f8c0",
       "ahead": 3,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.365004"
+      "last_verified": "2026-10-09T00:58:43.606249"
     },
     "pr-feat-filter-dynamic-snr-renorm": {
       "status": "UP_TO_DATE",
       "commit_sha": "8e1160ee03794ca1f569c22b5af08443cc2f8410",
       "ahead": 1,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.368603"
+      "last_verified": "2026-10-09T00:58:43.608661"
     },
     "pr-feat-inject-injfilter-optimal-snr": {
       "status": "UP_TO_DATE",
       "commit_sha": "7ce029f2cd307377d8ad400138fe801da5d4ceee",
       "ahead": 1,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.372623"
+      "last_verified": "2026-10-09T00:58:43.611008"
     },
     "pr-feat-psd-robust-estimators": {
       "status": "UP_TO_DATE",
       "commit_sha": "639133d2487bebc792ccafef7095596725bb0c4f",
       "ahead": 2,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.376143"
+      "last_verified": "2026-10-09T00:58:43.613717"
     },
     "pr-feat-strain-regularized-inpainting": {
       "status": "UP_TO_DATE",
       "commit_sha": "f42505847ad2c1ffc6d7a81a087a0e0a3ae1f49d",
       "ahead": 4,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.379682"
+      "last_verified": "2026-10-09T00:58:43.617119"
     },
     "pr-5392": {
       "status": "UP_TO_DATE",
       "commit_sha": "c9b643fd4444c9da533d05e2ebe50114070a1a23",
       "ahead": 16,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.383699"
+      "last_verified": "2026-10-09T00:58:43.620628"
     },
     "pr-5438": {
       "status": "UP_TO_DATE",
       "commit_sha": "824d52a3f1c6f55b6454207b85cdf0a6bed7b19c",
       "ahead": 5,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.387286"
+      "last_verified": "2026-10-09T00:58:43.623413"
     },
     "pr-5457": {
       "status": "UP_TO_DATE",
       "commit_sha": "f42505847ad2c1ffc6d7a81a087a0e0a3ae1f49d",
       "ahead": 4,
       "behind": 0,
-      "last_verified": "2026-10-09T00:50:41.391146"
+      "last_verified": "2026-10-09T00:58:43.626100"
+    },
+    "+ pr-perf-waveform-compress": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "+ pr-perf-waveform-compress",
+      "ahead": 0,
+      "behind": 0,
+      "last_verified": "2026-10-09T00:54:42.532740"
     }
   },
   "upstream_remote": "upstream",
