@@ -1,0 +1,426 @@
+{
+  "lastUpdated": "2026-10-09T21:15:22Z",
+  "openPrCount": 3,
+  "prs": {
+    "5475": {
+      "prNumber": 5475,
+      "title": "Make optparse more flexible about int formats",
+      "branch": "pr-fix-core-numpy2-optparse",
+      "headSha": "57f250860f50c28c1f7a63acebcf191b4f9f93ce",
+      "overallStatus": "IN_PROGRESS",
+      "totalChecks": 35,
+      "successCount": 5,
+      "failureCount": 17,
+      "inProgressCount": 12,
+      "actionableCount": 0,
+      "failures": [
+        {
+          "name": "build (ubuntu-24.04, 3.12, docs)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478712",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.12, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478642",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.11, unittest)",
+          "conclusion": "failure",
+          "category": "RUNNER_ENV_FAILURE",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478637",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.11, docs)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478620",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.12, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478611",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.13, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478577",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.14, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478569",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.13, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478567",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.13, docs)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478561",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.14, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478552",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.14, docs)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478536",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.11, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478527/job/114026478376",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.13)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478523/job/114026478297",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.11)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478523/job/114026478294",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.12)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478523/job/114026478159",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.14)",
+          "conclusion": "failure",
+          "category": "RUNNER_ENV_FAILURE",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478523/job/114026478038",
+          "actionable": false
+        },
+        {
+          "name": "qlty_check",
+          "conclusion": "failure",
+          "category": "UPSTREAM_FORMAT_BASELINE",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991478464/job/114026477777",
+          "actionable": false
+        }
+      ],
+      "localValidation": {
+        "localVerified": true,
+        "issues": 0,
+        "passed": true,
+        "details": "All local checks passed (clean lint & style)"
+      },
+      "lastChecked": "2026-10-09T21:15:20Z"
+    },
+    "5474": {
+      "prNumber": 5474,
+      "title": "data / file trigger handling fixes + extension",
+      "branch": "pr-fix-io-dictarray-indexing",
+      "headSha": "d545f25aa412be1868ff234d577410b572991df2",
+      "overallStatus": "IN_PROGRESS",
+      "totalChecks": 35,
+      "successCount": 5,
+      "failureCount": 17,
+      "inProgressCount": 12,
+      "actionableCount": 0,
+      "failures": [
+        {
+          "name": "build (macos-latest, 3.12)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565873/job/114026789055",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.14)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565873/job/114026788975",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.11)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565873/job/114026788838",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.13)",
+          "conclusion": "failure",
+          "category": "RUNNER_ENV_FAILURE",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565873/job/114026788579",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.13, docs)",
+          "conclusion": "failure",
+          "category": "RUNNER_ENV_FAILURE",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787539",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.14, docs)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787537",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.12, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787515",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.13, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787509",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.13, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787493",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.14, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787468",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.11, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787466",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.12, docs)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787451",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.11, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787443",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.12, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787440",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.14, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787335",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.11, docs)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565864/job/114026787137",
+          "actionable": false
+        },
+        {
+          "name": "qlty_check",
+          "conclusion": "failure",
+          "category": "UPSTREAM_FORMAT_BASELINE",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991565814/job/114026786961",
+          "actionable": false
+        }
+      ],
+      "localValidation": {
+        "localVerified": true,
+        "issues": 0,
+        "passed": true,
+        "details": "All local checks passed (clean lint & style)"
+      },
+      "lastChecked": "2026-10-09T21:15:21Z"
+    },
+    "5473": {
+      "prNumber": 5473,
+      "title": "waveform compress, more fixes",
+      "branch": "pr-perf-waveform-compress",
+      "headSha": "89ea1a1d33bffa037953353d9797e62739f5615c",
+      "overallStatus": "IN_PROGRESS",
+      "totalChecks": 35,
+      "successCount": 4,
+      "failureCount": 17,
+      "inProgressCount": 13,
+      "actionableCount": 0,
+      "failures": [
+        {
+          "name": "build (ubuntu-24.04, 3.11, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027023402",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.11, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027023075",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.13, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027023005",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.14, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027022983",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.12, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027022979",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.13, docs)",
+          "conclusion": "failure",
+          "category": "RUNNER_ENV_FAILURE",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027022971",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.14, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027022964",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.14, docs)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027022944",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.12, search)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027022914",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.11, docs)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027022909",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.11)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633694/job/114027022888",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.13)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633694/job/114027022846",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.12, docs)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027022796",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.12)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633694/job/114027022784",
+          "actionable": false
+        },
+        {
+          "name": "build (ubuntu-24.04, 3.13, unittest)",
+          "conclusion": "cancelled",
+          "category": "RUNNER_CANCELLED",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633687/job/114027022672",
+          "actionable": false
+        },
+        {
+          "name": "build (macos-latest, 3.14)",
+          "conclusion": "failure",
+          "category": "RUNNER_ENV_FAILURE",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633694/job/114027022565",
+          "actionable": false
+        },
+        {
+          "name": "qlty_check",
+          "conclusion": "failure",
+          "category": "UPSTREAM_FORMAT_BASELINE",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633734/job/114027022175",
+          "actionable": false
+        }
+      ],
+      "localValidation": {
+        "localVerified": true,
+        "issues": 0,
+        "passed": true,
+        "details": "All local checks passed (clean lint & style)"
+      },
+      "lastChecked": "2026-10-09T21:15:22Z"
+    }
+  }
+}
