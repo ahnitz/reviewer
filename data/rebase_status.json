@@ -1,84 +1,84 @@
 {
-  "last_check": "2026-10-09T11:20:55.436581",
+  "last_check": "2026-10-09T11:22:56.739214",
   "upstream_head": "874842a2c0efd33d35f99b34f26b8e3a26d2990a",
   "branches": {
     "pr-fix-core-numpy2-optparse": {
       "status": "CONFLICT",
       "branch": "pr-fix-core-numpy2-optparse",
       "error": "fatal: 'pr-fix-core-numpy2-optparse' is already used by worktree at '/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr1a'",
-      "timestamp": "2026-10-09T11:20:55.483105"
+      "timestamp": "2026-10-09T11:22:56.785047"
     },
     "pr-fix-io-dictarray-indexing": {
       "status": "CONFLICT",
       "branch": "pr-fix-io-dictarray-indexing",
       "error": "fatal: 'pr-fix-io-dictarray-indexing' is already used by worktree at '/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr'",
-      "timestamp": "2026-10-09T11:20:55.499925"
+      "timestamp": "2026-10-09T11:22:56.800606"
     },
     "pr-fix-events-numpy2-zerolag": {
       "status": "CONFLICT",
       "branch": "pr-fix-events-numpy2-zerolag",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T11:20:55.522549"
+      "timestamp": "2026-10-09T11:22:56.828798"
     },
     "pr-perf-waveform-compress": {
       "status": "CONFLICT",
       "branch": "pr-perf-waveform-compress",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T11:20:55.544223"
+      "timestamp": "2026-10-09T11:22:56.854922"
     },
     "pr-feat-vetoes-chisq-slicing": {
       "status": "CONFLICT",
       "branch": "pr-feat-vetoes-chisq-slicing",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T11:20:55.569225"
+      "timestamp": "2026-10-09T11:22:56.880715"
     },
     "pr-feat-events-eventmgr-multi": {
       "status": "CONFLICT",
       "branch": "pr-feat-events-eventmgr-multi",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T11:20:55.596150"
+      "timestamp": "2026-10-09T11:22:56.907154"
     },
     "pr-feat-filter-dynamic-snr-renorm": {
       "status": "CONFLICT",
       "branch": "pr-feat-filter-dynamic-snr-renorm",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T11:20:55.628564"
+      "timestamp": "2026-10-09T11:22:56.929659"
     },
     "pr-feat-inject-injfilter-optimal-snr": {
       "status": "CONFLICT",
       "branch": "pr-feat-inject-injfilter-optimal-snr",
       "error": "fatal: 'pr-feat-inject-injfilter-optimal-snr' is already used by worktree at '/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr1h'",
-      "timestamp": "2026-10-09T11:20:55.645389"
+      "timestamp": "2026-10-09T11:22:56.946235"
     },
     "pr-feat-psd-robust-estimators": {
       "status": "CONFLICT",
       "branch": "pr-feat-psd-robust-estimators",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T11:20:55.672308"
+      "timestamp": "2026-10-09T11:22:56.973337"
     },
     "pr-feat-strain-regularized-inpainting": {
       "status": "CONFLICT",
       "branch": "pr-feat-strain-regularized-inpainting",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T11:20:55.696767"
+      "timestamp": "2026-10-09T11:22:56.989261"
     },
     "pr-5392": {
       "status": "CONFLICT",
       "branch": "pr-5392",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T11:20:55.723748"
+      "timestamp": "2026-10-09T11:22:57.011270"
     },
     "pr-5438": {
       "status": "CONFLICT",
       "branch": "pr-5438",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T11:20:55.737872"
+      "timestamp": "2026-10-09T11:22:57.037093"
     },
     "pr-5457": {
       "status": "CONFLICT",
       "branch": "pr-5457",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T11:20:55.753702"
+      "timestamp": "2026-10-09T11:22:57.056410"
     },
     "+ pr-perf-waveform-compress": {
       "status": "UP_TO_DATE",
@@ -98,14 +98,14 @@
       "commit_sha": "+ pr-fix-core-numpy2-optparse",
       "ahead": 0,
       "behind": 0,
-      "last_verified": "2026-10-09T11:20:55.777075"
+      "last_verified": "2026-10-09T11:22:57.079787"
     },
     "+ pr-fix-io-dictarray-indexing": {
       "status": "UP_TO_DATE",
       "commit_sha": "+ pr-fix-io-dictarray-indexing",
       "ahead": 0,
       "behind": 0,
-      "last_verified": "2026-10-09T11:20:55.805083"
+      "last_verified": "2026-10-09T11:22:57.106075"
     },
     "+ pr-fix-events-numpy2-zerolag": {
       "status": "UP_TO_DATE",
@@ -126,7 +126,7 @@
       "commit_sha": "c6c58c3144ca3bcdb0045de0744502017cf5f37c",
       "ahead": 1,
       "behind": 0,
-      "last_verified": "2026-10-09T11:20:55.785851"
+      "last_verified": "2026-10-09T11:22:57.089484"
     },
     "+ pr-fix-filter-resample-copy": {
       "status": "UP_TO_DATE",
@@ -140,28 +140,28 @@
       "commit_sha": "+ pr-feat-frame-gwosc-hdf",
       "ahead": 0,
       "behind": 0,
-      "last_verified": "2026-10-09T11:20:55.763837"
+      "last_verified": "2026-10-09T11:22:57.065054"
     },
     "pr-fix-filter-resample-copy": {
       "status": "UP_TO_DATE",
       "commit_sha": "31d3ad03d8ee205b6d0a4b7df066468f5a08395f",
       "ahead": 1,
       "behind": 0,
-      "last_verified": "2026-10-09T11:20:55.794911"
+      "last_verified": "2026-10-09T11:22:57.100027"
     },
     "+ pr-fix-types-resample-delta-t": {
       "status": "UP_TO_DATE",
       "commit_sha": "+ pr-fix-types-resample-delta-t",
       "ahead": 0,
       "behind": 0,
-      "last_verified": "2026-10-09T11:20:55.811400"
+      "last_verified": "2026-10-09T11:22:57.113761"
     },
     "+ pr-feat-inject-injfilter-optimal-snr": {
       "status": "UP_TO_DATE",
       "commit_sha": "+ pr-feat-inject-injfilter-optimal-snr",
       "ahead": 0,
       "behind": 0,
-      "last_verified": "2026-10-09T11:20:55.772128"
+      "last_verified": "2026-10-09T11:22:57.073083"
     }
   },
   "upstream_remote": "upstream",

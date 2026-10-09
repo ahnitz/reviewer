@@ -509,7 +509,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
 
         if self.path == "/api/health":
             comments = load_feedback()
-            pending = sum(1 for c in comments if c.get("status") != "ADDRESSED")
+            pending = sum(1 for c in comments if c.get("status") not in ("ADDRESSED", "RESOLVED"))
             self._send_json({
                 "status": "healthy",
                 "totalComments": len(comments),
