@@ -1236,5 +1236,63 @@
     "resolution": "Removed redundant injection_power and injection_tilde dicts; optimal SNR is computed directly from short_injections and PSD using pycbc.filter.sigma.",
     "resolvedAt": "2026-10-09T19:26:19Z",
     "resolvedCommit": "330b9e18e"
+  },
+  {
+    "id": "c_1791574631_4da5cf",
+    "prId": "PR-1H",
+    "hunkIndex": 11,
+    "file": "pycbc/inject/injfilterrejector.py",
+    "lines": "lines 287-313",
+    "commentText": "Why do you need an alias? Just use optimal_snr, no?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T19:37:11Z",
+    "timestamp": 1791574631.7254515,
+    "replies": [
+      {
+        "id": "r_1791574632_cef8",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1H (pycbc/inject/injfilterrejector.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T19:37:12Z"
+      },
+      {
+        "id": "r_1791574871_a5cf",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 265e93bcd:\n- Removed the  alias in pycbc/inject/injfilterrejector.py.\n- The method is named  directly throughout the class and test suite.",
+        "createdAt": "2026-10-09T19:41:11Z"
+      }
+    ],
+    "resolution": "Removed redundant injection_optimal_snr alias; optimal_snr is used directly.",
+    "resolvedAt": "2026-10-09T19:41:11Z",
+    "resolvedCommit": "265e93bcd"
+  },
+  {
+    "id": "c_1791574678_b62e59",
+    "prId": "PR-1H",
+    "hunkIndex": 15,
+    "file": "pycbc/inject/injfilterrejector.py",
+    "lines": "lines 461-486",
+    "commentText": "This timing logic and skiiping seems duplicated, no? Probably also a case where htis can be simplified, no?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T19:37:58Z",
+    "timestamp": 1791574678.742932,
+    "replies": [
+      {
+        "id": "r_1791574680_2b96",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1H (pycbc/inject/injfilterrejector.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T19:38:00Z"
+      },
+      {
+        "id": "r_1791574871_2e59",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 265e93bcd:\n- Deduplicated injection extraction: segment start/end bounds and simulation IDs are now evaluated once at the top of template_segment_checker into .\n- If no injections fall within the segment, template_segment_checker returns False immediately.\n- The chirp-time, optimal-SNR, and coarse-match checks now each cleanly iterate over  without repeating isinstance/tc/geocent_end_time checks.",
+        "createdAt": "2026-10-09T19:41:11Z"
+      }
+    ],
+    "resolution": "Deduplicated segment injection timing and extraction logic in template_segment_checker by extracting seg_injections once.",
+    "resolvedAt": "2026-10-09T19:41:11Z",
+    "resolvedCommit": "265e93bcd"
   }
 ]
