@@ -21,7 +21,7 @@
     "target_merge_base": "f6eaed241",
     "maintainer_fork": "ahnitz/pycbc",
     "working_tree_path": "/home/ahnitz/projects/claude/searchdev/pycbc-work/apogee",
-    "dev_branch": "master",
+    "dev_branch": "firinspiral3-multidet-asym",
     "branch_map": {
       "PR-1A": "pr-fix-core-numpy2-optparse",
       "PR-1B": "pr-fix-io-dictarray-indexing",
