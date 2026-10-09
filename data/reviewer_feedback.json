@@ -934,5 +934,190 @@
         "createdAt": "2026-10-09T15:21:00Z"
       }
     ]
+  },
+  {
+    "id": "c_1791560261_38a9e6",
+    "prId": "PR-1D",
+    "hunkIndex": -1,
+    "file": "PR-level discussion",
+    "lines": "General",
+    "commentText": "Please look at the comments on the open PR and address them. Set the thresholds to more reasonable values based on the actual value produced. This will prevent regressions in the future. Also combine the tests to simplify the setup as suggested.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T15:37:41Z",
+    "timestamp": 1791560261.724433,
+    "replies": [
+      {
+        "id": "r_1791560263_bf14",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1D (PR-level discussion). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T15:37:43Z"
+      },
+      {
+        "id": "r_1791560538_done",
+        "author": "Antigravity AI Responder",
+        "replyText": "Addressed all review comments on PR #5473 (pr-perf-waveform-compress):\n1. Replaced dummy check len(sample_points) > 2 with realistic, physical bounds based on actual values (180 <= len <= 260 for TaylorF2 df=1/16, 200 <= len <= 280 for TaylorF2 df=1/8, and 18 <= len <= 35 for IMRPhenomD df=1/8) to prevent regressions.\n2. Tightened match thresholds based on actual values (m > 0.985 for TaylorF2, m > 0.995 for IMRPhenomD, m > 0.975 across interpolation orders).\n3. Combined test_compress_waveform_accuracy and test_compression_representative_cases into a single unified test method test_compress_waveform_accuracy.\n4. Added numpy.sort(numpy.unique(...)) in compress_waveform to guarantee graceful handling of unsorted or duplicate sample points.\n5. Replaced float equality with assertAlmostEqual in narrow slice tests. Verified 100% test pass (pytest test/test_waveform_compress.py: 4/4 passed). Committed (d718ca3fa) and pushed to origin/pr-perf-waveform-compress.",
+        "createdAt": "2026-10-09T15:43:00Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791560404_079bfd",
+    "prId": "PR-1A",
+    "hunkIndex": -1,
+    "file": "PR-level discussion",
+    "lines": "General",
+    "commentText": "See the automatic warnings here and address them \n\nhttps://github.com/gwastro/pycbc/pull/5475",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T15:40:04Z",
+    "timestamp": 1791560404.0477645,
+    "replies": [
+      {
+        "id": "r_1791560404_dfb1",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1A (PR-level discussion). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T15:40:04Z"
+      },
+      {
+        "id": "r_1791560570_done",
+        "author": "Antigravity AI Responder",
+        "replyText": "Addressed CodeQL/qlty warnings on PR #5475 (pycbc/types/optparse.py):\n1. Updated to_int() exception clauses to use explicit exception chaining: added `from err` when re-raising ValueError from non-numeric float() conversion to preserve traceback, and `from None` when raising ValueError for fractional values to suppress misleading context.\n2. Verified 100% test pass (pytest test/test_optparse.py: 9/9 passed in both Python 3.13 and 3.11 environments).\n3. Committed (f7878fe0c) and pushed to origin/pr-fix-core-numpy2-optparse.",
+        "createdAt": "2026-10-09T15:43:30Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791560634_698072",
+    "prId": "PR-FIX-MISC-ROBUSTNESS",
+    "hunkIndex": 6,
+    "file": "pycbc/vetoes/chisq.py",
+    "lines": "lines 196-207",
+    "commentText": "Take out the chisq change here. And rebase the PR.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T15:43:54Z",
+    "timestamp": 1791560634.9760737,
+    "replies": [
+      {
+        "id": "r_1791560635_29a4",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-FIX-MISC-ROBUSTNESS (pycbc/vetoes/chisq.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T15:43:55Z"
+      },
+      {
+        "id": "r_1791560921_done",
+        "author": "Antigravity AI Responder",
+        "replyText": "Reverted the chisq modification in pycbc/vetoes/chisq.py (leaving power_chisq_from_precomputed unchanged), rebased fix/misc-robustness cleanly onto upstream/master (874842a2c), verified unit tests (15/15 passed), and force-pushed to origin/fix/misc-robustness (68c6e0dcf).",
+        "createdAt": "2026-10-09T15:48:45Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791560954_2eb56a",
+    "prId": "PR-1D",
+    "hunkIndex": 4,
+    "file": "test/test_waveform_compress.py",
+    "lines": "lines 1-82",
+    "commentText": "The delta_f needs to be such that the entire signal lenght would be inside it otherwise the compression does not work as intended. Also, can we unify the cases between the tests so there is less code duplication and put it in the init? Some of the tests may become redundant then.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T15:49:14Z",
+    "timestamp": 1791560954.5093632,
+    "replies": [
+      {
+        "id": "r_1791560956_0eb1",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1D (test/test_waveform_compress.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T15:49:16Z"
+      },
+      {
+        "id": "r_1791561057_done",
+        "author": "Antigravity AI Responder",
+        "replyText": "Addressed review comments on test/test_waveform_compress.py (PR #5473):\n1. Updated delta_f so the full signal length fits inside 1 / delta_f (for BNS ~59s, delta_f = 1/64 gives T = 64s > 59s; for BBH ~1.1s, delta_f = 1/4 gives T = 4s > 1.1s), preventing time-domain aliasing and ensuring compression operates on the complete waveform.\n2. Unified waveform generation in setUpClass (hp_bns and hp_bbh), eliminating redundant waveform calls across test_compress_waveform_accuracy, test_compression_interpolation_orders, test_sample_point_deduplication_allows_adjacent, and test_narrow_slice_and_adjacent_points_no_singularity.\n3. Verified 100% test pass (pytest test/test_waveform_compress.py: 4/4 passed in 2.50s).\n4. Committed (97e49501c) and pushed to origin/pr-perf-waveform-compress.",
+        "createdAt": "2026-10-09T15:51:30Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791562385_a2b22f",
+    "prId": "PR-1D",
+    "hunkIndex": 4,
+    "file": "test/test_waveform_compress.py",
+    "lines": "lines 1-83",
+    "commentText": "Tje tests still seem kind of lax. E.g. the compression is mandated to provide a match to some tolerance, the test after that should check that it is > than that (within maybe epsilon variation), no?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T16:13:05Z",
+    "timestamp": 1791562385.341968,
+    "replies": [
+      {
+        "id": "r_1791562386_c2fb",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1D (test/test_waveform_compress.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T16:13:06Z"
+      },
+      {
+        "id": "r_1791562914_resolv",
+        "author": "Antigravity AI Responder",
+        "replyText": "Updated test/test_waveform_compress.py to strictly enforce match >= 1.0 - tolerance (within float precision epsilon 1e-5) across the compressed band [f_lower, f_max] (using high_frequency_cutoff=fmax) across all test cases and interpolation schemes. Also added explicit assertions verifying compression_factor > 10.0 (BNS achieved ~123x, BBH achieved ~48x). All tests pass in 2.73s with zero flake8 warnings.",
+        "createdAt": "2026-10-09T16:21:54Z"
+      }
+    ],
+    "resolution": "Strict match >= 1 - tolerance assertions and compression factor checks added",
+    "resolvedAt": "2026-10-09T16:21:54Z",
+    "resolvedCommit": "28bf5b17f"
+  },
+  {
+    "id": "c_1791571283_123bfe",
+    "prId": "PR-1B",
+    "hunkIndex": -1,
+    "file": "PR-level discussion",
+    "lines": "General",
+    "commentText": "Please review the CI status and check for errors, fix, and then rebase and push to the PR branch",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T18:41:23Z",
+    "timestamp": 1791571283.2920504,
+    "replies": [
+      {
+        "id": "r_1791571283_e58b",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1B (PR-level discussion). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T18:41:23Z"
+      },
+      {
+        "id": "r_1791571633_0973",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 41582bc38:\n1. CI Error Root Cause:\n   - In SingleDetTriggers.apply_mask, passing scalar index arguments (such as stat.argsort()[0] in bin/minifollowups/pycbc_page_snglinfo) resulted in arr = np.asanyarray(logic_mask) with arr.ndim == 0, causing len(arr) to raise TypeError: len() of unsized object during Pegasus workflow post-processing.\n   - In ReadByTemplate.__init__, gating_veto_windows={} triggered Ruff B006 (mutable default argument).\n   - In DictArray.remove, passing an empty index with inplace=False returned self rather than a fresh copy.\n   - In test/test_io_hdf.py, multiple docstrings and comments exceeded 79 characters (PEP 8 E501).\n\n2. Fixes & Simplifications:\n   - Updated SingleDetTriggers.apply_mask to use arr.size > 0 and safely handle 0-d scalar indices and boolean arrays. Added unit test test_singledettriggers_apply_mask_scalar_and_empty.\n   - Replaced gating_veto_windows={} default with None in ReadByTemplate.__init__.\n   - Updated DictArray.remove to return self.select(slice(None), inplace=False) on empty indices when inplace=False.\n   - Cleaned all lines in test/test_io_hdf.py to <= 79 characters.\n   - Cleanly squashed and rebased onto upstream/master (80ceda576).\n\n3. Local Verification:\n   - pytest test/test_io_hdf.py: 8/8 passed in 0.98s.\n   - flake8 --select=F401,E501: 0 errors.\n   - ruff check on changed lines: 0 errors.\n   - Pushed cleanly to origin/pr-fix-io-dictarray-indexing with --force-with-lease (commit 41582bc38).",
+        "createdAt": "2026-10-09T18:47:13Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791571516_a2903a",
+    "prId": "PR-1L",
+    "hunkIndex": -1,
+    "file": "PR-level discussion",
+    "lines": "General",
+    "commentText": "Please check on this comment and see if it makes sense as a simple thing. (very few lines to add) in the tests. \n\n\"Maybe we can add another test if the frequency window lies outside the bound? Say the user chooses a bound outside the available data it can clip to the only usable portion\"\"\n\nI think this already is what is happening, no?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T18:45:16Z",
+    "timestamp": 1791571516.478188,
+    "replies": [
+      {
+        "id": "r_1791571517_1822",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1L (PR-level discussion). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T18:45:17Z"
+      },
+      {
+        "id": "r_1791571747_e7b1",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 4d3756a7b:\n1. Analysis of Frequency Window Clipping:\n   - Exactly as observed, boundary clipping is already native to the implementation in pycbc/filter/qtransform.py:\n     f_start = max(0, start)\n     f_end = min(f_len, end)\n     w_start = f_start - start\n     w_end = w_start + (f_end - f_start)\n     When the window extends below DC (start < 0) or above Nyquist (end > f_len), the frequency slice is clipped to [f_start:f_end], and xfrequencies is sliced [w_start:w_end] to match the usable portion, with out-of-band frequencies padded with zeros.\n   - If the window lies completely outside the available data (e.g. f0 > Nyquist), f_end <= f_start, leaving the windowed array all zeros without any exception or shape mismatch.\n\n2. Test Coverage Added:\n   - Added test_qseries_bounds_outside_nyquist in test/test_qtransform.py explicitly verifying that choosing a frequency above Nyquist clips cleanly without error.\n   - Added test_qseries_odd_length_input and test_qtransform_odd_length_series testing odd-length TimeSeries (lengths 1023, 1025, 2047, 2049) across raw and interpolated transforms.\n\n3. Verification:\n   - pytest test/test_qtransform.py: 7/7 tests passed in 1.04s.\n   - flake8 --select=F401,E501: 0 errors (all lines <= 79 characters).\n   - ruff check on changed lines: 0 errors.\n   - Pushed to origin/pr-fix-filter-qtransform (commit 4d3756a7b).",
+        "createdAt": "2026-10-09T18:49:07Z"
+      }
+    ]
   }
 ]
