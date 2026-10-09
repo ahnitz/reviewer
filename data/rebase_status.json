@@ -1,84 +1,84 @@
 {
-  "last_check": "2026-10-09T10:17:24.958146",
+  "last_check": "2026-10-09T10:32:33.083199",
   "upstream_head": "874842a2c0efd33d35f99b34f26b8e3a26d2990a",
   "branches": {
     "pr-fix-core-numpy2-optparse": {
       "status": "CONFLICT",
       "branch": "pr-fix-core-numpy2-optparse",
       "error": "fatal: 'pr-fix-core-numpy2-optparse' is already used by worktree at '/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr1a'",
-      "timestamp": "2026-10-09T10:17:25.004947"
+      "timestamp": "2026-10-09T10:32:33.107386"
     },
     "pr-fix-io-dictarray-indexing": {
       "status": "CONFLICT",
       "branch": "pr-fix-io-dictarray-indexing",
-      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.023050"
+      "error": "fatal: 'pr-fix-io-dictarray-indexing' is already used by worktree at '/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr'",
+      "timestamp": "2026-10-09T10:32:33.113011"
     },
     "pr-fix-events-numpy2-zerolag": {
       "status": "CONFLICT",
       "branch": "pr-fix-events-numpy2-zerolag",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.047937"
+      "timestamp": "2026-10-09T10:32:33.119605"
     },
     "pr-perf-waveform-compress": {
       "status": "CONFLICT",
       "branch": "pr-perf-waveform-compress",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.068725"
+      "timestamp": "2026-10-09T10:32:33.126609"
     },
     "pr-feat-vetoes-chisq-slicing": {
       "status": "CONFLICT",
       "branch": "pr-feat-vetoes-chisq-slicing",
-      "error": "fatal: 'pr-feat-vetoes-chisq-slicing' is already used by worktree at '/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr'",
-      "timestamp": "2026-10-09T10:17:25.094348"
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:32:33.133053"
     },
     "pr-feat-events-eventmgr-multi": {
       "status": "CONFLICT",
       "branch": "pr-feat-events-eventmgr-multi",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.114824"
+      "timestamp": "2026-10-09T10:32:33.141159"
     },
     "pr-feat-filter-dynamic-snr-renorm": {
       "status": "CONFLICT",
       "branch": "pr-feat-filter-dynamic-snr-renorm",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.137277"
+      "timestamp": "2026-10-09T10:32:33.147935"
     },
     "pr-feat-inject-injfilter-optimal-snr": {
       "status": "CONFLICT",
       "branch": "pr-feat-inject-injfilter-optimal-snr",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.159522"
+      "timestamp": "2026-10-09T10:32:33.154241"
     },
     "pr-feat-psd-robust-estimators": {
       "status": "CONFLICT",
       "branch": "pr-feat-psd-robust-estimators",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.179576"
+      "timestamp": "2026-10-09T10:32:33.160697"
     },
     "pr-feat-strain-regularized-inpainting": {
       "status": "CONFLICT",
       "branch": "pr-feat-strain-regularized-inpainting",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.202684"
+      "timestamp": "2026-10-09T10:32:33.167679"
     },
     "pr-5392": {
       "status": "CONFLICT",
       "branch": "pr-5392",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.227441"
+      "timestamp": "2026-10-09T10:32:33.174507"
     },
     "pr-5438": {
       "status": "CONFLICT",
       "branch": "pr-5438",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.249867"
+      "timestamp": "2026-10-09T10:32:33.180484"
     },
     "pr-5457": {
       "status": "CONFLICT",
       "branch": "pr-5457",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.269786"
+      "timestamp": "2026-10-09T10:32:33.187382"
     },
     "+ pr-perf-waveform-compress": {
       "status": "UP_TO_DATE",
@@ -91,21 +91,21 @@
       "status": "CONFLICT",
       "branch": "pr-feat-frame-gwosc-hdf",
       "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-      "timestamp": "2026-10-09T10:17:25.292273"
+      "timestamp": "2026-10-09T10:32:33.194959"
     },
     "+ pr-fix-core-numpy2-optparse": {
       "status": "UP_TO_DATE",
       "commit_sha": "+ pr-fix-core-numpy2-optparse",
       "ahead": 0,
       "behind": 0,
-      "last_verified": "2026-10-09T10:17:25.304723"
+      "last_verified": "2026-10-09T10:32:33.196909"
     },
     "+ pr-fix-io-dictarray-indexing": {
       "status": "UP_TO_DATE",
       "commit_sha": "+ pr-fix-io-dictarray-indexing",
       "ahead": 0,
       "behind": 0,
-      "last_verified": "2026-10-09T10:13:22.905008"
+      "last_verified": "2026-10-09T10:32:33.201283"
     },
     "+ pr-fix-events-numpy2-zerolag": {
       "status": "UP_TO_DATE",
@@ -119,7 +119,14 @@
       "commit_sha": "+ pr-feat-vetoes-chisq-slicing",
       "ahead": 0,
       "behind": 0,
-      "last_verified": "2026-10-09T10:17:25.297976"
+      "last_verified": "2026-10-09T10:30:32.407781"
+    },
+    "pr-fix-filter-qtransform": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "c6c58c3144ca3bcdb0045de0744502017cf5f37c",
+      "ahead": 1,
+      "behind": 0,
+      "last_verified": "2026-10-09T10:32:33.199567"
     }
   },
   "upstream_remote": "upstream",

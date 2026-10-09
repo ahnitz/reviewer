@@ -34,7 +34,8 @@
       "PR-1I": "pr-feat-psd-robust-estimators",
       "PR-1J": "pr-feat-strain-regularized-inpainting",
       "PR-TEST-TRACK": "pr-feat-strain-regularized-inpainting",
-      "PR-1K": "pr-feat-frame-gwosc-hdf"
+      "PR-1K": "pr-feat-frame-gwosc-hdf",
+      "PR-1L": "pr-fix-filter-qtransform"
     },
     "user_requested_branches": [
       {
