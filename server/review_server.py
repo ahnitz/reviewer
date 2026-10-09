@@ -16,6 +16,18 @@ import re
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
+if SERVER_DIR not in sys.path:
+    sys.path.insert(0, SERVER_DIR)
+
+try:
+    from rationale_catalog import match_curated_hunk, synthesize_hunk_rationale
+except ImportError:
+    try:
+        from server.rationale_catalog import match_curated_hunk, synthesize_hunk_rationale
+    except ImportError:
+        def match_curated_hunk(*args, **kwargs): return None
+        def synthesize_hunk_rationale(*args, **kwargs):
+            return {"shortSummary": "Implementation update", "rationale": "Code refinement targeting upstream master.", "alternatives": "Evaluated against requirements."}
 
 def find_config_path(config_path=None):
     if config_path and os.path.exists(config_path):
@@ -222,21 +234,33 @@ def get_live_pr_hunks(branch_or_id):
     p_sha = subprocess.run(cmd_sha, cwd=REPO_DIR, capture_output=True, text=True)
     commit_sha = p_sha.stdout.strip() if p_sha.returncode == 0 else ""
 
-    p_mb = subprocess.run(["git", "merge-base", f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}", branch], cwd=REPO_DIR, capture_output=True, text=True)
+    # 1. Resolve merge base with current upstream master
+    upstream_ref = f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}"
+    p_mb = subprocess.run(["git", "merge-base", upstream_ref, branch], cwd=REPO_DIR, capture_output=True, text=True)
     if p_mb.returncode != 0 or not p_mb.stdout.strip():
         p_mb = subprocess.run(["git", "merge-base", "upstream/master", branch], cwd=REPO_DIR, capture_output=True, text=True)
+        upstream_ref = "upstream/master"
     if p_mb.returncode != 0 or not p_mb.stdout.strip():
         p_mb = subprocess.run(["git", "merge-base", "master", branch], cwd=REPO_DIR, capture_output=True, text=True)
+        upstream_ref = "master"
     base_commit = p_mb.stdout.strip() if p_mb.returncode == 0 and p_mb.stdout.strip() else MERGE_BASE
 
-    cmd_stat = ["git", "diff", "--shortstat", f"{base_commit}..{branch}"]
+    # True Pull Request diff: triple-dot diff against upstream master (diff from merge-base to branch)
+    diff_target = f"{upstream_ref}...{branch}"
+    diff_cmd_str = f"git diff {upstream_ref}...{branch}"
+
+    cmd_stat = ["git", "diff", "--shortstat", diff_target]
     p_stat = subprocess.run(cmd_stat, cwd=REPO_DIR, capture_output=True, text=True)
     diff_stat = p_stat.stdout.strip() if p_stat.returncode == 0 else ""
 
-    cmd_diff = ["git", "diff", "-U3", f"{base_commit}..{branch}"]
+    cmd_diff = ["git", "diff", "-U3", diff_target]
     p_diff = subprocess.run(cmd_diff, cwd=REPO_DIR, capture_output=True, text=True)
     if p_diff.returncode != 0:
-        return {"status": "error", "message": f"Failed running git diff: {p_diff.stderr}"}
+        # Fallback to double-dot against resolved base_commit if triple-dot fails
+        cmd_diff = ["git", "diff", "-U3", f"{base_commit}..{branch}"]
+        p_diff = subprocess.run(cmd_diff, cwd=REPO_DIR, capture_output=True, text=True)
+        if p_diff.returncode != 0:
+            return {"status": "error", "message": f"Failed running git diff: {p_diff.stderr}"}
 
     diff_text = p_diff.stdout
     file_blocks = re.split(r'\ndiff --git a/', '\n' + diff_text)
@@ -245,31 +269,33 @@ def get_live_pr_hunks(branch_or_id):
     for block in file_blocks:
         if not block.strip():
             continue
-        lines = block.splitlines()
+        lines = [l for l in block.splitlines() if l.strip()]
+        if not lines:
+            continue
         first_line = lines[0]
         file_name = first_line.split(' b/')[0] if ' b/' in first_line else first_line.split()[0]
-        
-        is_new = any('new file mode' in l for l in lines[:5])
-        is_test = file_name.startswith('test/') or 'test_' in file_name
         
         # Split by @@ hunk headers
         hunk_splits = re.split(r'(@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@.*)', block)
         if len(hunk_splits) <= 1:
             body_lines = [l for l in lines[1:] if not (l.startswith('index ') or l.startswith('--- ') or l.startswith('+++ ') or l.startswith('new file mode'))]
             snippet = '\n'.join(body_lines[:35])
+            meta = match_curated_hunk(pr_id, file_name, 1, len(body_lines), body_lines)
+            if not meta:
+                meta = synthesize_hunk_rationale(file_name, 1, len(body_lines), body_lines, REPO_DIR)
             hunks.append({
                 "file": file_name,
                 "startLine": 1,
                 "endLine": len(body_lines),
                 "lines": f"lines 1-{len(body_lines)}",
-                "shortSummary": f"File modification: {file_name}",
+                "shortSummary": meta.get("shortSummary") or f"File modification: {file_name}",
                 "diffSnippet": snippet,
                 "githubUrl": f"https://github.com/{MAINTAINER_FORK}/blob/{commit_sha or branch}/{file_name}",
                 "localFileUrl": f"file://{REPO_DIR}/{file_name}",
                 "vscodeUrl": f"vscode://file/{REPO_DIR}/{file_name}:1",
                 "filePathLine": f"{file_name}:1",
-                "rationale": f"Derived from branch {branch}.",
-                "alternatives": f"Targeting upstream merge base ({base_commit[:9]})."
+                "rationale": meta.get("rationale") or f"Derived from branch {branch}.",
+                "alternatives": meta.get("alternatives") or f"Targeting upstream master ({base_commit[:9]})."
             })
             continue
 
@@ -283,7 +309,6 @@ def get_live_pr_hunks(branch_or_id):
             start_line = int(m.group(3))
             count = int(m.group(4) or 1)
             end_line = start_line + max(count - 1, 0)
-            func_ctx = m.group(5).strip()
             
             body_lines = [l for l in (header + '\n' + body).splitlines() if not (l.startswith('index ') or l.startswith('--- ') or l.startswith('+++ ') or l.startswith('new file mode'))]
             snippet = '\n'.join(body_lines[:40])
@@ -297,21 +322,13 @@ def get_live_pr_hunks(branch_or_id):
             vscode_url = f"vscode://file/{REPO_DIR}/{file_name}:{start_line}"
             path_line = f"{file_name}:{start_line}"
 
-            if is_new and is_test:
-                summary = f"New test suite: {file_name}"
-                rationale = "Created in response to maintainer review feedback to comprehensively test invariant guarantees."
-            elif is_test:
-                summary = f"Unit test verification ({file_name})"
-                rationale = "Extended unit test assertions to validate fixes requested in review."
-            elif is_new:
-                summary = f"New module: {file_name}"
-                rationale = "Added module implementing required functionality."
-            elif func_ctx:
-                summary = f"{func_ctx}"
-                rationale = f"Implementation update around {func_ctx}."
-            else:
-                summary = "Core implementation update"
-                rationale = "Implementation refactoring and fixes applied to topic branch."
+            meta = match_curated_hunk(pr_id, file_name, start_line, end_line, body_lines)
+            if not meta:
+                meta = synthesize_hunk_rationale(file_name, start_line, end_line, body_lines, REPO_DIR)
+
+            summary = meta.get("shortSummary") or f"Logic update in {file_name}"
+            rationale = meta.get("rationale") or f"Implementation refinement in {file_name} targeting upstream master."
+            alternatives = meta.get("alternatives") or f"Targeting upstream master ({base_commit[:9]})."
 
             hunks.append({
                 "file": file_name,
@@ -325,7 +342,7 @@ def get_live_pr_hunks(branch_or_id):
                 "vscodeUrl": vscode_url,
                 "filePathLine": path_line,
                 "rationale": rationale,
-                "alternatives": f"Targeting upstream merge base ({base_commit[:9]})."
+                "alternatives": alternatives
             })
 
     return {
@@ -333,9 +350,13 @@ def get_live_pr_hunks(branch_or_id):
         "prId": pr_id.upper(),
         "branch": branch,
         "commitSha": commit_sha,
+        "baseCommit": base_commit,
+        "upstreamRef": upstream_ref,
+        "diffCmd": diff_cmd_str,
         "diffStat": diff_stat,
         "hunks": hunks
     }
+
 
 class ReviewRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
