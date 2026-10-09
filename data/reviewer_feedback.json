@@ -804,5 +804,135 @@
         "createdAt": "2026-10-09T15:02:00Z"
       }
     ]
+  },
+  {
+    "id": "c_1791558736_6e051c",
+    "prId": "PR-1A",
+    "hunkIndex": -1,
+    "file": "PR-level discussion",
+    "lines": "General",
+    "commentText": "The test should probably be something a bit shorter. This is just really extending the int flexibility, so I think one could condense the testing on this to about half the tests with most of the coverage.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T15:12:16Z",
+    "timestamp": 1791558736.5485694,
+    "replies": [
+      {
+        "id": "r_1791558736_5da8",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1A (PR-level discussion). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T15:12:16Z"
+      },
+      {
+        "id": "r_1791558736_condense_optparse_tests",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit ea49b9eab: Condensed `test/test_optparse.py` by 58% (from 307 lines down to 129 lines). Consolidated repetitive parser setups into 6 clean, focused tests covering arbitrary-precision integers (>=2^53), scientific notation/float strings, fractional rejection, multi-detector option actions, positive/nonnegative int, and configparser fallback. All tests pass.",
+        "createdAt": "2026-10-09T15:18:00Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791558832_ce5d10",
+    "prId": "PR-1H",
+    "hunkIndex": 0,
+    "file": "pycbc/inject/injfilterrejector.py",
+    "lines": "lines 98-108",
+    "commentText": "I don't think 'give the same value for all detectors' is helpful. Just have the first sentence.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T15:13:52Z",
+    "timestamp": 1791558832.3555176,
+    "replies": [
+      {
+        "id": "r_1791558834_5e4b",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1H (pycbc/inject/injfilterrejector.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T15:13:54Z"
+      },
+      {
+        "id": "r_1791558832_first_sentence",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 33b72ae47: Truncated _injfilterer_optsnr_help to the first sentence only ('Do not analyze injections whose optimal SNR is below this value in every detector.'), removing the redundant second sentence.",
+        "createdAt": "2026-10-09T15:20:00Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791558890_a5a4dc",
+    "prId": "PR-1H",
+    "hunkIndex": 4,
+    "file": "pycbc/inject/injfilterrejector.py",
+    "lines": "lines 196-210",
+    "commentText": "Were we missing these before? (we might have been). Does this resolve issues where someone chose not to set an option? I just wnat to check that this is the right fix. It very likely may be.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T15:14:50Z",
+    "timestamp": 1791558890.2828548,
+    "replies": [
+      {
+        "id": "r_1791558890_92e6",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1H (pycbc/inject/injfilterrejector.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T15:14:50Z"
+      },
+      {
+        "id": "r_1791558890_attribute_safety",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved: Yes, exactly. Previously, when none of the rejector options were provided or injection_file was falsy, __init__ returned early after setting only self.enabled = False. That left attributes like self.chirp_time_window, self.match_threshold, self.inj_trigger_window, and self.optimal_snr_threshold uninitialized on the instance, which caused subsequent attribute accesses on disabled instances to fail with AttributeError. Explicitly setting them to None in the disabled branch ensures complete, safe attribute consistency when an option is omitted.",
+        "createdAt": "2026-10-09T15:20:00Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791558925_834d45",
+    "prId": "PR-1H",
+    "hunkIndex": 5,
+    "file": "pycbc/inject/injfilterrejector.py",
+    "lines": "lines 216-230",
+    "commentText": "Shouldn't it just be 'injection_optimal_snr' or is something else actually meant here?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T15:15:25Z",
+    "timestamp": 1791558925.749224,
+    "replies": [
+      {
+        "id": "r_1791558926_504a",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1H (pycbc/inject/injfilterrejector.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T15:15:26Z"
+      },
+      {
+        "id": "r_1791558925_alias_and_clarification",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commits 33b72ae47 & 8c2c43408: Added injection_optimal_snr = optimal_snr as an explicit method alias to align with the injection_optimal_snr terminology. Also clarified internal attribute naming: self.injection_tilde holds the frequency-series representation for sigma(), while self.injection_power is preserved for backward compatibility. All 4 unit tests pass.",
+        "createdAt": "2026-10-09T15:21:00Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791559017_eff647",
+    "prId": "PR-1H",
+    "hunkIndex": 10,
+    "file": "pycbc/inject/injfilterrejector.py",
+    "lines": "lines 292-319",
+    "commentText": "The first phrase is the only part that matters. The rest is  somewhat unclear. \n\nUse the offiical sigma claculation from pycbc, no? This seems to overcomplicate things and so could be reduced a lot. Make sure to test this fter that change.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T15:16:57Z",
+    "timestamp": 1791559017.2228,
+    "replies": [
+      {
+        "id": "r_1791559018_452c",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1H (pycbc/inject/injfilterrejector.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T15:16:58Z"
+      },
+      {
+        "id": "r_1791559017_use_sigma",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 8c2c43408: Replaced the custom 25-line bin-averaging loop with PyCBC's canonical pycbc.filter.sigma function (interpolating PSD if delta_f differs). Also simplified the docstring to the concise first sentence: 'Optimal SNR of a stored injection against psd.' All 4 unit tests in test/test_injfilterrejector.py pass 100%.",
+        "createdAt": "2026-10-09T15:21:00Z"
+      }
+    ]
   }
 ]
