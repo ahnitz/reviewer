@@ -1149,5 +1149,92 @@
         "createdAt": "2026-10-09T18:50:00Z"
       }
     ]
+  },
+  {
+    "id": "c_1791573430_7c4d0a",
+    "prId": "PR-1H",
+    "hunkIndex": -1,
+    "file": "PR-level discussion",
+    "lines": "General",
+    "commentText": "Ok, this should probably be possible to call from pycbc_inspiral. Is that the case already? \n\nThere shoudl be one test for each of the major injfilterejector features, but a straightforward test for each (e.g. check that it kept the right thing, or rejected the right thing).",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T19:17:10Z",
+    "timestamp": 1791573430.2917342,
+    "replies": [
+      {
+        "id": "r_1791573431_4c84",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1H (PR-level discussion). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T19:17:11Z"
+      },
+      {
+        "id": "r_1791573979_4d0a",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 330b9e18e:\n1. pycbc_inspiral Integration:\n   - Added optimal SNR evaluation to InjFilterRejector.template_segment_checker: when --injection-filter-rejector-optimal-snr-threshold is set, each segment is checked against the threshold. If all injections in the segment have optimal SNR below threshold, template_segment_checker returns False and pycbc_inspiral skips filtering that segment.\n\n2. Comprehensive Feature Tests (test/test_injfilterrejector.py):\n   - test_chirp_time_rejection: Verifies template_segment_checker keeps templates with tau0 within window (tau_diff <= chirp_time_window -> True) and rejects templates with distant masses (tau_diff >> window -> False).\n   - test_match_threshold_rejection: Verifies template_segment_checker keeps waveforms with coarse match >= match_threshold (True) and rejects mismatching templates (False).\n   - test_trigger_window_rejection: Verifies find_indices_in_injection_intervals returns a boolean mask keeping triggers within the window of injection times and rejecting triggers outside.\n   - test_optimal_snr_threshold_rejection: Verifies template_segment_checker keeps segments when injection SNR >= threshold (True) and rejects when injection SNR < threshold (False).\n   - test_optimal_snr_calculation_and_alias: Verifies optimal_snr agrees with pycbc.filter.sigma within ~5% coarse band truncation and matches the injection_optimal_snr alias.\n   - test_disabled_rejector: Verifies disabled rejector permits all templates (True) and all triggers (slice(None)).\n\n3. Verification:\n   - pytest test/test_injfilterrejector.py: 6/6 passed in 4.48s.\n   - flake8 --select=E501,F401,F841: 0 errors (all lines <= 79 characters).\n   - Pushed to origin/pr-feat-inject-injfilter-optimal-snr (commit 330b9e18e).",
+        "createdAt": "2026-10-09T19:26:19Z"
+      }
+    ],
+    "resolution": "Enabled optimal SNR cut invocation from pycbc_inspiral via template_segment_checker; added comprehensive unit tests for all 4 major InjFilterRejector features (chirp time, match threshold, trigger window, optimal SNR).",
+    "resolvedAt": "2026-10-09T19:26:19Z",
+    "resolvedCommit": "330b9e18e"
+  },
+  {
+    "id": "c_1791573531_88ddb4",
+    "prId": "PR-1H",
+    "hunkIndex": 11,
+    "file": "pycbc/inject/injfilterrejector.py",
+    "lines": "lines 367-389",
+    "commentText": "Why do we make a copy? This is not very clear",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T19:18:51Z",
+    "timestamp": 1791573531.4862375,
+    "replies": [
+      {
+        "id": "r_1791573531_cd4d",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1H (pycbc/inject/injfilterrejector.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T19:18:51Z"
+      },
+      {
+        "id": "r_1791573979_ddb4",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 330b9e18e:\n- The conditional  only when  was confusing and unnecessary.\n- Removed the special case entirely: generate_short_inj_from_inj now processes the input waveform uniformly without redundant copying.",
+        "createdAt": "2026-10-09T19:26:19Z"
+      }
+    ],
+    "resolution": "Removed confusing inj_waveform.copy() special case in generate_short_inj_from_inj; waveform handling is now uniform.",
+    "resolvedAt": "2026-10-09T19:26:19Z",
+    "resolvedCommit": "330b9e18e"
+  },
+  {
+    "id": "c_1791573598_049892",
+    "prId": "PR-1H",
+    "hunkIndex": 12,
+    "file": "pycbc/inject/injfilterrejector.py",
+    "lines": "lines 394-414",
+    "commentText": "What is injection tilde and injection power and why do we need both? Don't we jsut need the coarse injection and the psd for our calculation adn that is it. Both of which should already largely exist here without much new code, no?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T19:19:58Z",
+    "timestamp": 1791573598.8610566,
+    "replies": [
+      {
+        "id": "r_1791573600_f703",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1H (pycbc/inject/injfilterrejector.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-09T19:20:00Z"
+      },
+      {
+        "id": "r_1791573979_9892",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 330b9e18e:\n1. Eliminated Redundant Dictionaries:\n   - Removed self.injection_power and self.injection_tilde from InjFilterRejector.__init__ and generate_short_inj_from_inj.\n   - The rejector now stores only a single dictionary: self.short_injections (the coarse FrequencySeries at delta_f = coarsematch_deltaf).\n\n2. Direct Calculation via pycbc.filter.sigma:\n   - optimal_snr(simulation_id, psd) now uses self.short_injections[simulation_id] directly, interpolating the input PSD to ht.delta_f, matching length and precision, and evaluating float(sigma(ht, psd=psd, low_frequency_cutoff=self.f_lower)).\n   - This eliminates all duplicate storage and ensures full mathematical consistency across the codebase.",
+        "createdAt": "2026-10-09T19:26:19Z"
+      }
+    ],
+    "resolution": "Removed redundant injection_power and injection_tilde dicts; optimal SNR is computed directly from short_injections and PSD using pycbc.filter.sigma.",
+    "resolvedAt": "2026-10-09T19:26:19Z",
+    "resolvedCommit": "330b9e18e"
   }
 ]
