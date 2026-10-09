@@ -2,7 +2,9 @@
 
 Welcome, AI Agent. This repository (**Reviewer**) is a production-grade, zero-dependency suite for **high-velocity, dual-direction code review between human maintainers and autonomous AI agents**.
 
-When a user points you to this repository, your mission is to start up, operate, and maintain the review dashboard, continuously synchronize the user's PR branches against upstream, and autonomously triage, address, and reply to review comments.
+> 📖 **AI Setup Runbook**: For explicit, phase-by-phase instructions on how to set up the multi-agent workflow to replicate the exact behavior of this system, read [`MULTI_AGENT_WORKFLOW.md`](MULTI_AGENT_WORKFLOW.md).
+
+When a user points you to this repository, your mission is to start up, operate, and maintain the review dashboard, continuously synchronize the user's PR branches against upstream, monitor development branch evolution across waves, and autonomously triage, address, and reply to review comments.
 
 ---
 
@@ -15,19 +17,22 @@ flowchart TD
     end
 
     subgraph Reviewer["Reviewer Core Suite"]
-        SERVER["Review Server Daemon\n(server/review_server.py)"]
+        SERVER["Review Server Daemon\n(server/review_server.py)\nPort 8080"]
         LEDGER[("Feedback Ledger\ndata/reviewer_feedback.json")]
+        ROADMAP[("Wave Roadmap\ndata/wave_roadmap.json")]
         REBASE["Rebase Monitor Daemon\n(sentinel/rebase_monitor.py)"]
         RESPONDER["Auto-Responder Daemon\n(sentinel/auto_responder.py)"]
+        DEV_RECONCILER["Dev Reconciler Sentinel\n(sentinel/dev_reconciler.py)"]
     end
 
     subgraph Git["Target Repository"]
         LOCAL_GIT["Topic Branches (pr-*)\nLocal Working Tree"]
+        DEV_BRANCH["Dev Branch (firinspiral3-multidet-asym)\nLive Feature Work"]
         REMOTE_FORK["Maintainer Fork (origin)\nForce-with-lease"]
         UPSTREAM["Upstream Master (upstream)\ngwastro/pycbc:master"]
     end
 
-    UI -- "1. Submits inline hunk comment" --> SERVER
+    UI -- "1. Submits inline hunk / PR comment" --> SERVER
     SERVER -- "2. Appends comment (PENDING_AGENT_ACTION)" --> LEDGER
     LEDGER -- "3. Auto-detected (<=2s)" --> RESPONDER
     RESPONDER -- "4. Marks IN_PROGRESS & notifies agent" --> LEDGER
@@ -35,15 +40,22 @@ flowchart TD
     LOCAL_GIT -- "6. Force-pushes updated branch" --> REMOTE_FORK
     LOCAL_GIT -- "7. Posts resolution reply with commit SHA" --> SERVER
     SERVER -- "8. Marks comment ADDRESSED" --> LEDGER
-    REBASE -- "9. Monitors upstream & auto-rebases branches" --> UPSTREAM
+
+    DEV_BRANCH -- "A. New commits on dev" --> DEV_RECONCILER
+    DEV_RECONCILER -- "B. Absorbs or synthesizes PRs" --> ROADMAP
+    ROADMAP -- "C. Serves /api/roadmap" --> SERVER
+
+    REBASE -- "D. Monitors upstream & auto-rebases" --> UPSTREAM
+    REBASE -- "E. Rebases & tests branches" --> LOCAL_GIT
 ```
 
-### Key Capabilities You Control:
-1. **Dynamic Hunk Extraction & 100% Coverage**: All code changes, new files, and unit test suites across topic branches appear as reviewable, commentable cards.
-2. **Quad-Action Navigation**: Every hunk has direct links to GitHub at line numbers, local `file://`, `vscode://` IDE links, and `copy :line`.
-3. **Continuous Upstream Rebase Tracking**: Keeps topic branches rebased with 0 commits behind `upstream/master`, runs isolated tests, and force-pushes to fork.
-4. **Automated Feedback Loop**: Maintainer comments submitted in the dashboard trigger immediate automated triage, code refactoring, test verification, and resolution replies.
-5. **Codified Engineering Standards**: 15 governing rules (`RULES.md`) inferred from maintainer review feedback.
+### Key Capabilities & Invariants You Control:
+1. **Strict Maintainer Remote Ownership (MANDATORY)**: The system ONLY tracks branches pushed to the user's personal GitHub fork (`origin -> ahnitz/pycbc`). All unpushed or foreign branches are strictly rejected.
+2. **Dynamic Hunk Extraction & 100% Coverage**: All code changes, new files, and unit test suites across topic branches appear as reviewable, commentable cards.
+3. **Multi-Wave Roadmap Evolution**: Automatically ingests dev branch commits and maps them into active PRs or synthesizes future wave PR candidates (Waves 1 to 4).
+4. **Continuous Upstream Rebase Tracking**: Keeps topic branches rebased with 0 commits behind `upstream/master`, runs isolated tests, and force-pushes to fork.
+5. **Automated Feedback Loop**: Maintainer comments submitted in the dashboard trigger immediate automated triage, code refactoring, test verification, and resolution replies.
+6. **Codified Engineering Standards**: 15 governing rules (`RULES.md`) inferred from maintainer review feedback.
 
 ---
 

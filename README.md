@@ -1,8 +1,10 @@
 # Reviewer: Dual-Direction PR Review & Upstream Sync Suite
 
-A production-grade, zero-dependency platform for **high-velocity, dual-direction code review, continuous upstream rebase tracking, and automated feedback triage between human maintainers and autonomous AI agents**.
+A production-grade, zero-dependency platform for **high-velocity, dual-direction code review, continuous upstream rebase tracking, multi-wave PR decomposition, and automated feedback triage between human maintainers and autonomous AI agents**.
 
-> **Intended Use**: Point your AI agent (or team) to this repository to start up an interactive review dashboard, monitor upstream branches, and autonomously address maintainer feedback across any set of Pull Requests or topic branches.
+> **AI Setup Runbook**: For explicit, step-by-step instructions on how an AI agent should configure and operate this multi-agent workflow to replicate the exact behavior of this system, see [`MULTI_AGENT_WORKFLOW.md`](MULTI_AGENT_WORKFLOW.md).
+
+> **Intended Use**: Point your AI agent (or team) to this repository to start up an interactive review dashboard, monitor upstream branches, absorb development branch commits into future wave PR blueprints, and autonomously address maintainer feedback across any set of Pull Requests or topic branches.
 
 ---
 
@@ -15,19 +17,22 @@ flowchart TD
     end
 
     subgraph Reviewer["Reviewer Core Suite"]
-        SERVER["Review Server Daemon\n(server/review_server.py)"]
+        SERVER["Review Server Daemon\n(server/review_server.py)\nPort 8080"]
         LEDGER[("Feedback Ledger\ndata/reviewer_feedback.json")]
+        ROADMAP[("Wave Roadmap\ndata/wave_roadmap.json")]
         REBASE["Rebase Monitor Daemon\n(sentinel/rebase_monitor.py)"]
         RESPONDER["Auto-Responder Daemon\n(sentinel/auto_responder.py)"]
+        DEV_RECONCILER["Dev Reconciler Sentinel\n(sentinel/dev_reconciler.py)"]
     end
 
     subgraph Git["Target Repository"]
         LOCAL_GIT["Topic Branches (pr-*)\nLocal Working Tree"]
+        DEV_BRANCH["Dev Branch (firinspiral3-multidet-asym)\nLive Feature Work"]
         REMOTE_FORK["Maintainer Fork (origin)\nForce-with-lease"]
         UPSTREAM["Upstream Master (upstream)\ngwastro/pycbc:master"]
     end
 
-    UI -- "1. Submits inline hunk comment" --> SERVER
+    UI -- "1. Submits inline hunk / PR comment" --> SERVER
     SERVER -- "2. Appends comment (PENDING_AGENT_ACTION)" --> LEDGER
     LEDGER -- "3. Auto-detected (<=2s)" --> RESPONDER
     RESPONDER -- "4. Marks IN_PROGRESS & notifies agent" --> LEDGER
@@ -35,32 +40,44 @@ flowchart TD
     LOCAL_GIT -- "6. Force-pushes updated branch" --> REMOTE_FORK
     LOCAL_GIT -- "7. Posts resolution reply with commit SHA" --> SERVER
     SERVER -- "8. Marks comment ADDRESSED" --> LEDGER
-    REBASE -- "9. Monitors upstream & auto-rebases branches" --> UPSTREAM
+
+    DEV_BRANCH -- "A. New commits on dev" --> DEV_RECONCILER
+    DEV_RECONCILER -- "B. Absorbs or synthesizes PRs" --> ROADMAP
+    ROADMAP -- "C. Serves /api/roadmap" --> SERVER
+
+    REBASE -- "D. Monitors upstream & auto-rebases" --> UPSTREAM
+    REBASE -- "E. Rebases & tests branches" --> LOCAL_GIT
 ```
 
 ---
 
 ## Key Capabilities
 
-1. **100% Code & Test Review Coverage (Zero Omission)**:
+1. **Strict Maintainer Remote Scope (Mandatory Invariant)**:
+   - The review system strictly tracks branches pushed to the user's **own GitHub fork (`origin -> ahnitz/pycbc`)**.
+   - Any request to track unpushed local branches or foreign upstream branches is cleanly rejected.
+2. **Multi-Wave PR Roadmap & Dev Branch Evolution**:
+   - Decomposes massive diffs into ordered dependency waves (Wave 1 to Wave 4).
+   - Automatically monitors the developer's live feature branch, absorbing new commits into existing PRs or synthesizing new standalone candidates (e.g. `PR-2F`).
+3. **100% Code & Test Review Coverage (Zero Omission)**:
    - Dynamic git diff ingestion against the true upstream merge base.
    - Newly created unit test suites, helper modules, and configuration changes automatically appear as distinct, commentable hunk cards.
-2. **Quad-Action Code & Context Navigation**:
+4. **Quad-Action Code & Context Navigation**:
    - **GitHub Link**: Jumps to the exact lines (`#L10-L40`) on the remote fork.
    - **Local File Link**: Directly inspects the local file in the browser (`file://...`).
    - **Open in IDE**: Deep-links directly to the file and cursor line in editor (`vscode://...`).
    - **Copy :line**: 1-click clipboard copy (`path/to/file.py:42`) for instant terminal jump.
-3. **Continuous Upstream Rebase Tracking**:
+5. **Continuous Upstream Rebase Tracking**:
    - Background daemon (`sentinel/rebase_monitor.py`) polls upstream (e.g. `gwastro/pycbc:master`).
    - Automatically rebases topic branches when upstream moves, runs isolated verification tests with `PYTHONPATH=.`, and force-pushes clean branches to fork.
    - Safe conflict abort (`git rebase --abort`) preserving working tree integrity.
-4. **Automated Feedback Loop & In-Place Updates**:
+6. **Automated Feedback Loop & In-Place Updates**:
    - Maintainer comments trigger immediate acknowledgment (`IN_PROGRESS`) and agent triage.
    - Once resolved and tested, replies with commit SHA and rationale are posted back.
    - Dashboard auto-polls every 3s—threads, status badges, and commit links refresh live without full page reload.
-5. **Codified Engineering Standards**:
+7. **Codified Engineering Standards**:
    - 15 governing rules ([`RULES.md`](RULES.md)) inferred from maintainer review comments, establishing standards for numerical precision, mutation semantics, NumPy 2 compatibility, upstream PR deduplication, and testing.
-6. **Zero Dependencies & Fully Portable**:
+8. **Zero Dependencies & Fully Portable**:
    - Standard Python 3 runtime (`http.server`, `urllib`, `subprocess`, `json`). No npm, Node.js, or heavyweight web frameworks required.
 
 ---

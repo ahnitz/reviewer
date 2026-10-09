@@ -99,8 +99,17 @@ TEAMWORK_FEEDBACK_FILE = os.path.join(ROOT_DIR, ".agents", "teamwork", "REVIEWER
 
 UPSTREAM_REMOTE = CFG.get("project", {}).get("upstream_remote", "upstream")
 UPSTREAM_BRANCH = CFG.get("project", {}).get("upstream_branch", "master")
+ORIGIN_REMOTE = CFG.get("project", {}).get("origin_remote", "origin")
 MERGE_BASE = CFG.get("project", {}).get("target_merge_base", "f6eaed241")
 MAINTAINER_FORK = CFG.get("project", {}).get("maintainer_fork", "ahnitz/pycbc")
+
+def is_pushed_to_origin(branch):
+    """Verifies that a branch exists on the maintainer's own GitHub remote (origin)."""
+    p = subprocess.run(["git", "rev-parse", "--verify", f"{ORIGIN_REMOTE}/{branch}"], cwd=REPO_DIR, capture_output=True, text=True)
+    if p.returncode == 0:
+        return True
+    p2 = subprocess.run(["git", "ls-remote", "--heads", ORIGIN_REMOTE, branch], cwd=REPO_DIR, capture_output=True, text=True)
+    return p2.returncode == 0 and bool(p2.stdout.strip())
 
 os.makedirs(os.path.dirname(FEEDBACK_FILE), exist_ok=True)
 if os.path.dirname(TEAMWORK_FEEDBACK_FILE):
@@ -141,6 +150,7 @@ DEFAULT_PR_BRANCH_MAP = {
 }
 
 PR_BRANCH_MAP = dict(CFG.get("project", {}).get("branch_map", DEFAULT_PR_BRANCH_MAP))
+USER_REQUESTED_BRANCHES = list(CFG.get("project", {}).get("user_requested_branches", []))
 
 def resolve_branch(pr_id):
     if not pr_id:
@@ -148,11 +158,18 @@ def resolve_branch(pr_id):
     # 1. Exact match in configured PR_BRANCH_MAP
     if pr_id.upper() in PR_BRANCH_MAP:
         return PR_BRANCH_MAP[pr_id.upper()]
-    # 2. Check if pr_id matches a local git branch directly
+    # 2. Check in USER_REQUESTED_BRANCHES
+    for ub in USER_REQUESTED_BRANCHES:
+        if isinstance(ub, dict):
+            if ub.get("prId", "").upper() == pr_id.upper():
+                return ub.get("branch")
+        elif str(ub).upper() == pr_id.upper():
+            return str(ub)
+    # 3. Check if pr_id matches a local git branch directly
     p = subprocess.run(["git", "rev-parse", "--verify", pr_id], cwd=REPO_DIR, capture_output=True, text=True)
     if p.returncode == 0:
         return pr_id
-    # 3. Check common naming variations
+    # 4. Check common naming variations
     for candidate in [pr_id.lower(), f"pr-{pr_id.lower()}", f"pr_{pr_id.lower()}", f"pr/{pr_id.lower()}"]:
         p = subprocess.run(["git", "rev-parse", "--verify", candidate], cwd=REPO_DIR, capture_output=True, text=True)
         if p.returncode == 0:
@@ -169,6 +186,17 @@ def find_rebase_status_file():
         if os.path.exists(c):
             return os.path.abspath(c)
     return os.path.abspath(os.path.join(SERVER_DIR, "..", "data", "rebase_status.json"))
+
+def find_roadmap_file():
+    candidates = [
+        os.path.join(SERVER_DIR, "..", "data", "wave_roadmap.json"),
+        os.path.join(ROOT_DIR, "agent-dual-review", "data", "wave_roadmap.json"),
+        os.path.join(ROOT_DIR, "data", "wave_roadmap.json"),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return os.path.abspath(c)
+    return os.path.abspath(os.path.join(SERVER_DIR, "..", "data", "wave_roadmap.json"))
 
 def find_rebase_script():
     candidates = [
@@ -366,31 +394,81 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
         if self.path == "/api/prs" or self.path.startswith("/api/prs?"):
             results = {}
             tracked = dict(PR_BRANCH_MAP)
-            patterns = CFG.get("project", {}).get("branch_patterns", ["pr-*", "feat/*", "fix/*", "perf/*"])
-            for pat in patterns:
-                p_br = subprocess.run(["git", "branch", "--list", pat], cwd=REPO_DIR, capture_output=True, text=True)
-                if p_br.returncode == 0:
-                    for line in p_br.stdout.splitlines():
-                        b = line.strip().lstrip("*+ ").strip()
-                        if b and b not in tracked.values():
-                            key = b.upper().replace("/", "-")
-                            if not key.startswith("PR-"):
-                                key = f"PR-{key}"
-                            tracked[key] = b
+
+            # Include user-requested branches explicitly
+            for ub in USER_REQUESTED_BRANCHES:
+                if isinstance(ub, dict):
+                    pid = ub.get("prId") or ub.get("branch", "").upper().replace("/", "-")
+                    bname = ub.get("branch")
+                else:
+                    pid = str(ub).upper().replace("/", "-")
+                    bname = str(ub)
+                if not pid.startswith("PR-"):
+                    pid = f"PR-{pid}"
+                if bname and bname not in tracked.values():
+                    tracked[pid] = bname
+
+            # Include any synthesized candidates from wave_roadmap.json if marked as TRACKED
+            rm_file = find_roadmap_file()
+            if os.path.exists(rm_file):
+                try:
+                    with open(rm_file, "r", encoding="utf-8") as f:
+                        rm_data = json.load(f)
+                    for pid, pdata in rm_data.get("prs", {}).items():
+                        if pdata.get("status") in ("PUSHED_TO_ORIGIN", "ACTIVE", "TRACKED") and pdata.get("branch"):
+                            bname = pdata["branch"]
+                            if bname not in tracked.values():
+                                tracked[pid] = bname
+                except Exception:
+                    pass
 
             for pid, branch in tracked.items():
                 results[pid] = get_live_pr_hunks(branch)
             self._send_json({"status": "ok", "prs": results})
             return
 
+        if self.path == "/api/roadmap" or self.path.startswith("/api/roadmap?"):
+            rm_file = find_roadmap_file()
+            if os.path.exists(rm_file):
+                try:
+                    with open(rm_file, "r", encoding="utf-8") as f:
+                        rm_data = json.load(f)
+                    self._send_json({"status": "ok", "roadmap": rm_data})
+                    return
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, status=500)
+                    return
+            self._send_json({"status": "error", "message": "Roadmap not found"}, status=404)
+            return
+
+        if self.path == "/api/dev/status" or self.path.startswith("/api/dev/status?"):
+            dev_branch = CFG.get("project", {}).get("dev_branch", "firinspiral3-multidet-asym")
+            p_head = subprocess.run(["git", "rev-parse", dev_branch], cwd=REPO_DIR, capture_output=True, text=True)
+            head_sha = p_head.stdout.strip() if p_head.returncode == 0 else ""
+            p_log = subprocess.run(["git", "log", "-n", "5", "--oneline", dev_branch], cwd=REPO_DIR, capture_output=True, text=True)
+            recent_commits = p_log.stdout.strip().splitlines() if p_log.returncode == 0 else []
+            self._send_json({
+                "status": "ok",
+                "devBranch": dev_branch,
+                "headSha": head_sha,
+                "recentCommits": recent_commits,
+                "userTrackedCount": len(USER_REQUESTED_BRANCHES),
+                "userTrackedBranches": USER_REQUESTED_BRANCHES,
+                "activePRCount": len(PR_BRANCH_MAP)
+            })
+            return
+
         if self.path == "/api/branches" or self.path.startswith("/api/branches?"):
-            p_br = subprocess.run(["git", "branch", "--format=%(refname:short) %(objectname:short)"], cwd=REPO_DIR, capture_output=True, text=True)
+            # Restrict to branches pushed to maintainer's own GitHub account (origin)
+            p_br = subprocess.run(["git", "branch", "-r", "--list", f"{ORIGIN_REMOTE}/*", "--format=%(refname:short) %(objectname:short)"], cwd=REPO_DIR, capture_output=True, text=True)
             branches = []
             if p_br.returncode == 0:
                 for line in p_br.stdout.splitlines():
                     parts = line.strip().split()
                     if len(parts) >= 2:
-                        branches.append({"branch": parts[0], "sha": parts[1]})
+                        bname = parts[0].replace(f"{ORIGIN_REMOTE}/", "")
+                        if bname not in ("HEAD", "master", "main") and not bname.startswith("HEAD"):
+                            branches.append({"branch": bname, "sha": parts[1]})
             self._send_json({"status": "ok", "branches": branches})
             return
 
@@ -418,6 +496,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
+        global USER_REQUESTED_BRANCHES
         if self.path == "/api/rebase/sync":
             rebase_script = find_rebase_script()
             if rebase_script and os.path.exists(rebase_script):
@@ -505,6 +584,117 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                 self._send_json({"status": "ok", "message": "Reply saved"})
             else:
                 self._send_json({"status": "error", "message": "Comment ID not found"}, status=404)
+            return
+
+        if self.path == "/api/prs/track":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length)
+            try:
+                data = json.loads(body.decode("utf-8"))
+            except Exception as e:
+                self._send_json({"status": "error", "message": f"Invalid JSON: {e}"}, status=400)
+                return
+
+            branch = data.get("branch", "").strip()
+            if not branch:
+                self._send_json({"status": "error", "message": "Missing 'branch' parameter"}, status=400)
+                return
+
+            # Verify branch in git repository
+            p_check = subprocess.run(["git", "rev-parse", "--verify", branch], cwd=REPO_DIR, capture_output=True, text=True)
+            if p_check.returncode != 0:
+                self._send_json({"status": "error", "message": f"Branch '{branch}' not found in git repository ({REPO_DIR})"}, status=404)
+                return
+
+            # Strict Gate: Verify branch is pushed to user's own GitHub account (origin)
+            if not is_pushed_to_origin(branch):
+                if branch.startswith(f"{ORIGIN_REMOTE}/"):
+                    clean_b = branch[len(ORIGIN_REMOTE)+1:]
+                    if is_pushed_to_origin(clean_b):
+                        branch = clean_b
+                if not is_pushed_to_origin(branch):
+                    self._send_json({
+                        "status": "error",
+                        "message": f"Branch '{branch}' is not pushed to your GitHub account ({ORIGIN_REMOTE} -> {MAINTAINER_FORK}). The review system strictly tracks branches pushed to your own GitHub account only."
+                    }, status=400)
+                    return
+
+            pr_id = data.get("prId", "").strip().upper()
+            if not pr_id:
+                pr_id = branch.upper().replace("/", "-")
+                if not pr_id.startswith("PR-"):
+                    pr_id = f"PR-{pr_id}"
+
+            # Add to user requested branches
+            USER_REQUESTED_BRANCHES.append({"prId": pr_id, "branch": branch, "trackedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())})
+            PR_BRANCH_MAP[pr_id] = branch
+
+            # Persist to config if possible
+            cfg_path = find_config_path()
+            if os.path.exists(cfg_path):
+                try:
+                    with open(cfg_path, "r", encoding="utf-8") as f:
+                        cur_cfg = json.load(f)
+                    cur_cfg.setdefault("project", {}).setdefault("user_requested_branches", []).append({"prId": pr_id, "branch": branch})
+                    cur_cfg.setdefault("project", {}).setdefault("branch_map", {})[pr_id] = branch
+                    with open(cfg_path, "w", encoding="utf-8") as f:
+                        json.dump(cur_cfg, f, indent=2)
+                except Exception:
+                    pass
+
+            hunks_data = get_live_pr_hunks(branch)
+            print(f"[ReviewServer] Tracked user-requested branch '{branch}' as '{pr_id}' ({len(hunks_data.get('hunks', []))} hunks)", flush=True)
+            self._send_json({
+                "status": "ok",
+                "message": f"Branch '{branch}' tracked successfully as '{pr_id}'",
+                "prId": pr_id,
+                "branch": branch,
+                "data": hunks_data
+            })
+            return
+
+        if self.path == "/api/prs/untrack":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length)
+            try:
+                data = json.loads(body.decode("utf-8"))
+            except Exception as e:
+                self._send_json({"status": "error", "message": f"Invalid JSON: {e}"}, status=400)
+                return
+
+            target = (data.get("prId", "") or data.get("branch", "")).strip()
+            target_upper = target.upper()
+
+            USER_REQUESTED_BRANCHES = [
+                b for b in USER_REQUESTED_BRANCHES
+                if (b.get("prId", "").upper() if isinstance(b, dict) else str(b).upper()) != target_upper
+                and (b.get("branch", "") if isinstance(b, dict) else str(b)) != target
+            ]
+            if target_upper in PR_BRANCH_MAP and target_upper not in DEFAULT_PR_BRANCH_MAP:
+                del PR_BRANCH_MAP[target_upper]
+
+            self._send_json({"status": "ok", "message": f"Untracked '{target}'"})
+            return
+
+        if self.path == "/api/dev/reconcile":
+            reconciler_script = os.path.join(SERVER_DIR, "..", "sentinel", "dev_reconciler.py")
+            if not os.path.exists(reconciler_script):
+                reconciler_script = os.path.join(ROOT_DIR, "agent-dual-review", "sentinel", "dev_reconciler.py")
+            if os.path.exists(reconciler_script):
+                try:
+                    p = subprocess.run([sys.executable, reconciler_script, "--reconcile"], cwd=REPO_DIR, capture_output=True, text=True, timeout=60)
+                    rm_file = find_roadmap_file()
+                    if os.path.exists(rm_file):
+                        with open(rm_file, "r", encoding="utf-8") as f:
+                            rm_data = json.load(f)
+                        self._send_json({"status": "ok", "roadmap": rm_data, "log": p.stdout})
+                        return
+                    self._send_json({"status": "ok", "log": p.stdout})
+                    return
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, status=500)
+                    return
+            self._send_json({"status": "error", "message": "dev_reconciler.py not found"}, status=404)
             return
 
         super().do_POST()

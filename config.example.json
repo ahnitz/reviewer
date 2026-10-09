@@ -1,7 +1,7 @@
 {
   "system": {
     "name": "Reviewer: Dual-Direction PR Review & Upstream Sync Suite",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "server": {
     "host": "0.0.0.0",
@@ -11,21 +11,23 @@
   "storage": {
     "feedback_file": "data/reviewer_feedback.json",
     "rebase_status_file": "data/rebase_status.json",
+    "roadmap_file": "data/wave_roadmap.json",
     "auto_backup": true
   },
   "project": {
     "working_tree_path": "/path/to/target/git/repository",
+    "dev_branch": "firinspiral3-multidet-asym",
     "upstream_remote": "upstream",
     "upstream_repo": "owner/repo",
     "upstream_branch": "master",
     "origin_remote": "origin",
     "maintainer_fork": "fork_owner/repo",
     "target_merge_base": "master",
-    "branch_patterns": ["pr-*", "feat/*", "fix/*", "perf/*"],
     "branch_map": {
       "PR-1A": "pr-fix-bug-example",
       "PR-1B": "pr-feat-feature-example"
-    }
+    },
+    "user_requested_branches": []
   },
   "sentinel": {
     "poll_interval_seconds": 2,

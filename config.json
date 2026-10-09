@@ -1,7 +1,7 @@
 {
   "system": {
     "name": "PyCBC Dual-Direction PR Review System",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "server": {
     "host": "0.0.0.0",
@@ -10,18 +10,45 @@
   },
   "storage": {
     "feedback_file": "data/reviewer_feedback.json",
+    "rebase_status_file": "data/rebase_status.json",
+    "roadmap_file": "data/wave_roadmap.json",
     "auto_backup": true
   },
   "project": {
     "upstream_repo": "gwastro/pycbc",
+    "upstream_remote": "upstream",
     "upstream_branch": "master",
     "target_merge_base": "f6eaed241",
     "maintainer_fork": "ahnitz/pycbc",
     "working_tree_path": "/home/ahnitz/projects/claude/searchdev/pycbc-work/apogee",
-    "branch_prefix": "pr-"
+    "dev_branch": "firinspiral3-multidet-asym",
+    "branch_map": {
+      "PR-1A": "pr-fix-core-numpy2-optparse",
+      "PR-1B": "pr-fix-io-dictarray-indexing",
+      "PR-1C": "pr-fix-events-numpy2-zerolag",
+      "PR-1D": "pr-perf-waveform-compress",
+      "PR-1E": "pr-feat-vetoes-chisq-slicing",
+      "PR-1F": "pr-feat-events-eventmgr-multi",
+      "PR-1G": "pr-feat-filter-dynamic-snr-renorm",
+      "PR-1H": "pr-feat-inject-injfilter-optimal-snr",
+      "PR-1I": "pr-feat-psd-robust-estimators",
+      "PR-1J": "pr-feat-strain-regularized-inpainting",
+      "PR-TEST-TRACK": "pr-feat-strain-regularized-inpainting"
+    },
+    "user_requested_branches": [
+      {
+        "prId": "PR-TEST-TRACK",
+        "branch": "pr-feat-strain-regularized-inpainting"
+      }
+    ]
   },
   "sentinel": {
     "poll_interval_seconds": 3,
     "notify_on_new_comment": true
+  },
+  "rebase": {
+    "interval_seconds": 60,
+    "auto_push": true,
+    "test_command": "pytest"
   }
 }

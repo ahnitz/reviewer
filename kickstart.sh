@@ -17,6 +17,9 @@ RESPONDER_LOG_FILE="$ROOT_DIR/.auto_responder.log"
 REBASE_SCRIPT="$ROOT_DIR/sentinel/rebase_monitor.py"
 REBASE_PID_FILE="$ROOT_DIR/.rebase_monitor.pid"
 REBASE_LOG_FILE="$ROOT_DIR/.rebase_monitor.log"
+RECONCILER_SCRIPT="$ROOT_DIR/sentinel/dev_reconciler.py"
+RECONCILER_PID_FILE="$ROOT_DIR/.dev_reconciler.pid"
+RECONCILER_LOG_FILE="$ROOT_DIR/.dev_reconciler.log"
 
 PORT="${PORT:-8080}"
 HOST="${HOST:-0.0.0.0}"
@@ -127,7 +130,33 @@ else
     echo "✓ Automated rebase monitor is already active"
 fi
 
-# 6. Output Summary and Usage Instructions
+# 6. Check / Start Automated Dev Branch Reconciler Daemon
+RECONCILER_RUNNING=0
+if [ -f "$RECONCILER_PID_FILE" ]; then
+    OLD_REC_PID=$(cat "$RECONCILER_PID_FILE" 2>/dev/null || echo "")
+    if [ -n "$OLD_REC_PID" ] && kill -0 "$OLD_REC_PID" 2>/dev/null; then
+        RECONCILER_RUNNING=1
+    fi
+fi
+
+if [ "$RECONCILER_RUNNING" -eq 0 ]; then
+    echo "Starting automated dev branch reconciler in background..."
+    nohup python3 "$RECONCILER_SCRIPT" --watch --interval 60 > "$RECONCILER_LOG_FILE" 2>&1 &
+    NEW_REC_PID=$!
+    echo "$NEW_REC_PID" > "$RECONCILER_PID_FILE"
+    sleep 1
+
+    if kill -0 "$NEW_REC_PID" 2>/dev/null; then
+        echo "✓ Automated dev reconciler started successfully (PID: $NEW_REC_PID)"
+    else
+        echo "❌ Dev reconciler failed to start. Last log lines:" >&2
+        tail -n 20 "$RECONCILER_LOG_FILE" >&2
+    fi
+else
+    echo "✓ Automated dev reconciler is already active"
+fi
+
+# 7. Output Summary and Usage Instructions
 echo ""
 echo "=================================================================="
 echo "✨ SYSTEM IS LIVE AND OPERATIONAL"
@@ -135,12 +164,15 @@ echo "=================================================================="
 echo "Dashboard UI:        http://localhost:$PORT/dashboard/pr_review_dashboard.html"
 echo "Root Auto-Redirect:  http://localhost:$PORT/"
 echo "REST API:            http://localhost:$PORT/api/comments"
+echo "Roadmap API:         http://localhost:$PORT/api/roadmap"
+echo "Dev Status API:      http://localhost:$PORT/api/dev/status"
 echo "Rebase Status API:   http://localhost:$PORT/api/rebase/status"
 echo "Healthcheck:         http://localhost:$PORT/api/health"
 echo ""
 echo "Helpful Management Commands:"
-echo "  ./status.sh                  # Check status of server, responder, and rebase monitor"
-echo "  ./stop.sh                    # Stop all review services"
-echo "  python3 sentinel/rebase_monitor.py --once   # Run immediate upstream check & rebase"
+echo "  ./status.sh                                 # Check status of server, responder, rebase & dev reconciler"
+echo "  ./stop.sh                                   # Stop all review services"
+echo "  python3 sentinel/dev_reconciler.py --status # View live wave roadmap status"
+echo "  python3 sentinel/rebase_monitor.py --once  # Run immediate upstream check & rebase"
 echo "  python3 sentinel/feedback_cli.py list --pending-only"
 echo "=================================================================="

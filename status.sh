@@ -55,6 +55,21 @@ else
     echo "Rebase Monitor: STOPPED"
 fi
 
+# Check dev reconciler process
+RECONCILER_PID_FILE="$SCRIPT_DIR/.dev_reconciler.pid"
+if [ -f "$RECONCILER_PID_FILE" ]; then
+    REC_PID=$(cat "$RECONCILER_PID_FILE")
+    if kill -0 "$REC_PID" 2>/dev/null; then
+        echo "Dev Reconciler: RUNNING (PID: $REC_PID)"
+    else
+        echo "Dev Reconciler: STALE PID ($REC_PID not running)"
+    fi
+elif pgrep -f "sentinel/dev_reconciler.py" >/dev/null 2>&1; then
+    echo "Dev Reconciler: RUNNING (PID: $(pgrep -f "sentinel/dev_reconciler.py" | head -n1))"
+else
+    echo "Dev Reconciler: STOPPED"
+fi
+
 # Check HTTP Health
 echo -n "HTTP API:       "
 HEALTH_OUT=$(curl -s -m 2 "http://localhost:$PORT/api/health" 2>/dev/null || true)
@@ -78,6 +93,14 @@ if [ -f "$DATA_FILE" ]; then
     echo "Ledger:         $DATA_FILE ($TOTAL_CNT total, $PENDING_CNT pending)"
 else
     echo "Ledger:         MISSING ($DATA_FILE)"
+fi
+
+# Wave Roadmap status
+ROADMAP_FILE="$SCRIPT_DIR/data/wave_roadmap.json"
+if [ -f "$ROADMAP_FILE" ]; then
+    INGESTED=$(python3 -c "import json; d=json.load(open('$ROADMAP_FILE')); print(d.get('ingested_commits_count', 0))" 2>/dev/null || echo 0)
+    TOTAL_PRS=$(python3 -c "import json; d=json.load(open('$ROADMAP_FILE')); print(len(d.get('prs', {})))" 2>/dev/null || echo 0)
+    echo "Roadmap:        $ROADMAP_FILE ($TOTAL_PRS PR candidates, $INGESTED dev commits ingested)"
 fi
 
 echo "Dashboard:      http://localhost:$PORT/dashboard/pr_review_dashboard.html"

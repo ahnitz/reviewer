@@ -39,6 +39,22 @@ if [ -n "$PIDS" ]; then
 fi
 echo "✓ Rebase monitor stopped."
 
+# Stop Dev Reconciler
+RECONCILER_PID_FILE="$SCRIPT_DIR/.dev_reconciler.pid"
+if [ -f "$RECONCILER_PID_FILE" ]; then
+    REC_PID=$(cat "$RECONCILER_PID_FILE")
+    if [ -n "$REC_PID" ] && kill -0 "$REC_PID" 2>/dev/null; then
+        echo "Stopping dev reconciler (PID: $REC_PID)..."
+        kill -15 "$REC_PID" 2>/dev/null || true
+    fi
+    rm -f "$RECONCILER_PID_FILE"
+fi
+PIDS=$(pgrep -f "sentinel/dev_reconciler.py" || true)
+if [ -n "$PIDS" ]; then
+    kill -15 $PIDS 2>/dev/null || true
+fi
+echo "✓ Dev reconciler stopped."
+
 # Stop Review Server
 if [ -f "$SERVER_PID_FILE" ]; then
     PID=$(cat "$SERVER_PID_FILE")
