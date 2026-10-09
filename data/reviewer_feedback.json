@@ -648,5 +648,161 @@
         "createdAt": "2026-10-09T14:17:22Z"
       }
     ]
+  },
+  {
+    "id": "c_1791555716_a3eed5",
+    "prId": "PR-1A",
+    "hunkIndex": -1,
+    "file": "PR-level discussion",
+    "lines": "General",
+    "commentText": "The Q transform parts seem like it should be a separate PR from the other parts. Please split this in two.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T14:21:56Z",
+    "timestamp": 1791555716.2678976,
+    "replies": [
+      {
+        "id": "r_1791555716_9e41",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1A (PR-level discussion). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T14:21:56Z"
+      },
+      {
+        "id": "r_1791556354_1a_split",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit bdf09127b (PR-1A) and commit c6c58c314 (PR-1L): Split the Q-transform bounds checking into its own clean standalone PR candidate branch pr-fix-filter-qtransform with dedicated unit test suite test/test_qtransform.py (4/4 tests pass). PR-1A (pr-fix-core-numpy2-optparse) now strictly contains core option/config parsing (to_int, deduplicated conv), resample_to_delta_t copy semantics, and numpy.int_ render fixes (20/20 tests pass). Both branches pushed to origin.",
+        "createdAt": "2026-10-09T14:32:34Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791555802_aa0026",
+    "prId": "PR-1B",
+    "hunkIndex": 6,
+    "file": "pycbc/io/hdf.py",
+    "lines": "lines 679-688",
+    "commentText": "What is this part for?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T14:23:22Z",
+    "timestamp": 1791555802.1138823,
+    "replies": [
+      {
+        "id": "r_1791555802_3243",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1B (pycbc/io/hdf.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T14:23:22Z"
+      },
+      {
+        "id": "r_1791556354_1b_trigs_init",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 46ff5feec: Removed self.file, self.veto_files, and self.segment_name from SingleDetTriggers.__init__. These were ad-hoc attributes that are not needed by SingleDetTriggers or DictArray indexing. Restored exact upstream master behavior.",
+        "createdAt": "2026-10-09T14:32:34Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791555828_da7581",
+    "prId": "PR-1B",
+    "hunkIndex": 7,
+    "file": "pycbc/io/hdf.py",
+    "lines": "lines 713-722",
+    "commentText": "What is this part for?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T14:23:48Z",
+    "timestamp": 1791555828.9958577,
+    "replies": [
+      {
+        "id": "r_1791555830_0ee6",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1B (pycbc/io/hdf.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T14:23:50Z"
+      },
+      {
+        "id": "r_1791556354_1b_trig_dict",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 46ff5feec: Reverted SingleDetTriggers.trig_dict() back to upstream master implementation (mtrigs['ifo'] = self.ifo; return mtrigs). Removed all unneeded keys (file, veto_files, segment_name, gating_veto_windows). All 7 unit tests pass.",
+        "createdAt": "2026-10-09T14:32:34Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791555979_70c7a6",
+    "prId": "PR-1B",
+    "hunkIndex": 10,
+    "file": "pycbc/io/hdf.py",
+    "lines": "lines 1038-1053",
+    "commentText": "This seems to be messier than needed to simply associated a file to the ifo. Why the spearate if matching part? Or ratherwhy the else part? SHouldn't the former work in all cases?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T14:26:19Z",
+    "timestamp": 1791555979.995003,
+    "replies": [
+      {
+        "id": "r_1791555981_6c70",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1B (pycbc/io/hdf.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T14:26:21Z"
+      },
+      {
+        "id": "r_1791556354_1b_fg_sngl",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 46ff5feec: Replaced the redundant if/else logic in ForegroundTriggers.__init__ with a single unified list comprehension: matching_ifos = [k for k in hf.keys() if k in self.ifos]. This cleanly handles both single-detector and multi-detector trigger HDF files without any special-casing or redundant fallback branches. All 7 unit tests pass.",
+        "createdAt": "2026-10-09T14:32:34Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791557742_31efb8",
+    "prId": "PR-1A",
+    "hunkIndex": -1,
+    "file": "PR-level discussion",
+    "lines": "General",
+    "commentText": "The resample thing also seems like it should be separate too",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T14:55:42Z",
+    "timestamp": 1791557742.4017024,
+    "replies": [
+      {
+        "id": "r_1791557742_7013",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1A (PR-level discussion). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T14:55:42Z"
+      },
+      {
+        "id": "r_1791557742_pr1m_resolved",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved: Fully decoupled resample_to_delta_t from PR-1A and extracted it into dedicated standalone PR-1M (branch: pr-fix-filter-resample-copy, commit 31d3ad03d). PR-1A now strictly focuses on optparse float-string ints and config environment safety. Both branches have been pushed to origin (ahnitz/pycbc) and all tests pass (test_optparse: 16/16 pass; test_resample: 4/4 pass).",
+        "createdAt": "2026-10-09T15:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791557804_a9c137",
+    "prId": "PR-1K",
+    "hunkIndex": 1,
+    "file": "pycbc/frame/frame.py",
+    "lines": "lines 104-119",
+    "commentText": "Is this reliable? What do people normally do? Does h5py not have something for this already or is there a stnadard convention?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T14:56:44Z",
+    "timestamp": 1791557804.3321252,
+    "replies": [
+      {
+        "id": "r_1791557805_2fa5",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1K (pycbc/frame/frame.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T14:56:45Z"
+      },
+      {
+        "id": "r_1791557804_h5py_is_hdf5",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit c251d54dc: Great observation. Replaced the manual magic byte checks with the standard `h5py.is_hdf5(file_path)` API across both `pycbc/frame/frame.py` and `pycbc/frame/gwosc_hdf.py`. `h5py.is_hdf5` directly delegates to the underlying HDF Group C library function `H5Fis_hdf5` to reliably validate superblock format across all HDF5 versions, eliminating custom file inspection logic and matching standard Python/HDF5 conventions. All 14 test cases pass.",
+        "createdAt": "2026-10-09T15:02:00Z"
+      }
+    ]
   }
 ]

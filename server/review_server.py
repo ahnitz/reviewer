@@ -162,6 +162,7 @@ DEFAULT_PR_BRANCH_MAP = {
     "PR-1J": "pr-feat-strain-regularized-inpainting",
     "PR-1K": "pr-feat-frame-gwosc-hdf",
     "PR-1L": "pr-fix-filter-qtransform",
+    "PR-1M": "pr-fix-filter-resample-copy",
 }
 
 PR_BRANCH_MAP = dict(CFG.get("project", {}).get("branch_map", DEFAULT_PR_BRANCH_MAP))
