@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-09T15:51:44.707428",
+  "last_updated": "2026-10-09T16:39:45.371674",
   "dev_branch": "firinspiral3-multidet-asym",
   "upstream_base": "f6eaed241fd115a0b79b459bca83787b19135875",
-  "last_ingested_commit": "74f87db92aa8a8e53a4f0fc4ca5d970761a7cbb7",
-  "ingested_commits_count": 233,
+  "last_ingested_commit": "48b447d767d827011f82e664bdee8a7376d3320e",
+  "ingested_commits_count": 234,
   "prs": {
     "PR-1A": {
       "wave": 1,
@@ -170,7 +170,8 @@
         "bin/pycbc_overwhiten",
         "test/test_overwhiten.py",
         "bin/pycbc_single_template",
-        "bin/pycbc_inspiral"
+        "bin/pycbc_inspiral",
+        "bin/pycbc_optimal_snr"
       ],
       "test_cmd": "pytest test/test_overwhiten.py"
     },
@@ -326,7 +327,10 @@
         "bin/minifollowups/pycbc_sngl_minifollowup",
         "bin/plotting/pycbc_plot_psd_file",
         "bin/plotting/pycbc_page_fars_vs_stat",
-        "bin/minifollowups/pycbc_page_injinfo"
+        "bin/minifollowups/pycbc_page_injinfo",
+        "bin/plotting/pycbc_plot_psd_timefreq",
+        "bin/plotting/pycbc_plot_range",
+        "bin/plotting/pycbc_plot_range_vs_mtot"
       ],
       "test_cmd": "pytest test/test_results.py"
     },
@@ -474,6 +478,19 @@
       ],
       "test_cmd": "pytest test/test_gwosc_hdf.py",
       "synthesized_from_commit": "db3ee8fd1011995b006beaa07da04b2d4e3623c5"
+    },
+    "PR-FIX-TEST-984": {
+      "pr_id": "PR-FIX-TEST-984",
+      "wave": 2,
+      "branch": "pr-fix-test-test_range_and_psd_cutoff",
+      "title": "test: add unit test coverage for test_range_and_psd_cutoff.py",
+      "status": "CANDIDATE_SYNTHESIZED",
+      "dependencies": [],
+      "files": [
+        "test/test_range_and_psd_cutoff.py"
+      ],
+      "test_cmd": "pytest test/test_range_and_psd_cutoff.py",
+      "synthesized_from_commit": "48b447d767d827011f82e664bdee8a7376d3320e"
     }
   },
   "ingestion_log": [
@@ -4866,6 +4883,76 @@
       "wave": 2,
       "note": "Commit 74f87db92 absorbed into future Wave 2 PR PR-2E ('bin/pycbc_optimal_mf_snr').",
       "timestamp": "2026-10-09T15:43:44.624757"
+    },
+    {
+      "commit_sha": "48b447d767d827011f82e664bdee8a7376d3320e",
+      "commit_msg": "plotting/filters: enforce high frequency cutoff across PSD and inspiral range tools",
+      "file": "bin/plotting/pycbc_plot_psd_file",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-4A",
+      "wave": 4,
+      "note": "Commit 48b447d76 absorbed into future Wave 4 PR PR-4A ('bin/plotting/pycbc_plot_psd_file').",
+      "timestamp": "2026-10-09T15:59:44.795922"
+    },
+    {
+      "commit_sha": "48b447d767d827011f82e664bdee8a7376d3320e",
+      "commit_msg": "plotting/filters: enforce high frequency cutoff across PSD and inspiral range tools",
+      "file": "bin/plotting/pycbc_plot_psd_timefreq",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-4A",
+      "wave": 4,
+      "note": "Commit 48b447d76 absorbed into future Wave 4 PR PR-4A ('bin/plotting/pycbc_plot_psd_timefreq').",
+      "timestamp": "2026-10-09T15:59:44.795970"
+    },
+    {
+      "commit_sha": "48b447d767d827011f82e664bdee8a7376d3320e",
+      "commit_msg": "plotting/filters: enforce high frequency cutoff across PSD and inspiral range tools",
+      "file": "bin/plotting/pycbc_plot_range",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-4A",
+      "wave": 4,
+      "note": "Commit 48b447d76 absorbed into future Wave 4 PR PR-4A ('bin/plotting/pycbc_plot_range').",
+      "timestamp": "2026-10-09T15:59:44.795990"
+    },
+    {
+      "commit_sha": "48b447d767d827011f82e664bdee8a7376d3320e",
+      "commit_msg": "plotting/filters: enforce high frequency cutoff across PSD and inspiral range tools",
+      "file": "bin/plotting/pycbc_plot_range_vs_mtot",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-4A",
+      "wave": 4,
+      "note": "Commit 48b447d76 absorbed into future Wave 4 PR PR-4A ('bin/plotting/pycbc_plot_range_vs_mtot').",
+      "timestamp": "2026-10-09T15:59:44.796008"
+    },
+    {
+      "commit_sha": "48b447d767d827011f82e664bdee8a7376d3320e",
+      "commit_msg": "plotting/filters: enforce high frequency cutoff across PSD and inspiral range tools",
+      "file": "bin/pycbc_optimal_snr",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-2B",
+      "wave": 2,
+      "note": "Commit 48b447d76 absorbed into future Wave 2 PR PR-2B ('bin/pycbc_optimal_snr').",
+      "timestamp": "2026-10-09T15:59:44.796021"
+    },
+    {
+      "commit_sha": "48b447d767d827011f82e664bdee8a7376d3320e",
+      "commit_msg": "plotting/filters: enforce high frequency cutoff across PSD and inspiral range tools",
+      "file": "bin/pycbc_single_template",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-2B",
+      "wave": 2,
+      "note": "Commit 48b447d76 absorbed into future Wave 2 PR PR-2B ('bin/pycbc_single_template').",
+      "timestamp": "2026-10-09T15:59:44.796024"
+    },
+    {
+      "commit_sha": "48b447d767d827011f82e664bdee8a7376d3320e",
+      "commit_msg": "plotting/filters: enforce high frequency cutoff across PSD and inspiral range tools",
+      "file": "test/test_range_and_psd_cutoff.py",
+      "action": "NEW_PR_CANDIDATE_SYNTHESIZED",
+      "pr_id": "PR-FIX-TEST-984",
+      "wave": 2,
+      "note": "New standalone capability in test/test_range_and_psd_cutoff.py synthesized into PR-FIX-TEST-984 (test: add unit test coverage for test_range_and_psd_cutoff.py)",
+      "timestamp": "2026-10-09T15:59:44.796053"
     }
   ]
 }
