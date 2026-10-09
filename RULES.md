@@ -26,6 +26,8 @@ This document establishes the governing engineering standards, numerical safety 
 13. [Rule 13: Upstream PR Auditing & Rebase Synchronization](#rule-13-upstream-pr-auditing--rebase-synchronization)
 14. [Rule 14: Continuous Upstream Rebase Tracking & Multi-Branch Synchronization](#rule-14-continuous-upstream-rebase-tracking--multi-branch-synchronization)
 15. [Rule 15: Comprehensive Review Hunk Visibility, Dynamic Test Discovery & Context Linking](#rule-15-comprehensive-review-hunk-visibility-dynamic-test-discovery--context-linking)
+16. [Rule 16: Mandatory Architectural Rationale, Problem Statement & Alternatives for Every Code Modification & Refactoring](#rule-16-mandatory-architectural-rationale-problem-statement--alternatives-for-every-code-modification--refactoring)
+17. [Rule 17: Strict Triple-Dot Diff Semantics Against Upstream Master & Stable Comment Anchoring](#rule-17-strict-triple-dot-diff-semantics-against-upstream-master--stable-comment-anchoring)
 
 ---
 
@@ -307,6 +309,45 @@ A code review dashboard is only effective if 100% of code modifications are revi
    - **Copy Path:Line**: Copies `{file}:{start}` to clipboard for instant CLI navigation.
 3. **Eager Pre-fetching & Polling**: The dashboard must eagerly load live hunks for all PRs on startup (`syncAllPRHunks()`) and poll the server periodically to reflect new changes seamlessly.
 4. **Universal Commentability**: Every hunk—whether a 1-line bugfix, a refactored DSP kernel, or a 300-line new test file—must include an inline review comment form dispatching directly to the agent feedback ledger.
+
+---
+
+## Rule 16: Mandatory Architectural Rationale, Problem Statement & Alternatives for Every Code Modification & Refactoring
+
+### Core Rationale
+Whenever an AI agent decomposes PRs, refactors existing code, addresses maintainer review feedback, or creates a topic branch:
+1. **Zero Generic Placeholders**: It is strictly forbidden to emit robotic, vague placeholder strings like `"Implementation update around class EventManager(object):"` or `"Implementation update around class InterpolatingConfigParser(DeepCopyableConfigParser):"` or `"Refactored code"`.
+2. **Cognitive Burden on Reviewers**: Maintainers evaluating code changes require the exact technical justification for every hunk. Code without explicit logic and reasoning forces reviewers to reverse-engineer intent, slowing reviews and hiding subtle regressions.
+3. **Mandatory Triad**: Every hunk presented in the review system must explicitly answer three questions:
+   - **Problem**: What concrete bug, numerical issue, performance bottleneck, cluster incompatibility, or design limitation is being solved?
+   - **Logic & Rationale**: Why was this specific implementation, algorithm, or data structure chosen? How does it resolve the problem while preserving invariants?
+   - **Alternatives Considered & Rejected**: What alternative designs were evaluated (e.g. why an external library, different data format, or naive approach was rejected) and why?
+
+### Implementation Standard
+1. **Catalog Registration**: Whenever an AI agent modifies or refactors code, it must register the hunk in the authoritative rationale catalog (`server/rationale_catalog.py`).
+2. **Granular Hunk Rules**: When refactoring a class or function (such as `EventManager` or `InterpolatingConfigParser`), individual hunks must have distinct, granular entries matched by unique symbol patterns (e.g., `isidentifier` vs `def getint`, or `mgr.ifo` vs `f.close()`), guaranteeing that each hunk displays its own tailored explanation rather than a generic class-level summary.
+3. **Intelligent Fallback Engine**: If an uncurated hunk is encountered, the review server's synthesis engine (`synthesize_hunk_rationale`) must analyze the diff's AST, modified expressions, and enclosing context to produce specific technical problem/logic/alternative descriptions, and is strictly prohibited from emitting generic `"Implementation update around..."` strings.
+
+---
+
+## Rule 17: Strict Triple-Dot Diff Semantics Against Upstream Master & Stable Comment Anchoring
+
+### Core Rationale
+When branches rebase onto `upstream/master`, the review dashboard must display ONLY the real differences introduced by the branch relative to current `upstream/master` (`git diff upstream/master...<branch>`).
+1. **No Stale Merge Bases**: Branches must never be evaluated against obsolete historical merge bases (e.g. `f6eaed241`), which display phantom diffs of code that has already been merged upstream or refactored.
+2. **Stable Comment-to-Hunk Anchoring**: Inline review comments submitted by human maintainers must remain pinned to their exact file and line context even after branch rebases or when line numbers shift.
+
+### Implementation Standard
+1. **Triple-Dot Diff Semantics**: All diff calculations in the review server and dashboard must use:
+   ```bash
+   git diff -U3 upstream/master...<branch>
+   git diff --shortstat upstream/master...<branch>
+   ```
+   This computes the symmetric difference from the merge base of `upstream/master` and `<branch>` to the tip of `<branch>`, strictly exposing branch-specific modifications.
+2. **File and Line Comment Pinning**:
+   - A comment must NEVER drift across files. Comment-to-hunk matching strictly enforces `comment.file === hunk.file`.
+   - Comments are matched to hunks by line interval overlap `[comment.startLine, comment.endLine] \cap [hunk.startLine, hunk.endLine]`.
+   - If lines shift during a rebase, the comment is pinned to the nearest hunk in that exact file based on line distance, preserving full conversational context without cross-file drift.
 
 ---
 

@@ -16,6 +16,12 @@ When a user points you (the AI agent) to this repository and asks you to set up 
 4. **Strict Maintainer Ownership Invariant (CRITICAL)**:
    > **The review system must ONLY track branches that are pushed to the user's OWN GitHub fork (`origin -> <username>/<repo>`).**
    > Any request to track an unpushed local branch, an upstream branch, or a third-party branch MUST be strictly rejected. The system is designed to review the user's own work and staged PRs, not external branches.
+5. **Mandatory Architectural Rationale Invariant (CRITICAL)**:
+   > **Every diff hunk displayed in the review system must provide a concrete Problem statement, Logic & Rationale, and Alternatives Considered & Rejected.**
+   > Robotic placeholder strings (`"Implementation update around..."`, `"Refactored code"`) are strictly prohibited. Whenever an AI agent creates, modifies, or refactors a branch, it must register all hunks in `server/rationale_catalog.py`.
+6. **Strict Triple-Dot Upstream Diff & Stable Comment Anchoring Invariant**:
+   > **Diffs must strictly use `git diff upstream/master...<branch>` to show only true differences against current upstream master.**
+   > Historical stale merge bases (`f6eaed241`) must never be used. Inline review comments must remain pinned to their exact file and line context even after branches rebase, never drifting across files.
 
 ---
 
@@ -172,7 +178,26 @@ Create or update `config.json` in the reviewer suite root:
      ```bash
      git push -u origin pr-fix-<subsystem>
      ```
-4. Run the dev reconciler to initialize `data/wave_roadmap.json`:
+4. Register Curated Hunk Rationales in `server/rationale_catalog.py`:
+   - For every branch and modified file, add granular entries in `CURATED_HUNKS`:
+     ```python
+     ("PR-1A", "pycbc/types/config.py"): [
+         {
+             "symbol": "isidentifier",
+             "shortSummary": "Filter invalid shell environment keys during interpolation",
+             "rationale": "ConfigParser interpolation crashes if section names or keys contain % or $...",
+             "alternatives": "Disabling environment interpolation entirely was rejected..."
+         },
+         {
+             "symbol": "def getint",
+             "shortSummary": "Safe arbitrary-precision getint() supporting scientific notation and float strings",
+             "rationale": "Delegates integer config parsing to to_int(), preserving arbitrary-precision integers...",
+             "alternatives": "Standard configparser.getint() fails on scientific notation and float strings..."
+         }
+     ]
+     ```
+   - Ensure every hunk has a distinct symbol pattern so that each hunk displays its own tailored explanation.
+5. Run the dev reconciler to initialize `data/wave_roadmap.json`:
    ```bash
    python3 sentinel/dev_reconciler.py --reconcile
    ```
@@ -207,6 +232,8 @@ When a maintainer writes a review comment on the dashboard:
    - **Rule 5**: Extended precision preservation (`numpy.float64` / `numpy.longdouble` consistency).
    - **Rule 12**: Avoiding namespace stuttering (e.g. `pycbc.psd.estimate.welch`).
    - **Rule 13**: Upstream PR auditing & deduplication.
+   - **Rule 16**: Mandatory architectural rationale (Problem, Logic/Rationale, Alternatives; zero generic placeholders).
+   - **Rule 17**: Strict triple-dot diff semantics (`upstream/master...branch`) and stable comment-to-hunk anchoring.
 4. The AI agent checks out the topic branch in the target repo:
    ```bash
    git checkout <branch>
@@ -216,12 +243,15 @@ When a maintainer writes a review comment on the dashboard:
    ```bash
    pytest test/test_<target>.py
    ```
-7. Commit and force-push to `origin`:
+7. Register the modified or refactored hunk in `server/rationale_catalog.py`:
+   - Add/update the hunk rule with exact `symbol`, `shortSummary`, `rationale`, and `alternatives`.
+   - Verify via `curl -s http://localhost:8080/api/pr/<id>/hunks` that all hunks display full architectural descriptions with zero generic placeholders.
+8. Commit and force-push to `origin`:
    ```bash
    git commit -m "fix(<subsystem>): <detailed explanation of fix>"
    git push --force-with-lease origin <branch>
    ```
-8. Post the verified resolution reply back to the dashboard:
+9. Post the verified resolution reply back to the dashboard:
    ```bash
    python3 sentinel/feedback_cli.py reply \
      --comment-id <comment_id> \

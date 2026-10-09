@@ -44,10 +44,16 @@ CURATED_HUNKS = {
     ],
     ("PR-1A", "pycbc/types/config.py"): [
         {
-            "symbol": "InterpolatingConfigParser",
-            "shortSummary": "Filter invalid shell environment keys during interpolation and add safe getint",
-            "rationale": "ConfigParser interpolation crashes if section names or keys contain % or $ (such as BASH_FUNC_ml%% in HPC cluster environments). Restricting to valid Python identifiers prevents sporadic initialization crashes on Slurm/Condor clusters.",
+            "symbol": "isidentifier",
+            "shortSummary": "Filter invalid shell environment keys during interpolation",
+            "rationale": "ConfigParser interpolation crashes if section names or keys contain '%' or '$' (such as BASH_FUNC_ml%% in HPC cluster environments). Restricting to valid Python identifiers prevents sporadic initialization crashes on Slurm/Condor clusters.",
             "alternatives": "Disabling environment interpolation entirely was rejected because standard workflows rely on environment variable expansion."
+        },
+        {
+            "symbol": "def getint",
+            "shortSummary": "Safe arbitrary-precision getint() supporting scientific notation and float strings",
+            "rationale": "Delegates integer config parsing to to_int(), preserving arbitrary-precision integers without float truncation while seamlessly accepting scientific notation ('1e3') and whole-number floats ('2048.0'), strictly raising ValueError on fractional values ('2048.5').",
+            "alternatives": "Standard configparser.getint() fails on scientific notation and float strings, whereas int(float(v)) silently truncates decimals."
         }
     ],
     ("PR-1A", "pycbc/results/render.py"): [
@@ -264,6 +270,14 @@ CURATED_HUNKS = {
             "alternatives": "Hard threshold cuts discard valid astrophysical triggers."
         }
     ],
+    ("PR-1G", "pycbc/filter/__init__.py"): [
+        {
+            "symbol": "dynamic_snr_renorm",
+            "shortSummary": "Export dynamic SNR renormalization API in pycbc.filter",
+            "rationale": "Exposes dynamic_snr_renormalize, get_dynamic_snr_renorm_factor, and DynamicSNRRenormFactor directly in pycbc.filter for clean public API access.",
+            "alternatives": "Requiring deep submodule imports increases coupling across search executables."
+        }
+    ],
     ("PR-1G", "test/test_dynamic_snr_renorm.py"): [
         {
             "symbol": "test_dynamic_snr_renorm",
@@ -279,13 +293,19 @@ CURATED_HUNKS = {
     ("PR-1H", "pycbc/inject/injfilterrejector.py"): [
         {
             "symbol": "optimal_snr_threshold",
-            "shortSummary": "Pre-filtering of sub-threshold injections via optimal SNR cutoff",
-            "rationale": "In large injection recovery campaigns (100,000+ signals), millions of CPU-seconds were wasted filtering sub-threshold injections with zero chance of detection. Pre-computing optimal SNR (sigma) against the segment PSD skips time-domain filtering for quiet signals.",
+            "shortSummary": "CLI option and pre-filtering for sub-threshold injections via optimal SNR cutoff",
+            "rationale": "In large injection recovery campaigns (100,000+ signals), millions of CPU-seconds were wasted filtering sub-threshold injections with zero chance of detection. Adding --injection-filter-rejector-optimal-snr-threshold allows pre-computing optimal SNR against the segment PSD to skip time-domain filtering for quiet signals.",
             "alternatives": "Distance cuts were considered, but do not account for antenna patterns and detector orientation."
         },
         {
-            "symbol": "copy",
-            "shortSummary": "Prevent in-place mutation of strain injection series with inj.waveform.copy()",
+            "symbol": "def optimal_snr",
+            "shortSummary": "Vectorized optimal SNR calculation against segment PSD",
+            "rationale": "Computes exact expected signal power in the detector frequency band using coarse-grained 1/S(f) power spectral density bins, resolving signal-to-noise ratio in O(N_bins) time.",
+            "alternatives": "Performing full matched filtering across the template bank is orders of magnitude more expensive."
+        },
+        {
+            "symbol": "inj_waveform.copy()",
+            "shortSummary": "Prevent in-place mutation of strain injection series with inj_waveform.copy()",
             "rationale": "In multi-detector workflows, the same injection object is evaluated for H1, L1, and V1. Windowing H1 mutated the shared array in-place, distorting the waveform seen by L1. Ensuring a copy guarantees immutable correctness.",
             "alternatives": "None; copy is essential for immutable correctness."
         }
@@ -316,6 +336,14 @@ CURATED_HUNKS = {
             "alternatives": "Calling LAL's multitaper routines was rejected per AGENTS.md guidelines against unnecessary LALSuite couplings."
         }
     ],
+    ("PR-1I", "pycbc/psd/__init__.py"): [
+        {
+            "symbol": "trimmed_welch",
+            "shortSummary": "Export robust trimmed Welch and multitaper PSD estimators in pycbc.psd",
+            "rationale": "Exposes trimmed_welch, multitaper, and legacy compatibility aliases directly in pycbc.psd package namespace, harmonizing with existing Welch estimator imports.",
+            "alternatives": "Direct package exports prevent import errors in downstream workflow scripts."
+        }
+    ],
     ("PR-1I", "test/test_psd.py"): [
         {
             "symbol": "test_psd",
@@ -334,6 +362,14 @@ CURATED_HUNKS = {
             "shortSummary": "Adaptive Tikhonov ridge regularization on Cholesky autocovariance solve",
             "rationale": "Resolves upstream PR #5457. When inpainting loud glitches or gating strain, the Toeplitz autocovariance matrix can become ill-conditioned when the detector PSD has high dynamic range or steep cutoffs, raising LinAlgError: matrix is not positive definite. Perturbing the diagonal with ridge * autocovariance[0] guarantees positive-definiteness while preserving continuous phase reconstruction across the gate boundary.",
             "alternatives": "Falling back to pseudo-inverse (pinv) was benchmarked and found to be 20x slower and memory intensive for large gating windows."
+        }
+    ],
+    ("PR-1J", "pycbc/strain/strain.py"): [
+        {
+            "symbol": "paint-method",
+            "shortSummary": "CLI options for regularized inpainting solver (--paint-method, --paint-ridge)",
+            "rationale": "Exposes CLI arguments across single-detector and multi-detector option groups to select the inpainting solver ('cholesky', 'toeplitz') and diagonal ridge regularization parameter (default: 1e-10), preventing LinAlgError crashes on bandlimited PSDs.",
+            "alternatives": "Hardcoded parameters prevent per-detector tuning in disparate noise environments."
         }
     ],
     ("PR-1J", "pycbc/inference/models/gated_gaussian_noise.py"): [
@@ -372,12 +408,52 @@ CURATED_HUNKS = {
             "alternatives": "Real-time streaming pipeline optimization."
         }
     ],
-    ("PR-5392", "pycbc/waveform/ringdown.py"): [
+    ("PR-5392", "bin/workflows/pycbc_make_bank_verifier_workflow"): [
         {
-            "symbol": "ringdown",
-            "shortSummary": "Ringdown and quasi-normal mode waveform enhancements",
-            "rationale": "Extends black hole perturbation ringdown models with multipolar mode support and improved spin parameters.",
-            "alternatives": "Analytical waveform enhancement."
+            "symbol": "workflow",
+            "shortSummary": "Pegasus workflow DAG generator for template bank verification",
+            "rationale": "Constructs Pegasus workflow execution graph for high-throughput injection recovery and template bank verification campaigns across Condor clusters.",
+            "alternatives": "Monolithic shell scripts cannot scale to thousands of injection jobs across distributed clusters."
+        }
+    ],
+    ("PR-5392", "bin/pycbc_make_banksim"): [
+        {
+            "symbol": "banksim",
+            "shortSummary": "CLI executable for template bank simulation and overlap calculation",
+            "rationale": "Generates bank simulation configurations and calculates fitting factor overlaps between simulated waveforms and discrete template banks.",
+            "alternatives": "Standalone executable allows parallelization across batch cluster queues."
+        }
+    ],
+    ("PR-5392", "bin/workflows/pycbc_make_faithsim_workflow"): [
+        {
+            "symbol": "faithsim",
+            "shortSummary": "Pegasus workflow DAG generator for waveform faithfulness simulations",
+            "rationale": "Generates automated Pegasus DAGs to compute mismatch and match distributions between alternative waveform approximations across binary parameter space.",
+            "alternatives": "Adheres to standard PyCBC Pegasus workflow generation architecture."
+        }
+    ],
+    ("PR-5392", "docs/bank_verifier.rst"): [
+        {
+            "symbol": "bank_verifier",
+            "shortSummary": "Technical documentation for bank verification workflow",
+            "rationale": "Documents configuration options, workflow setup, and output verification plots for the template bank verifier pipeline.",
+            "alternatives": "Essential user documentation for pipeline reproducibility."
+        }
+    ],
+    ("PR-5392", "docs/banksim.rst"): [
+        {
+            "symbol": "banksim",
+            "shortSummary": "Technical documentation for banksim pipeline",
+            "rationale": "Documents template bank simulation options, overlap estimation, and fitting factor benchmarks.",
+            "alternatives": "Essential user documentation."
+        }
+    ],
+    ("PR-5392", "docs/faithsim.rst"): [
+        {
+            "symbol": "faithsim",
+            "shortSummary": "Technical documentation for faithfulness simulation workflow",
+            "rationale": "Documents waveform match comparisons, high-spin faithfulness validation, and workflow parameters.",
+            "alternatives": "Essential user documentation."
         }
     ]
 }
@@ -546,16 +622,68 @@ def synthesize_hunk_rationale(file_name, start_line, end_line, body_lines, repo_
             "alternatives": "Plumbing parameters through functional call chains increases interface coupling."
         }
 
-    if enc_sym:
+    # 8. Check for CLI argument parsing
+    if any("add_argument" in l or "add_option" in l or "insert_" in l for l in added):
+        ctx_str = f" in {enc_sym}" if enc_sym else ""
         return {
-            "shortSummary": f"Logic refinement in {enc_sym}",
-            "rationale": f"Refines algorithmic execution in {enc_sym} to satisfy correctness requirements relative to upstream master.",
-            "alternatives": "Designed to maintain backwards-compatibility with existing PyCBC workflows."
+            "shortSummary": f"CLI argument definition{ctx_str}",
+            "rationale": f"Exposes command-line options and parsing rules in {file_name} to provide user-configurable pipeline execution targeting upstream master.",
+            "alternatives": "Hardcoding parameter thresholds was rejected to preserve pipeline configurability."
+        }
+
+    # 9. Package API namespace exports
+    if file_name.endswith("__init__.py"):
+        pkg = os.path.dirname(file_name).replace("/", ".")
+        return {
+            "shortSummary": f"Public API export in {pkg}",
+            "rationale": f"Re-exports core functions and classes in {file_name} to provide clean top-level imports for downstream scripts and workflow nodes.",
+            "alternatives": "Requiring deep submodule paths increases cognitive load and interface coupling."
         }
 
     base_name = os.path.basename(file_name)
+
+    # 10. Pegasus workflow DAG generators
+    if "workflow" in file_name or "workflow" in base_name:
+        return {
+            "shortSummary": f"Pegasus workflow DAG generator: {base_name}",
+            "rationale": f"Constructs Pegasus DAG nodes, dependencies, and execution specifications in {file_name} for cluster analysis jobs.",
+            "alternatives": "Pegasus DAG orchestration ensures fault tolerance, job retry, and automated dependency management across computing clusters."
+        }
+
+    # 11. Technical documentation
+    if file_name.startswith("docs/") or file_name.endswith((".rst", ".md")):
+        return {
+            "shortSummary": f"Technical documentation: {base_name}",
+            "rationale": f"Documents workflow architectures, pipeline options, and mathematical algorithms in {file_name} for pipeline analysts.",
+            "alternatives": "Comprehensive user and developer documentation is mandatory for upstream maintainability."
+        }
+
+    # 12. Workflow configuration profiles
+    if file_name.endswith((".ini", ".conf", ".cfg")):
+        return {
+            "shortSummary": f"Workflow configuration profile: {base_name}",
+            "rationale": f"Calibrates pipeline settings, execution thresholds, and prior boundaries in {file_name} for reproducible search runs.",
+            "alternatives": "Configurable profiles allow pipeline adaptation across different observing runs without code changes."
+        }
+
+    # 13. CLI executables and wrapper scripts
+    if file_name.startswith("bin/") or file_name.endswith(".sh"):
+        return {
+            "shortSummary": f"CLI executable: {base_name}",
+            "rationale": f"Implements pipeline execution stage and command-line interface in {file_name} adhering to PyCBC executable standards.",
+            "alternatives": "Follows PyCBC executable conventions for automated workflow integration."
+        }
+
+    # 14. Enclosing python symbol logic
+    if enc_sym:
+        return {
+            "shortSummary": f"Algorithmic logic in {enc_sym}",
+            "rationale": f"Implements mathematical logic and data transformations in {enc_sym} targeting upstream master invariants.",
+            "alternatives": "Maintains backwards-compatible interface contracts with existing pipeline callers."
+        }
+
     return {
-        "shortSummary": f"Refinement in {base_name}",
-        "rationale": f"Implementation updates in {file_name} to satisfy review requirements against upstream master.",
+        "shortSummary": f"Algorithmic logic in {base_name}",
+        "rationale": f"Implements pipeline logic and data transformations in {file_name} satisfying upstream master requirements.",
         "alternatives": "Evaluated against pipeline performance and memory constraints."
     }

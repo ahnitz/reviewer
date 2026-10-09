@@ -55,7 +55,10 @@ flowchart TD
 3. **Multi-Wave Roadmap Evolution**: Automatically ingests dev branch commits and maps them into active PRs or synthesizes future wave PR candidates (Waves 1 to 4).
 4. **Continuous Upstream Rebase Tracking**: Keeps topic branches rebased with 0 commits behind `upstream/master`, runs isolated tests, and force-pushes to fork.
 5. **Automated Feedback Loop**: Maintainer comments submitted in the dashboard trigger immediate automated triage, code refactoring, test verification, and resolution replies.
-6. **Codified Engineering Standards**: 15 governing rules (`RULES.md`) inferred from maintainer review feedback.
+6. **Mandatory Architectural Rationale (MANDATORY)**: Whenever an AI agent refactors code, decomposes PRs, addresses maintainer feedback, or modifies implementations, the agent **must** provide the actual architectural explanation for every hunk (Problem, Logic & Rationale, Alternatives Considered & Rejected). Generic placeholders (`"Implementation update around..."`, `"Refactored code"`) are strictly forbidden. All hunks must be registered in `server/rationale_catalog.py`.
+7. **Strict Triple-Dot Upstream Diffs**: When branches rebase, diffs must strictly reflect the differences against the current `upstream/master` (`git diff upstream/master...<branch>`), never against stale historical merge bases (`f6eaed241`).
+8. **Stable Comment-to-Hunk Anchoring**: Inline review comments must remain pinned to their exact file and line context even after branch rebases, never drifting across files.
+9. **Codified Engineering Standards**: 17 governing rules (`RULES.md`) inferred from maintainer review feedback.
 
 ---
 
@@ -130,17 +133,20 @@ Each comment record contains:
    - Check extended precision (**Rule 5**: preserve `numpy.longdouble` for large GPS timestamps).
    - Guard against namespace stuttering (**Rule 12**: avoid `estimate_psd_` in `pycbc.psd.estimate`).
    - Verify upstream PR deduplication (**Rule 13**: check if an upstream PR already solves it).
+   - Enforce architectural explanation (**Rule 16**: mandatory Problem, Logic/Rationale, Alternatives; zero generic placeholders).
+   - Verify triple-dot diff semantics (**Rule 17**: diff strictly against `upstream/master`).
 3. Implement the clean, root-cause resolution. Avoid quick band-aids.
 4. Add or extend unit tests under `test/` verifying the fix and edge cases.
 5. Run the isolated test suite with working directory isolation:
    ```bash
    PYTHONPATH=. pytest test/test_<target>.py
    ```
-6. Commit the change with a clear commit message referencing the review feedback:
+6. Register the modified hunk in `server/rationale_catalog.py` with granular symbol, short summary, architectural rationale, and rejected alternatives.
+7. Commit the change with a clear commit message referencing the review feedback:
    ```bash
    git commit -m "fix(<module>): <description of resolution>"
    ```
-7. Force-push to the maintainer fork:
+8. Force-push to the maintainer fork:
    ```bash
    git push --force-with-lease origin <branch>
    ```
@@ -184,7 +190,7 @@ As upstream master advances (`gwastro/pycbc:master`), topic branches must not fa
 
 ---
 
-## 5. Summary of the 15 Governing Engineering Rules
+## 5. Summary of the 17 Governing Engineering Rules
 
 Always adhere to [`RULES.md`](RULES.md):
 - **Rule 1**: Strict string/float to integer conversion; preserve arbitrary precision $\ge 2^{53}$, guard against truncation.
@@ -202,6 +208,8 @@ Always adhere to [`RULES.md`](RULES.md):
 - **Rule 13**: Upstream PR auditing & rebase synchronization before creating topic branches.
 - **Rule 14**: Continuous upstream rebase tracking & multi-branch synchronization.
 - **Rule 15**: Comprehensive review hunk visibility, dynamic test discovery & context linking.
+- **Rule 16**: Mandatory architectural rationale, problem statement & alternatives for every code modification & refactoring (zero generic placeholders; catalog registration).
+- **Rule 17**: Strict triple-dot diff semantics against upstream master (`upstream/master...branch`) and stable comment-to-hunk anchoring.
 
 ---
 
