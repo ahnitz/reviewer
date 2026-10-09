@@ -1119,5 +1119,35 @@
         "createdAt": "2026-10-09T18:49:07Z"
       }
     ]
+  },
+  {
+    "id": "c_5473925845_4233348092",
+    "prNumber": 5476,
+    "prTitle": "Fix qtransform bounds... again",
+    "prId": "PR-1L",
+    "branch": "pr-fix-filter-qtransform",
+    "reviewer": "kkacanja",
+    "author": "kkacanja",
+    "file": "pycbc/filter/qtransform.py",
+    "line": 210,
+    "lines": "lines 210-211",
+    "hunkIndex": 0,
+    "comment": "What happens if the input data is odd? Maybe you can add this in as a test. We never really deal with odd numbered series but if you construct the time series by hand some errors might occur.",
+    "commentText": "What happens if the input data is odd? Maybe you can add this in as a test. We never really deal with odd numbered series but if you construct the time series by hand some errors might occur.",
+    "status": "RESOLVED",
+    "resolutionNote": "Investigated odd-length TimeSeries input; verified that center = (start + end) // 2 exactly computes center bin start + k without indexing drift; added unit tests test_qseries_odd_length_input and test_qtransform_odd_length_series testing lengths 1023, 1025, 2047, 2049 across real/complex and interpolated/uninterpolated paths; wrapped line 222 to <= 79 characters. 6/6 unit tests pass.",
+    "resolution": "Investigated odd-length TimeSeries input; verified that center = (start + end) // 2 exactly computes center bin start + k without indexing drift; added unit tests test_qseries_odd_length_input and test_qtransform_odd_length_series testing lengths 1023, 1025, 2047, 2049 across real/complex and interpolated/uninterpolated paths; wrapped line 222 to <= 79 characters. 6/6 unit tests pass.",
+    "createdAt": "2026-10-09T18:48:00Z",
+    "timestamp": 1791571680.0,
+    "resolvedAt": "2026-10-09T18:50:00Z",
+    "resolvedCommit": "4d3756a7b",
+    "replies": [
+      {
+        "id": "r_5473925845_4233348092",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 4d3756a7b: Investigated odd-length TimeSeries input; verified that center = (start + end) // 2 exactly computes center bin start + k without indexing drift; added unit tests test_qseries_odd_length_input and test_qtransform_odd_length_series testing lengths 1023, 1025, 2047, 2049 across real/complex and interpolated/uninterpolated paths; wrapped line 222 to <= 79 characters. 6/6 unit tests pass.",
+        "createdAt": "2026-10-09T18:50:00Z"
+      }
+    ]
   }
 ]
