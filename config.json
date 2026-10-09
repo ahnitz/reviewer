@@ -33,12 +33,17 @@
       "PR-1H": "pr-feat-inject-injfilter-optimal-snr",
       "PR-1I": "pr-feat-psd-robust-estimators",
       "PR-1J": "pr-feat-strain-regularized-inpainting",
-      "PR-TEST-TRACK": "pr-feat-strain-regularized-inpainting"
+      "PR-TEST-TRACK": "pr-feat-strain-regularized-inpainting",
+      "PR-1K": "pr-feat-frame-gwosc-hdf"
     },
     "user_requested_branches": [
       {
         "prId": "PR-TEST-TRACK",
         "branch": "pr-feat-strain-regularized-inpainting"
+      },
+      {
+        "prId": "PR-1K",
+        "branch": "pr-feat-frame-gwosc-hdf"
       }
     ]
   },
