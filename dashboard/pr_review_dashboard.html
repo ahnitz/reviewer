@@ -145,6 +145,77 @@
     let waveRoadmap = null;
     let devStatus = null;
     let originBranches = [];
+    let lifecycleFilter = "all"; // 'all', 'needs_triage', 'open_upstream', 'ready_to_open', 'staged', 'merged'
+
+    function setLifecycleFilter(filter) {
+      lifecycleFilter = filter;
+      const c = document.getElementById("content-container");
+      if (c && currentTab === "overview") renderOverviewPage(c);
+    }
+
+    function getPRLifecycle(pr) {
+      if (pr.lifecycle) return pr.lifecycle;
+      if (pr.githubPr) {
+        if (pr.githubPr.state === 'OPEN') {
+          return {
+            phase: 'OPEN_UPSTREAM',
+            label: `Open Upstream PR #${pr.githubPr.number}`,
+            badge: `🟢 PR #${pr.githubPr.number} (OPEN)`,
+            action: `Under active review upstream on gwastro/pycbc (#${pr.githubPr.number})`,
+            actionUrl: pr.githubPr.htmlUrl,
+            actionText: `View PR #${pr.githubPr.number} on GitHub`,
+            isActionNeeded: false,
+            order: 1
+          };
+        } else if (pr.githubPr.state === 'MERGED') {
+          return {
+            phase: 'MERGED_UPSTREAM',
+            label: `Merged Upstream PR #${pr.githubPr.number}`,
+            badge: `🟣 PR #${pr.githubPr.number} (MERGED)`,
+            action: `Merged into master; unblocks dependent branches`,
+            actionUrl: pr.githubPr.htmlUrl,
+            actionText: `Merged PR #${pr.githubPr.number}`,
+            isActionNeeded: false,
+            order: 4
+          };
+        }
+      }
+      const unaddressed = serverComments.filter(c => c.prId === pr.id && c.status !== 'RESOLVED' && c.status !== 'ADDRESSED');
+      if (unaddressed.length > 0) {
+        return {
+          phase: 'NEEDS_TRIAGE',
+          label: `${unaddressed.length} Comments Needing Attention`,
+          badge: '⚠️ FEEDBACK PENDING',
+          action: `${unaddressed.length} review threads need resolution before opening PR`,
+          actionUrl: null,
+          actionText: 'Resolve Feedback',
+          isActionNeeded: true,
+          order: 0
+        };
+      }
+      if (pr.wave && pr.wave > 1) {
+        return {
+          phase: 'STAGED',
+          label: `Staged (Wave ${pr.wave})`,
+          badge: '⏳ STAGED',
+          action: 'Held in queue pending upstream prerequisite merges',
+          actionUrl: null,
+          actionText: 'Held in Queue',
+          isActionNeeded: false,
+          order: 3
+        };
+      }
+      return {
+        phase: 'READY_TO_OPEN',
+        label: 'Ready to Open',
+        badge: '🚀 READY TO SUBMIT',
+        action: 'Pushed to fork, 100% tests pass. Ready for GitHub submission.',
+        actionUrl: pr.ghCreatePrUrl,
+        actionText: 'Open PR on GitHub →',
+        isActionNeeded: true,
+        order: 2
+      };
+    }
 
     async function fetchRoadmap() {
       try {
@@ -336,15 +407,21 @@
                   badge = adds + dels;
                 }
                 const roadmapPr = (waveRoadmap && waveRoadmap.prs) ? waveRoadmap.prs[prId] : null;
+                let prCategory = (roadmapPr && roadmapPr.wave) ? `Wave ${roadmapPr.wave} Feature` : "User Tracked";
+                if (prData.githubPr && prData.githubPr.state === 'OPEN') {
+                  prCategory = `🟢 Open Upstream PR #${prData.githubPr.number}`;
+                } else if (prData.githubPr && prData.githubPr.state === 'MERGED') {
+                  prCategory = `🟣 Merged PR #${prData.githubPr.number}`;
+                }
                 pr = {
                   id: prId,
                   shortName: shortLabel.length > 18 ? shortLabel.substring(0, 16) + '…' : shortLabel,
                   branch: branchName,
                   commitSha: prData.commitSha || "",
-                  title: (roadmapPr && roadmapPr.title) ? roadmapPr.title : `Branch: ${branchName}`,
+                  title: (prData.githubPr && prData.githubPr.title) ? prData.githubPr.title : ((roadmapPr && roadmapPr.title) ? roadmapPr.title : `Branch: ${branchName}`),
                   diff: prData.diffStat || "Active topic branch",
                   diffBadge: badge,
-                  category: (roadmapPr && roadmapPr.wave) ? `Wave ${roadmapPr.wave} Feature` : "User Tracked",
+                  category: prCategory,
                   wave: (roadmapPr && roadmapPr.wave) ? roadmapPr.wave : 1,
                   testCmd: (roadmapPr && roadmapPr.test_cmd) ? roadmapPr.test_cmd : "pytest",
                   testTiming: "Verified",
@@ -354,6 +431,8 @@
                   ghCreatePrUrl: `https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:${branchName}?expand=1`,
                   ghBranchUrl: `https://github.com/ahnitz/pycbc/tree/${branchName}`,
                   ghCommitUrl: `https://github.com/ahnitz/pycbc/commit/${prData.commitSha || ''}`,
+                  githubPr: prData.githubPr || null,
+                  lifecycle: prData.lifecycle || null,
                   problemDescription: `Review and discussion for branch ${branchName}.`,
                   solutionDescription: `Extracted live git diff against upstream merge base.`,
                   simplificationDeepDive: `Automated dynamic hunk discovery from user's GitHub account.`,
@@ -362,6 +441,20 @@
                 PR_PAGES.push(pr);
                 updatedCurrent = true;
               } else if (pr && prData.hunks && prData.hunks.length > 0) {
+                if (prData.lifecycle) {
+                  pr.lifecycle = prData.lifecycle;
+                }
+                if (prData.githubPr) {
+                  pr.githubPr = prData.githubPr;
+                  if (prData.githubPr.state === 'OPEN') {
+                    pr.category = `🟢 Open Upstream PR #${prData.githubPr.number}`;
+                  } else if (prData.githubPr.state === 'MERGED') {
+                    pr.category = `🟣 Merged PR #${prData.githubPr.number}`;
+                  }
+                  if (prData.githubPr.title) {
+                    pr.title = prData.githubPr.title;
+                  }
+                }
                 const newSig = JSON.stringify(prData.hunks.map(h => h.file + h.lines));
                 const oldSig = JSON.stringify((pr.hunks || []).map(h => h.file + h.lines));
                 if (newSig !== oldSig || (prData.commitSha && prData.commitSha !== pr.commitSha)) {
@@ -553,7 +646,28 @@
       const container = document.getElementById("nav-tabs");
       const tabs = [
         { id: "overview", label: "Overview & Roadmap", badge: "Wave 1" },
-        ...PR_PAGES.map(pr => ({ id: pr.id, label: pr.id + ": " + pr.shortName, badge: pr.diffBadge })),
+        ...PR_PAGES.map(pr => {
+          const lc = getPRLifecycle(pr);
+          let badge = pr.diffBadge;
+          let prefix = "";
+          let isGithubOpen = false;
+          let isNeedsTriage = false;
+          if (lc.phase === 'OPEN_UPSTREAM') {
+            badge = `#${pr.githubPr ? pr.githubPr.number : ''} OPEN`;
+            prefix = "🟢 ";
+            isGithubOpen = true;
+          } else if (lc.phase === 'MERGED_UPSTREAM') {
+            badge = `#${pr.githubPr ? pr.githubPr.number : ''} MERGED`;
+            prefix = "🟣 ";
+          } else if (lc.phase === 'NEEDS_TRIAGE') {
+            badge = "⚠️ ACTION";
+            prefix = "⚠️ ";
+            isNeedsTriage = true;
+          } else if (lc.phase === 'READY_TO_OPEN') {
+            badge = "🚀 READY";
+          }
+          return { id: pr.id, label: prefix + pr.id + ": " + pr.shortName, badge, isGithubOpen, isNeedsTriage };
+        }),
         { id: "lookahead", label: "Waves 2–4 Simplification", badge: "-1,298 lines" },
         { id: "notes", label: "Review Threads", badge: serverComments.length + " active" }
       ];
@@ -562,10 +676,16 @@
         const isActive = (currentTab === t.id);
         const activeClass = isActive 
           ? "bg-slate-900 text-white font-semibold border-slate-900 shadow-xs" 
-          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-slate-200 bg-slate-50/50";
+          : (t.isNeedsTriage
+              ? "text-amber-900 hover:text-amber-950 hover:bg-amber-100 border-amber-400 bg-amber-50 font-bold"
+              : (t.isGithubOpen 
+                  ? "text-emerald-800 hover:text-emerald-950 hover:bg-emerald-50 border-emerald-300 bg-emerald-50/50 font-medium"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-slate-200 bg-slate-50/50"));
         const badgeClass = isActive
           ? "bg-slate-800 text-slate-200"
-          : "bg-slate-200/80 text-slate-600";
+          : (t.isNeedsTriage
+              ? "bg-amber-200 text-amber-900 font-bold"
+              : (t.isGithubOpen ? "bg-emerald-200/80 text-emerald-900 font-bold" : "bg-slate-200/80 text-slate-600"));
         return `
           <button onclick="switchTab('${t.id}')" 
                   class="px-3 py-1.5 text-xs rounded-md border flex items-center gap-1.5 whitespace-nowrap transition-all ${activeClass}">
@@ -1201,6 +1321,328 @@
       }
     }
 
+    function renderNeedsTriageFocusHtml(needsTriageList) {
+      if (needsTriageList.length === 0) {
+        return `
+          <div class="bg-gradient-to-r from-emerald-50/70 via-emerald-50/30 to-white border-2 border-emerald-400 rounded-lg p-8 text-center space-y-3 shadow-xs">
+            <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto shadow-2xs">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="text-base font-bold text-emerald-950">Zero PRs Need Immediate Triage!</h3>
+            <p class="text-xs text-emerald-800 max-w-lg mx-auto leading-relaxed">
+              All maintainer review comments have been resolved, all unit tests pass across all candidate branches, and branches are cleanly synchronized with upstream master.
+            </p>
+            <div class="pt-2 flex justify-center gap-3">
+              <button onclick="setLifecycleFilter('open_upstream')" class="px-3.5 py-1.5 text-xs font-semibold rounded bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-2xs cursor-pointer">
+                View Live Upstream PR &rarr;
+              </button>
+              <button onclick="setLifecycleFilter('ready_to_open')" class="px-3.5 py-1.5 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-2xs cursor-pointer">
+                View Ready to Submit PRs &rarr;
+              </button>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="bg-white border-2 border-amber-500 rounded-lg p-6 shadow-xs">
+          <div class="flex items-center justify-between pb-4 border-b border-amber-200 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+              <h3 class="text-base font-bold text-slate-900">PRs Requiring Immediate Action (${needsTriageList.length})</h3>
+            </div>
+            <span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">ACTION REQUIRED</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs text-left divide-y divide-amber-200">
+              <thead class="bg-amber-50 text-slate-700 font-semibold">
+                <tr>
+                  <th class="py-2.5 px-3">PR ID</th>
+                  <th class="py-2.5 px-3">Topic Branch</th>
+                  <th class="py-2.5 px-3">Scope &amp; Title</th>
+                  <th class="py-2.5 px-3">Pending Action</th>
+                  <th class="py-2.5 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-amber-100 text-slate-700">
+                ${needsTriageList.map(pr => `
+                  <tr>
+                    <td class="py-3 px-3 font-bold text-slate-900">${pr.id}</td>
+                    <td class="py-3 px-3 code-font text-blue-700 font-semibold">${pr.branch}</td>
+                    <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
+                    <td class="py-3 px-3 text-amber-800 font-semibold">${getPRLifecycle(pr).label}</td>
+                    <td class="py-3 px-3 text-right">
+                      <button onclick="switchTab('${pr.id}')" class="px-3 py-1 text-xs font-semibold rounded bg-amber-600 text-white hover:bg-amber-700 shadow-2xs cursor-pointer">
+                        Triage PR &rarr;
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderOpenUpstreamFocusHtml(openUpstreamList) {
+      if (openUpstreamList.length === 0) {
+        return `
+          <div class="bg-slate-50 border border-slate-200 rounded-lg p-8 text-center text-slate-600">
+            <h3 class="text-base font-bold text-slate-800">No PRs Currently Open Upstream</h3>
+            <p class="text-xs text-slate-500 mt-1">Submit a candidate from the 'Ready to Submit' list to open a PR on gwastro/pycbc.</p>
+            <button onclick="setLifecycleFilter('ready_to_open')" class="mt-4 px-3.5 py-1.5 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 cursor-pointer">
+              View Ready PRs &rarr;
+            </button>
+          </div>
+        `;
+      }
+      return `
+        <div class="bg-gradient-to-r from-emerald-50/70 via-emerald-50/30 to-white border-2 border-emerald-500 rounded-lg p-6 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-emerald-200 gap-2 mb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-600 text-white flex items-center gap-1.5 shadow-2xs">
+                  <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> LIVE UPSTREAM
+                </span>
+                <h3 class="text-base font-bold text-slate-900">Active Pull Requests on gwastro/pycbc (${openUpstreamList.length})</h3>
+                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">OPEN ON GITHUB</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-1">
+                These topic branches have been submitted as active pull requests targeting <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code>.
+              </p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs text-left divide-y divide-emerald-200">
+              <thead class="bg-emerald-50 text-slate-700 font-semibold">
+                <tr>
+                  <th class="py-2.5 px-3">GitHub PR</th>
+                  <th class="py-2.5 px-3">Topic Branch</th>
+                  <th class="py-2.5 px-3">PR Title</th>
+                  <th class="py-2.5 px-3">Diff Footprint</th>
+                  <th class="py-2.5 px-3">Status</th>
+                  <th class="py-2.5 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-emerald-100 text-slate-700">
+                ${openUpstreamList.map(pr => `
+                  <tr class="hover:bg-emerald-50/50 transition-colors">
+                    <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">
+                      <a href="${pr.githubPr.htmlUrl}" target="_blank" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 hover:underline font-bold text-sm">
+                        <span>#${pr.githubPr.number}</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                      </a>
+                    </td>
+                    <td class="py-3 px-3 code-font text-blue-700 font-semibold">
+                      <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
+                    </td>
+                    <td class="py-3 px-3 font-medium text-slate-800">
+                      <a href="${pr.githubPr.htmlUrl}" target="_blank" class="hover:underline">${pr.githubPr.title || pr.title}</a>
+                    </td>
+                    <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
+                    <td class="py-3 px-3 whitespace-nowrap">
+                      <span class="px-2.5 py-1 rounded text-xs font-bold bg-emerald-600 text-white shadow-2xs">OPEN PR #${pr.githubPr.number}</span>
+                    </td>
+                    <td class="py-3 px-3 text-right whitespace-nowrap space-x-2">
+                      <a href="${pr.githubPr.htmlUrl}" target="_blank" class="px-2.5 py-1 text-xs font-semibold rounded bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-2xs inline-block">
+                        View on GitHub &rarr;
+                      </a>
+                      <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer">
+                        Review Local Diff &rarr;
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderReadyToOpenFocusHtml(readyToOpenList) {
+      return `
+        <div class="bg-white border-2 border-blue-500 rounded-lg p-6 shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-600 text-white">Ready to Submit</span>
+                <h3 class="text-base font-bold text-slate-900">Wave 1 Independent Topics (${readyToOpenList.length})</h3>
+                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">100% PASSING TESTS &bull; 0 DEPENDENCIES</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">
+                These candidate branches are verified against master, pushed to your fork at <code class="code-font text-slate-700 font-semibold">origin -> ahnitz/pycbc</code>, and ready for immediate submission.
+              </p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-xs text-left divide-y divide-slate-200">
+              <thead class="bg-slate-50 text-slate-700 font-semibold">
+                <tr>
+                  <th class="py-2.5 px-3">PR ID</th>
+                  <th class="py-2.5 px-3">Branch Name</th>
+                  <th class="py-2.5 px-3">Scope &amp; Title</th>
+                  <th class="py-2.5 px-3">Diff Footprint</th>
+                  <th class="py-2.5 px-3">Submit to GitHub</th>
+                  <th class="py-2.5 px-3 text-right">Review Local Diff</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-600">
+                ${readyToOpenList.map(pr => `
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
+                    <td class="py-3 px-3 code-font text-blue-700 font-semibold">
+                      <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
+                    </td>
+                    <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
+                    <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
+                    <td class="py-3 px-3 whitespace-nowrap">
+                      <a href="${pr.ghCreatePrUrl}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded bg-emerald-600 text-white hover:bg-emerald-700 shadow-2xs">
+                        <span>Open PR &rarr;</span>
+                        <svg class="w-3 h-3 fill-none stroke-current" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                      </a>
+                    </td>
+                    <td class="py-3 px-3 text-right whitespace-nowrap">
+                      <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer">
+                        Review Hunks &rarr;
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStagedFocusHtml(stagedList, wave2List, wave3List, wave4List) {
+      return `
+        <div class="space-y-6">
+          <div class="bg-gradient-to-r from-purple-50/70 via-purple-50/30 to-white border-2 border-purple-400 rounded-lg p-6 shadow-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+              <h3 class="text-base font-bold text-slate-900">Staged Downstream Subsystems (Waves 2–4: ${stagedList.length} PRs)</h3>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800 border border-purple-300">QUEUED BEHIND WAVE 1</span>
+            </div>
+            <p class="text-xs text-slate-600 mt-1">
+              These candidate branches depend on earlier foundational PRs merging upstream into <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code> first. The coordinator automatically promotes branches as upstream merges occur.
+            </p>
+          </div>
+
+          <!-- WAVE 2 -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-700 text-white">Wave 2</span>
+                <h4 class="text-sm font-bold text-slate-900">Strain Conditioning &amp; Noise Models</h4>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-xs text-left divide-y divide-slate-200">
+                <thead class="bg-slate-50 text-slate-700 font-semibold">
+                  <tr>
+                    <th class="py-2.5 px-3">PR ID</th>
+                    <th class="py-2.5 px-3">Branch Name</th>
+                    <th class="py-2.5 px-3">Scope &amp; Title</th>
+                    <th class="py-2.5 px-3">Dependencies</th>
+                    <th class="py-2.5 px-3 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-600">
+                  ${wave2List.map(pr => `
+                    <tr>
+                      <td class="py-2.5 px-3 font-bold text-slate-900">${pr.id}</td>
+                      <td class="py-2.5 px-3 code-font text-blue-700 font-semibold">${pr.branch}</td>
+                      <td class="py-2.5 px-3 font-medium text-slate-800">${pr.title}</td>
+                      <td class="py-2.5 px-3 text-slate-500">${pr.unblocks}</td>
+                      <td class="py-2.5 px-3 text-right">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800 border border-purple-200">Queued</span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- WAVE 3 -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-700 text-white">Wave 3</span>
+                <h4 class="text-sm font-bold text-slate-900">Bank Generation &amp; Innermost Ratio Engine</h4>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-xs text-left divide-y divide-slate-200">
+                <thead class="bg-slate-50 text-slate-700 font-semibold">
+                  <tr>
+                    <th class="py-2.5 px-3">PR ID</th>
+                    <th class="py-2.5 px-3">Branch Name</th>
+                    <th class="py-2.5 px-3">Scope &amp; Title</th>
+                    <th class="py-2.5 px-3">Dependencies</th>
+                    <th class="py-2.5 px-3 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-600">
+                  ${wave3List.map(pr => `
+                    <tr>
+                      <td class="py-2.5 px-3 font-bold text-slate-900">${pr.id}</td>
+                      <td class="py-2.5 px-3 code-font text-blue-700 font-semibold">${pr.branch}</td>
+                      <td class="py-2.5 px-3 font-medium text-slate-800">${pr.title}</td>
+                      <td class="py-2.5 px-3 text-slate-500">${pr.unblocks}</td>
+                      <td class="py-2.5 px-3 text-right">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800 border border-purple-200">Queued</span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- WAVE 4 -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-700 text-white">Wave 4</span>
+                <h4 class="text-sm font-bold text-slate-900">Inspiral Search Executable &amp; Diagnostics</h4>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-xs text-left divide-y divide-slate-200">
+                <thead class="bg-slate-50 text-slate-700 font-semibold">
+                  <tr>
+                    <th class="py-2.5 px-3">PR ID</th>
+                    <th class="py-2.5 px-3">Branch Name</th>
+                    <th class="py-2.5 px-3">Scope &amp; Title</th>
+                    <th class="py-2.5 px-3">Dependencies</th>
+                    <th class="py-2.5 px-3 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-600">
+                  ${wave4List.map(pr => `
+                    <tr>
+                      <td class="py-2.5 px-3 font-bold text-slate-900">${pr.id}</td>
+                      <td class="py-2.5 px-3 code-font text-blue-700 font-semibold">${pr.branch}</td>
+                      <td class="py-2.5 px-3 font-medium text-slate-800">${pr.title}</td>
+                      <td class="py-2.5 px-3 text-slate-500">${pr.unblocks}</td>
+                      <td class="py-2.5 px-3 text-right">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-800 border border-purple-200">Queued</span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderOverviewPage(container) {
       const devBranchName = (devStatus && devStatus.devBranch) ? devStatus.devBranch : "firinspiral3-multidet-asym";
       const devHeadSha = (devStatus && devStatus.headSha) ? devStatus.headSha.substring(0, 9) : "db3ee8fd1";
@@ -1235,6 +1677,18 @@
         { id: "PR-4A", branch: "pr-feat-diagnostics-minifollowup-ifar", title: "feat(diagnostics): Minifollowup visual diagnostics, background IFAR normalization, and found/missed pages", files: "bin/pycbc_page_ifar, pycbc/workflow/minifollowup.py", diff: "~1,420 lines (23 files)", unblocks: "PR-2C, PR-3D (Absorbed dcb77125a)", status: "QUEUED" },
         { id: "PR-4B", branch: "pr-feat-inspiral-pycbc-inspiral-fir", title: "feat(inspiral): Hierarchical FIR multi-detector matched-filter search executable (pycbc_inspiral_fir)", files: "bin/pycbc_inspiral_fir", diff: "~1,520 lines (1 file)", unblocks: "PR-1E, PR-2B, PR-3B (Absorbed 2845412dd, 4b9942b09, b8e71d422)", status: "QUEUED" }
       ];
+
+      const allTrackedPRs = PR_PAGES;
+      const needsTriageList = allTrackedPRs.filter(p => getPRLifecycle(p).phase === 'NEEDS_TRIAGE');
+      const openUpstreamList = allTrackedPRs.filter(p => getPRLifecycle(p).phase === 'OPEN_UPSTREAM');
+      const readyToOpenList = allTrackedPRs.filter(p => getPRLifecycle(p).phase === 'READY_TO_OPEN');
+      const stagedList = [
+        ...allTrackedPRs.filter(p => getPRLifecycle(p).phase === 'STAGED'),
+        ...wave2List.filter(w => !allTrackedPRs.some(p => p.id === w.id)),
+        ...wave3List.filter(w => !allTrackedPRs.some(p => p.id === w.id)),
+        ...wave4List.filter(w => !allTrackedPRs.some(p => p.id === w.id))
+      ];
+      const mergedList = allTrackedPRs.filter(p => getPRLifecycle(p).phase === 'MERGED_UPSTREAM');
 
       container.innerHTML = `
         <div class="space-y-6">
@@ -1284,6 +1738,148 @@
               <span class="text-slate-600 font-medium">Merge Status: <strong class="text-emerald-700">10 / 10 Clean Merge against master</strong></span>
             </div>
           </div>
+
+          <!-- PR Lifecycle & Immediate Focus Matrix -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                  <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">
+                    PR Lifecycle &amp; Immediate Focus Matrix
+                  </h3>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+                    ACTION-ORIENTED WORKFLOW
+                  </span>
+                </div>
+                <p class="text-xs text-slate-600 mt-1">
+                  Track every PR branch through each stage of its lifecycle. Click any phase card below to instantly filter the view and focus on what needs action right now.
+                </p>
+              </div>
+              <div class="shrink-0 flex items-center gap-2">
+                <button onclick="setLifecycleFilter('all')"
+                        class="px-3 py-1.5 text-xs font-semibold rounded-md border ${lifecycleFilter === 'all' ? 'bg-slate-900 text-white border-slate-900 shadow-2xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200'} transition-all cursor-pointer">
+                  Show All Candidates (${allTrackedPRs.length + wave2List.length + wave3List.length + wave4List.length})
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Stage 1: Needs Attention -->
+              <div onclick="setLifecycleFilter('needs_triage')"
+                   class="p-4 rounded-lg border-2 cursor-pointer transition-all ${lifecycleFilter === 'needs_triage' ? 'border-amber-500 bg-amber-50/70 shadow-sm ring-2 ring-amber-300' : 'border-slate-200 bg-slate-50/50 hover:border-amber-400 hover:bg-amber-50/30'}">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full ${needsTriageList.length > 0 ? 'bg-amber-500 animate-pulse' : 'bg-slate-400'}"></span>
+                    Needs Attention
+                  </span>
+                  <span class="px-2 py-0.5 rounded text-xs font-bold ${needsTriageList.length > 0 ? 'bg-amber-600 text-white' : 'bg-slate-200 text-slate-600'}">
+                    ${needsTriageList.length}
+                  </span>
+                </div>
+                <div class="mt-2.5">
+                  <div class="text-lg font-bold ${needsTriageList.length > 0 ? 'text-amber-950' : 'text-slate-700'}">
+                    ${needsTriageList.length > 0 ? `${needsTriageList.length} Requiring Action` : '0 Action Needed'}
+                  </div>
+                  <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+                    ${needsTriageList.length > 0 ? 'Review comments or merge conflicts require immediate triage.' : 'All review comments resolved. All branches cleanly rebased against master.'}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Stage 2: Open Upstream on GitHub -->
+              <div onclick="setLifecycleFilter('open_upstream')"
+                   class="p-4 rounded-lg border-2 cursor-pointer transition-all ${lifecycleFilter === 'open_upstream' ? 'border-emerald-500 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-300' : 'border-slate-200 bg-slate-50/50 hover:border-emerald-400 hover:bg-emerald-50/30'}">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Open Upstream PRs
+                  </span>
+                  <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-600 text-white shadow-2xs">
+                    ${openUpstreamList.length} Active
+                  </span>
+                </div>
+                <div class="mt-2.5">
+                  <div class="text-lg font-bold text-emerald-950 flex items-center gap-1.5">
+                    ${openUpstreamList.length > 0 ? `PR #${openUpstreamList[0].githubPr ? openUpstreamList[0].githubPr.number : '5473'} OPEN` : 'None Open'}
+                  </div>
+                  <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+                    ${openUpstreamList.length > 0 ? 'Submitted to gwastro/pycbc:master. Under active community review & CI.' : 'No branches currently submitted as active pull requests.'}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Stage 3: Ready to Submit -->
+              <div onclick="setLifecycleFilter('ready_to_open')"
+                   class="p-4 rounded-lg border-2 cursor-pointer transition-all ${lifecycleFilter === 'ready_to_open' ? 'border-blue-500 bg-blue-50/70 shadow-sm ring-2 ring-blue-300' : 'border-slate-200 bg-slate-50/50 hover:border-blue-400 hover:bg-blue-50/30'}">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase tracking-wider text-blue-800 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    Ready to Submit
+                  </span>
+                  <span class="px-2 py-0.5 rounded text-xs font-bold bg-blue-600 text-white">
+                    ${readyToOpenList.length} Ready
+                  </span>
+                </div>
+                <div class="mt-2.5">
+                  <div class="text-lg font-bold text-slate-900">
+                    ${readyToOpenList.length} Topic Branches
+                  </div>
+                  <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+                    100% tests pass, master synced, 0 dependencies. 1-click submit links available below.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Stage 4: Staged & Dependent -->
+              <div onclick="setLifecycleFilter('staged')"
+                   class="p-4 rounded-lg border-2 cursor-pointer transition-all ${lifecycleFilter === 'staged' ? 'border-purple-500 bg-purple-50/70 shadow-sm ring-2 ring-purple-300' : 'border-slate-200 bg-slate-50/50 hover:border-purple-400 hover:bg-purple-50/30'}">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase tracking-wider text-purple-800 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                    Staged &amp; Queued
+                  </span>
+                  <span class="px-2 py-0.5 rounded text-xs font-bold bg-purple-600 text-white">
+                    ${stagedList.length} Staged
+                  </span>
+                </div>
+                <div class="mt-2.5">
+                  <div class="text-lg font-bold text-slate-900">
+                    Waves 2–4 Subsystems
+                  </div>
+                  <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+                    Queued downstream. Reconciler automatically monitors and promotes branches as prerequisites merge.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Active Filter Status Bar -->
+            ${lifecycleFilter !== 'all' ? `
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-slate-700">Currently Filtering:</span>
+                  <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
+                    lifecycleFilter === 'needs_triage' ? 'bg-amber-100 text-amber-900 border border-amber-300' :
+                    lifecycleFilter === 'open_upstream' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' :
+                    lifecycleFilter === 'ready_to_open' ? 'bg-blue-100 text-blue-900 border border-blue-300' :
+                    'bg-purple-100 text-purple-900 border border-purple-300'
+                  }">
+                    ${lifecycleFilter.replace('_', ' ')}
+                  </span>
+                  <span class="text-slate-500">Showing only matching candidates for immediate focus.</span>
+                </div>
+                <button onclick="setLifecycleFilter('all')" class="text-blue-600 hover:text-blue-800 font-semibold hover:underline cursor-pointer flex items-center gap-1">
+                  <span>Show Full Overview &rarr;</span>
+                </button>
+              </div>
+            ` : ''}
+          </div>
+
+          ${lifecycleFilter === 'needs_triage' ? renderNeedsTriageFocusHtml(needsTriageList) :
+            lifecycleFilter === 'open_upstream' ? renderOpenUpstreamFocusHtml(openUpstreamList) :
+            lifecycleFilter === 'ready_to_open' ? renderReadyToOpenFocusHtml(readyToOpenList) :
+            lifecycleFilter === 'staged' ? renderStagedFocusHtml(stagedList, wave2List, wave3List, wave4List) : `
 
           <!-- Interactive Control Center: Branch Tracking & Dev Reconciler Grid -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1503,6 +2099,75 @@
             </div>
           </div>
 
+          <!-- ACTIVE UPSTREAM PULL REQUESTS -->
+          ${(() => {
+            const openPrs = PR_PAGES.filter(p => p.githubPr && p.githubPr.state === 'OPEN');
+            if (openPrs.length === 0) return '';
+            return `
+            <div id="open-prs-section" class="bg-gradient-to-r from-emerald-50/70 via-emerald-50/30 to-white border-2 border-emerald-500 rounded-lg p-6 shadow-sm">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-emerald-200 gap-2 mb-4">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-600 text-white flex items-center gap-1.5 shadow-2xs">
+                      <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> LIVE UPSTREAM
+                    </span>
+                    <h3 class="text-base font-bold text-slate-900">Active Pull Requests on gwastro/pycbc (${openPrs.length})</h3>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">OPEN ON GITHUB</span>
+                  </div>
+                  <p class="text-xs text-slate-600 mt-1">
+                    These topic branches have been submitted as active pull requests targeting <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code>.
+                  </p>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs text-left divide-y divide-emerald-200">
+                  <thead class="bg-emerald-50 text-slate-700 font-semibold">
+                    <tr>
+                      <th class="py-2.5 px-3">GitHub PR</th>
+                      <th class="py-2.5 px-3">Topic Branch</th>
+                      <th class="py-2.5 px-3">PR Title</th>
+                      <th class="py-2.5 px-3">Diff Footprint</th>
+                      <th class="py-2.5 px-3">Status</th>
+                      <th class="py-2.5 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-emerald-100 text-slate-700">
+                    ${openPrs.map(pr => `
+                      <tr class="hover:bg-emerald-50/50 transition-colors">
+                        <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">
+                          <a href="${pr.githubPr.htmlUrl}" target="_blank" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 hover:underline font-bold text-sm">
+                            <span>#${pr.githubPr.number}</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                          </a>
+                        </td>
+                        <td class="py-3 px-3 code-font text-blue-700 font-semibold">
+                          <button onclick="switchTab('${pr.id}')" class="hover:underline text-left">${pr.branch}</button>
+                        </td>
+                        <td class="py-3 px-3 font-medium text-slate-800">
+                          <a href="${pr.githubPr.htmlUrl}" target="_blank" class="hover:underline">${pr.githubPr.title || pr.title}</a>
+                        </td>
+                        <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
+                        <td class="py-3 px-3 whitespace-nowrap">
+                          <span class="px-2.5 py-1 rounded text-xs font-bold bg-emerald-600 text-white shadow-2xs">OPEN PR #${pr.githubPr.number}</span>
+                        </td>
+                        <td class="py-3 px-3 text-right whitespace-nowrap space-x-2">
+                          <a href="${pr.githubPr.htmlUrl}" target="_blank" class="px-2.5 py-1 text-xs font-semibold rounded bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-2xs inline-block">
+                            View on GitHub &rarr;
+                          </a>
+                          <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs">
+                            Review Local Diff &rarr;
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            `;
+          })()}
+
           <!-- WAVE 1: ACTIVE REVIEW QUEUE -->
           <div id="wave1-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
@@ -1526,7 +2191,7 @@
                     <th class="py-2.5 px-3">Branch Name</th>
                     <th class="py-2.5 px-3">Scope &amp; Title</th>
                     <th class="py-2.5 px-3">Diff Footprint</th>
-                    <th class="py-2.5 px-3">GitHub Direct Links</th>
+                    <th class="py-2.5 px-3">GitHub Status &amp; Links</th>
                     <th class="py-2.5 px-3 text-right">Review Action</th>
                   </tr>
                 </thead>
@@ -1540,13 +2205,24 @@
                       <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
                       <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
                       <td class="py-3 px-3 space-x-2 whitespace-nowrap">
-                        <a href="${pr.ghCompareUrl}" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
-                          Diff View
-                        </a>
-                        <span class="text-slate-300">|</span>
-                        <a href="${pr.ghCreatePrUrl}" target="_blank" class="inline-flex items-center text-emerald-700 hover:text-emerald-900 font-semibold">
-                          Open PR &rarr;
-                        </a>
+                        ${(pr.githubPr && pr.githubPr.state === 'OPEN') ? `
+                          <a href="${pr.githubPr.htmlUrl}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded bg-emerald-600 text-white hover:bg-emerald-700 shadow-2xs">
+                            <span>🟢 PR #${pr.githubPr.number} (OPEN)</span>
+                            <svg class="w-3 h-3 fill-none stroke-current" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                          </a>
+                        ` : (pr.githubPr && pr.githubPr.state === 'MERGED') ? `
+                          <a href="${pr.githubPr.htmlUrl}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded bg-purple-700 text-white hover:bg-purple-800 shadow-2xs">
+                            <span>🟣 PR #${pr.githubPr.number} (MERGED)</span>
+                          </a>
+                        ` : `
+                          <a href="${pr.ghCompareUrl}" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
+                            Diff View
+                          </a>
+                          <span class="text-slate-300">|</span>
+                          <a href="${pr.ghCreatePrUrl}" target="_blank" class="inline-flex items-center text-emerald-700 hover:text-emerald-900 font-semibold">
+                            Open PR &rarr;
+                          </a>
+                        `}
                       </td>
                       <td class="py-3 px-3 text-right whitespace-nowrap">
                         <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs">
@@ -1770,6 +2446,7 @@
               </p>
             </div>
           </div>
+          `}
 
         </div>
       `;
@@ -1813,11 +2490,24 @@
 
               <!-- GitHub & Review Action Toolbar -->
               <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                <a href="${pr.ghCreatePrUrl}" target="_blank"
-                   class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-colors">
-                  <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                  Open PR on GitHub &rarr;
-                </a>
+                ${(pr.githubPr && pr.githubPr.state === 'OPEN') ? `
+                  <a href="${pr.githubPr.htmlUrl}" target="_blank"
+                     class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-colors">
+                    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                    <span>View PR #${pr.githubPr.number} on GitHub &rarr;</span>
+                  </a>
+                ` : (pr.githubPr && pr.githubPr.state === 'MERGED') ? `
+                  <a href="${pr.githubPr.htmlUrl}" target="_blank"
+                     class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded bg-purple-700 text-white hover:bg-purple-800 shadow-xs transition-colors">
+                    <span>View Merged PR #${pr.githubPr.number} &rarr;</span>
+                  </a>
+                ` : `
+                  <a href="${pr.ghCreatePrUrl}" target="_blank"
+                     class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-colors">
+                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    Open PR on GitHub &rarr;
+                  </a>
+                `}
                 <a href="${pr.ghCompareUrl}" target="_blank"
                    class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
                   GitHub Diff View
@@ -1837,6 +2527,85 @@
               </div>
             </div>
           </div>
+
+          <!-- PR Lifecycle Status Banner -->
+          ${(() => {
+            const lc = getPRLifecycle(pr);
+            if (lc.phase === 'OPEN_UPSTREAM') {
+              return `
+                <div class="bg-gradient-to-r from-emerald-50 via-emerald-50/40 to-white border-2 border-emerald-500 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+                  <div class="flex items-start sm:items-center gap-3.5">
+                    <div class="p-2.5 bg-emerald-100 text-emerald-800 rounded-full shrink-0">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-600 text-white uppercase tracking-wider">Active Upstream Pull Request</span>
+                        <span class="text-base font-bold text-slate-900">gwastro/pycbc#${pr.githubPr.number}: ${pr.githubPr.title || pr.title}</span>
+                      </div>
+                      <p class="text-xs text-slate-600 mt-1">
+                        This topic branch has been submitted to <code class="code-font text-slate-800 font-semibold">gwastro/pycbc:master</code>. The review diff and comments below reflect the live code.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="shrink-0 flex items-center gap-2">
+                    <a href="${pr.githubPr.htmlUrl}" target="_blank" class="px-4 py-2 text-xs font-bold rounded-md bg-emerald-700 text-white hover:bg-emerald-800 shadow-2xs inline-flex items-center gap-1.5 transition-colors">
+                      <span>View PR #${pr.githubPr.number} on GitHub</span>
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                  </div>
+                </div>
+              `;
+            } else if (lc.phase === 'NEEDS_TRIAGE') {
+              return `
+                <div class="bg-gradient-to-r from-amber-50 via-amber-50/40 to-white border-2 border-amber-500 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+                  <div class="flex items-start sm:items-center gap-3.5">
+                    <div class="p-2.5 bg-amber-100 text-amber-800 rounded-full shrink-0">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-amber-600 text-white uppercase tracking-wider">Action Required</span>
+                        <span class="text-base font-bold text-slate-900">${lc.label}</span>
+                      </div>
+                      <p class="text-xs text-slate-600 mt-1">${lc.action}</p>
+                    </div>
+                  </div>
+                  <div class="shrink-0 flex items-center gap-2">
+                    <button onclick="document.getElementById('pr-thread-box-${pr.id}').scrollIntoView({behavior:'smooth'})" class="px-4 py-2 text-xs font-bold rounded-md bg-amber-600 text-white hover:bg-amber-700 shadow-2xs inline-flex items-center gap-1.5 transition-colors">
+                      <span>View Unresolved Threads</span>
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                  </div>
+                </div>
+              `;
+            } else if (lc.phase === 'READY_TO_OPEN') {
+              return `
+                <div class="bg-gradient-to-r from-blue-50 via-blue-50/40 to-white border-2 border-blue-400 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+                  <div class="flex items-start sm:items-center gap-3.5">
+                    <div class="p-2.5 bg-blue-100 text-blue-800 rounded-full shrink-0">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-blue-600 text-white uppercase tracking-wider">Candidate Ready</span>
+                        <span class="text-base font-bold text-slate-900">Decoupled Topic Branch Ready for Upstream Submission</span>
+                      </div>
+                      <p class="text-xs text-slate-600 mt-1">
+                        Clean rebase against gwastro/master &bull; 100% unit tests pass &bull; 0 dependencies. You can submit this PR immediately.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="shrink-0 flex items-center gap-2">
+                    <a href="${pr.ghCreatePrUrl}" target="_blank" class="px-4 py-2 text-xs font-bold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-2xs inline-flex items-center gap-1.5 transition-colors">
+                      <span>Open PR on GitHub &rarr;</span>
+                    </a>
+                  </div>
+                </div>
+              `;
+            }
+            return '';
+          })()}
 
           <!-- Live Review & Discussion Threads Container for this PR -->
           <div id="pr-thread-box-${pr.id}"></div>

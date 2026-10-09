@@ -13,6 +13,7 @@ import uuid
 import argparse
 import subprocess
 import re
+import urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -159,6 +160,8 @@ DEFAULT_PR_BRANCH_MAP = {
     "PR-1H": "pr-feat-inject-injfilter-optimal-snr",
     "PR-1I": "pr-feat-psd-robust-estimators",
     "PR-1J": "pr-feat-strain-regularized-inpainting",
+    "PR-1K": "pr-feat-frame-gwosc-hdf",
+    "PR-1L": "pr-fix-filter-qtransform",
 }
 
 PR_BRANCH_MAP = dict(CFG.get("project", {}).get("branch_map", DEFAULT_PR_BRANCH_MAP))
@@ -220,6 +223,109 @@ def find_rebase_script():
         if os.path.exists(c):
             return os.path.abspath(c)
     return None
+
+GITHUB_PR_CACHE = {"data": None, "time": 0}
+
+def get_github_prs(repo_owner="gwastro", repo_name="pycbc", user_filter=None):
+    """Fetch all pull requests on upstream repo opened by user, with 45s caching."""
+    if user_filter is None:
+        user_filter = MAINTAINER_FORK.split("/")[0] if "/" in MAINTAINER_FORK else "ahnitz"
+    now = time.time()
+    if GITHUB_PR_CACHE["data"] and (now - GITHUB_PR_CACHE["time"] < 45):
+        return GITHUB_PR_CACHE["data"]
+    try:
+        url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/pulls?state=all&per_page=50"
+        req = urllib.request.Request(url, headers={"User-Agent": "PyCBC-Reviewer-Bot/1.0"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            prs = json.loads(resp.read().decode("utf-8"))
+        branch_to_pr = {}
+        for p in prs:
+            head_user = p.get("head", {}).get("user", {}).get("login")
+            head_ref = p.get("head", {}).get("ref")
+            if head_user == user_filter and head_ref:
+                branch_to_pr[head_ref] = {
+                    "number": p["number"],
+                    "title": p["title"],
+                    "state": "MERGED" if p.get("merged_at") else p["state"].upper(),
+                    "htmlUrl": p["html_url"],
+                    "createdAt": p["created_at"],
+                    "updatedAt": p["updated_at"]
+                }
+        GITHUB_PR_CACHE["data"] = branch_to_pr
+        GITHUB_PR_CACHE["time"] = now
+        return branch_to_pr
+    except Exception as e:
+        print(f"[ReviewServer WARN] GitHub PR fetch error: {e}", file=sys.stderr)
+        return GITHUB_PR_CACHE["data"] or {}
+
+def compute_pr_lifecycle(pr_id, branch, gh_prs, roadmap_prs, unaddressed_comments_by_pr):
+    """Categorizes a PR topic branch into its actionable lifecycle stage."""
+    gh = gh_prs.get(branch)
+    if gh:
+        state = gh.get("state", "").upper()
+        if state == "OPEN":
+            return {
+                "phase": "OPEN_UPSTREAM",
+                "label": f"Open Upstream PR #{gh['number']}",
+                "badge": f"🟢 PR #{gh['number']} (OPEN)",
+                "action": f"Under active review upstream on gwastro/pycbc (#{gh['number']})",
+                "actionUrl": gh["htmlUrl"],
+                "actionText": f"View PR #{gh['number']} on GitHub",
+                "isActionNeeded": False,
+                "order": 1
+            }
+        elif state == "MERGED":
+            return {
+                "phase": "MERGED_UPSTREAM",
+                "label": f"Merged Upstream PR #{gh['number']}",
+                "badge": f"🟣 PR #{gh['number']} (MERGED)",
+                "action": "Merged into master; unblocks dependent branches",
+                "actionUrl": gh["htmlUrl"],
+                "actionText": f"Merged PR #{gh['number']}",
+                "isActionNeeded": False,
+                "order": 5
+            }
+
+    unresolved_count = unaddressed_comments_by_pr.get(pr_id, 0)
+    if unresolved_count > 0:
+        return {
+            "phase": "NEEDS_TRIAGE",
+            "label": f"{unresolved_count} Comments Needing Attention",
+            "badge": "⚠️ FEEDBACK PENDING",
+            "action": f"{unresolved_count} review threads need resolution before opening PR",
+            "actionUrl": None,
+            "actionText": "Resolve Feedback",
+            "isActionNeeded": True,
+            "order": 0
+        }
+
+    pdata = roadmap_prs.get(pr_id, {})
+    deps = pdata.get("dependencies", [])
+    merged_branches = {b for b, p in gh_prs.items() if p.get("state") == "MERGED"}
+    unmerged_deps = [d for d in deps if roadmap_prs.get(d, {}).get("branch") not in merged_branches]
+
+    if unmerged_deps:
+        return {
+            "phase": "STAGED",
+            "label": f"Staged (Waiting on {', '.join(unmerged_deps)})",
+            "badge": "⏳ STAGED",
+            "action": f"Dependent on {', '.join(unmerged_deps)} merging upstream first",
+            "actionUrl": None,
+            "actionText": "Held in Queue",
+            "isActionNeeded": False,
+            "order": 3
+        }
+
+    return {
+        "phase": "READY_TO_OPEN",
+        "label": "Ready to Open",
+        "badge": "🚀 READY TO SUBMIT",
+        "action": "Pushed to fork, 100% tests pass. Ready for GitHub submission.",
+        "actionUrl": f"https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:{branch}?expand=1",
+        "actionText": "Open PR on GitHub →",
+        "isActionNeeded": True,
+        "order": 2
+    }
 
 def get_live_pr_hunks(branch_or_id):
     branch = resolve_branch(branch_or_id) or branch_or_id
@@ -345,6 +451,9 @@ def get_live_pr_hunks(branch_or_id):
                 "alternatives": alternatives
             })
 
+    gh_prs = get_github_prs()
+    gh_pr = gh_prs.get(branch)
+
     return {
         "status": "ok",
         "prId": pr_id.upper(),
@@ -354,6 +463,10 @@ def get_live_pr_hunks(branch_or_id):
         "upstreamRef": upstream_ref,
         "diffCmd": diff_cmd_str,
         "diffStat": diff_stat,
+        "githubPr": gh_pr,
+        "upstreamPrNumber": gh_pr["number"] if gh_pr else None,
+        "upstreamPrState": gh_pr["state"] if gh_pr else None,
+        "upstreamPrUrl": gh_pr["htmlUrl"] if gh_pr else None,
         "hunks": hunks
     }
 
@@ -443,9 +556,42 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                 except Exception:
                     pass
 
+            gh_all = get_github_prs()
+
+            # Load roadmap data to resolve dependencies
+            roadmap_prs = {}
+            rm_file = find_roadmap_file()
+            if os.path.exists(rm_file):
+                try:
+                    with open(rm_file, "r", encoding="utf-8") as f:
+                        roadmap_prs = json.load(f).get("prs", {})
+                except Exception:
+                    pass
+
+            # Load feedback data to find unaddressed comments
+            unaddressed_by_pr = {}
+            if os.path.exists(FEEDBACK_FILE):
+                try:
+                    with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
+                        fb_data = json.load(f)
+                    for item in fb_data:
+                        if item.get("status") in ("PENDING_AGENT_ACTION", "IN_PROGRESS"):
+                            c_pid = item.get("prId")
+                            if c_pid:
+                                unaddressed_by_pr[c_pid] = unaddressed_by_pr.get(c_pid, 0) + 1
+                except Exception:
+                    pass
+
             for pid, branch in tracked.items():
-                results[pid] = get_live_pr_hunks(branch)
-            self._send_json({"status": "ok", "prs": results})
+                pr_info = get_live_pr_hunks(branch)
+                pr_info["lifecycle"] = compute_pr_lifecycle(pid, branch, gh_all, roadmap_prs, unaddressed_by_pr)
+                results[pid] = pr_info
+
+            self._send_json({"status": "ok", "prs": results, "githubPrs": gh_all})
+            return
+
+        if self.path == "/api/github/prs" or self.path.startswith("/api/github/prs?"):
+            self._send_json({"status": "ok", "githubPrs": get_github_prs()})
             return
 
         if self.path == "/api/roadmap" or self.path.startswith("/api/roadmap?"):
@@ -718,7 +864,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"status": "error", "message": "dev_reconciler.py not found"}, status=404)
             return
 
-        super().do_POST()
+        self._send_json({"status": "error", "message": f"Endpoint not found: {self.path}"}, status=404)
 
 def run(host=HOST, port=PORT):
     server = HTTPServer((host, port), ReviewRequestHandler)
