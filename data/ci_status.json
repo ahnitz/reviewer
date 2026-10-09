@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-09T21:15:22Z",
+  "lastUpdated": "2026-10-09T22:16:38Z",
   "openPrCount": 3,
   "prs": {
     "5475": {
@@ -7,11 +7,11 @@
       "title": "Make optparse more flexible about int formats",
       "branch": "pr-fix-core-numpy2-optparse",
       "headSha": "57f250860f50c28c1f7a63acebcf191b4f9f93ce",
-      "overallStatus": "IN_PROGRESS",
+      "overallStatus": "RUNNER_ENVIRONMENT",
       "totalChecks": 35,
-      "successCount": 5,
+      "successCount": 17,
       "failureCount": 17,
-      "inProgressCount": 12,
+      "inProgressCount": 0,
       "actionableCount": 0,
       "failures": [
         {
@@ -140,18 +140,18 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-09T21:15:20Z"
+      "lastChecked": "2026-10-09T22:16:36Z"
     },
     "5474": {
       "prNumber": 5474,
       "title": "data / file trigger handling fixes + extension",
       "branch": "pr-fix-io-dictarray-indexing",
       "headSha": "d545f25aa412be1868ff234d577410b572991df2",
-      "overallStatus": "IN_PROGRESS",
+      "overallStatus": "RUNNER_ENVIRONMENT",
       "totalChecks": 35,
-      "successCount": 5,
+      "successCount": 17,
       "failureCount": 17,
-      "inProgressCount": 12,
+      "inProgressCount": 0,
       "actionableCount": 0,
       "failures": [
         {
@@ -280,18 +280,18 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-09T21:15:21Z"
+      "lastChecked": "2026-10-09T22:16:37Z"
     },
     "5473": {
       "prNumber": 5473,
       "title": "waveform compress, more fixes",
       "branch": "pr-perf-waveform-compress",
       "headSha": "89ea1a1d33bffa037953353d9797e62739f5615c",
-      "overallStatus": "IN_PROGRESS",
+      "overallStatus": "RUNNER_ENVIRONMENT",
       "totalChecks": 35,
-      "successCount": 4,
-      "failureCount": 17,
-      "inProgressCount": 13,
+      "successCount": 16,
+      "failureCount": 18,
+      "inProgressCount": 0,
       "actionableCount": 0,
       "failures": [
         {
@@ -400,6 +400,13 @@
           "actionable": false
         },
         {
+          "name": "build",
+          "conclusion": "failure",
+          "category": "RUNNER_ENV_FAILURE",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/37991633712/job/114027022647",
+          "actionable": false
+        },
+        {
           "name": "build (macos-latest, 3.14)",
           "conclusion": "failure",
           "category": "RUNNER_ENV_FAILURE",
@@ -420,7 +427,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-09T21:15:22Z"
+      "lastChecked": "2026-10-09T22:16:38Z"
     }
   }
 }
