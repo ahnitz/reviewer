@@ -36,6 +36,7 @@ DEFAULT_BRANCH_TEST_MAP = {
     "pr-feat-inject-injfilter-optimal-snr": ["pytest", "test/test_injfilterrejector.py"],
     "pr-feat-psd-robust-estimators": ["pytest", "test/test_psd.py"],
     "pr-feat-strain-regularized-inpainting": ["pytest", "test/test_gate_and_paint.py"],
+    "pr-feat-frame-gwosc-hdf": ["pytest", "test/test_gwosc_hdf.py"],
 }
 
 def load_config(config_file=DEFAULT_CONFIG_FILE):
