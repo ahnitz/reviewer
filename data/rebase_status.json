@@ -1,97 +1,84 @@
 {
-  "last_check": "2026-10-09T01:29:54.908091",
-  "upstream_head": "7158cda72def0c7803ca0779a69469fc48d1f577",
+  "last_check": "2026-10-09T10:17:24.958146",
+  "upstream_head": "874842a2c0efd33d35f99b34f26b8e3a26d2990a",
   "branches": {
     "pr-fix-core-numpy2-optparse": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "a51feed1755ac5d84caf759f1cf7ac525a83e0f8",
-      "ahead": 3,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:54.947223"
+      "status": "CONFLICT",
+      "branch": "pr-fix-core-numpy2-optparse",
+      "error": "fatal: 'pr-fix-core-numpy2-optparse' is already used by worktree at '/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr1a'",
+      "timestamp": "2026-10-09T10:17:25.004947"
     },
     "pr-fix-io-dictarray-indexing": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "99266a1bd93ca721a8c5cacd74175b96a3757461",
-      "ahead": 3,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:54.954021"
+      "status": "CONFLICT",
+      "branch": "pr-fix-io-dictarray-indexing",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.023050"
     },
     "pr-fix-events-numpy2-zerolag": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "91238780e199ca122298f8c2a57e3092f50fcfeb",
-      "ahead": 2,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:54.961600"
+      "status": "CONFLICT",
+      "branch": "pr-fix-events-numpy2-zerolag",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.047937"
     },
     "pr-perf-waveform-compress": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "578a65ecffdd5a79e51e671066e49e008d90e807",
-      "ahead": 4,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:54.974951"
+      "status": "CONFLICT",
+      "branch": "pr-perf-waveform-compress",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.068725"
     },
     "pr-feat-vetoes-chisq-slicing": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "996570d8183aa93e1f9dce12f3fd1af4f942ad24",
-      "ahead": 4,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:54.981373"
+      "status": "CONFLICT",
+      "branch": "pr-feat-vetoes-chisq-slicing",
+      "error": "fatal: 'pr-feat-vetoes-chisq-slicing' is already used by worktree at '/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr'",
+      "timestamp": "2026-10-09T10:17:25.094348"
     },
     "pr-feat-events-eventmgr-multi": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "f4ee39b5fcbc432dd2e9ee4f3076e6291ca8f8c0",
-      "ahead": 3,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:54.985249"
+      "status": "CONFLICT",
+      "branch": "pr-feat-events-eventmgr-multi",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.114824"
     },
     "pr-feat-filter-dynamic-snr-renorm": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "8e1160ee03794ca1f569c22b5af08443cc2f8410",
-      "ahead": 1,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:54.988628"
+      "status": "CONFLICT",
+      "branch": "pr-feat-filter-dynamic-snr-renorm",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.137277"
     },
     "pr-feat-inject-injfilter-optimal-snr": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "7ce029f2cd307377d8ad400138fe801da5d4ceee",
-      "ahead": 1,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:54.992775"
+      "status": "CONFLICT",
+      "branch": "pr-feat-inject-injfilter-optimal-snr",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.159522"
     },
     "pr-feat-psd-robust-estimators": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "639133d2487bebc792ccafef7095596725bb0c4f",
-      "ahead": 2,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:54.996187"
+      "status": "CONFLICT",
+      "branch": "pr-feat-psd-robust-estimators",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.179576"
     },
     "pr-feat-strain-regularized-inpainting": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "f42505847ad2c1ffc6d7a81a087a0e0a3ae1f49d",
-      "ahead": 4,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:55.001306"
+      "status": "CONFLICT",
+      "branch": "pr-feat-strain-regularized-inpainting",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.202684"
     },
     "pr-5392": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "c9b643fd4444c9da533d05e2ebe50114070a1a23",
-      "ahead": 16,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:55.007393"
+      "status": "CONFLICT",
+      "branch": "pr-5392",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.227441"
     },
     "pr-5438": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "824d52a3f1c6f55b6454207b85cdf0a6bed7b19c",
-      "ahead": 5,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:55.011148"
+      "status": "CONFLICT",
+      "branch": "pr-5438",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.249867"
     },
     "pr-5457": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "f42505847ad2c1ffc6d7a81a087a0e0a3ae1f49d",
-      "ahead": 4,
-      "behind": 0,
-      "last_verified": "2026-10-09T01:29:55.015678"
+      "status": "CONFLICT",
+      "branch": "pr-5457",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.269786"
     },
     "+ pr-perf-waveform-compress": {
       "status": "UP_TO_DATE",
@@ -101,11 +88,38 @@
       "last_verified": "2026-10-09T00:54:42.532740"
     },
     "pr-feat-frame-gwosc-hdf": {
+      "status": "CONFLICT",
+      "branch": "pr-feat-frame-gwosc-hdf",
+      "error": "error: cannot rebase: You have unstaged changes.\nerror: Please commit or stash them.",
+      "timestamp": "2026-10-09T10:17:25.292273"
+    },
+    "+ pr-fix-core-numpy2-optparse": {
       "status": "UP_TO_DATE",
-      "commit_sha": "9e3bee67882b4be361628b17bf1012237c6af383",
-      "ahead": 1,
+      "commit_sha": "+ pr-fix-core-numpy2-optparse",
+      "ahead": 0,
       "behind": 0,
-      "last_verified": "2026-10-09T01:29:55.019392"
+      "last_verified": "2026-10-09T10:17:25.304723"
+    },
+    "+ pr-fix-io-dictarray-indexing": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "+ pr-fix-io-dictarray-indexing",
+      "ahead": 0,
+      "behind": 0,
+      "last_verified": "2026-10-09T10:13:22.905008"
+    },
+    "+ pr-fix-events-numpy2-zerolag": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "+ pr-fix-events-numpy2-zerolag",
+      "ahead": 0,
+      "behind": 0,
+      "last_verified": "2026-10-09T10:16:24.710086"
+    },
+    "+ pr-feat-vetoes-chisq-slicing": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "+ pr-feat-vetoes-chisq-slicing",
+      "ahead": 0,
+      "behind": 0,
+      "last_verified": "2026-10-09T10:17:25.297976"
     }
   },
   "upstream_remote": "upstream",

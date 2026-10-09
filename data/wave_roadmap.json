@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-09T01:29:34.096806",
+  "last_updated": "2026-10-09T10:17:40.214176",
   "dev_branch": "firinspiral3-multidet-asym",
   "upstream_base": "f6eaed241fd115a0b79b459bca83787b19135875",
-  "last_ingested_commit": "db3ee8fd1011995b006beaa07da04b2d4e3623c5",
-  "ingested_commits_count": 231,
+  "last_ingested_commit": "dfb49408decfa422775b387d8195b2ec3deb7b6e",
+  "ingested_commits_count": 232,
   "prs": {
     "PR-1A": {
       "wave": 1,
@@ -191,7 +191,8 @@
         "bin/all_sky_search/pycbc_exclude_zerolag",
         "bin/all_sky_search/pycbc_coinc_findtrigs",
         "bin/all_sky_search/pycbc_coinc_mergetrigs",
-        "bin/all_sky_search/pycbc_coinc_hdfinjfind"
+        "bin/all_sky_search/pycbc_coinc_hdfinjfind",
+        "bin/all_sky_search/pycbc_fit_sngls_by_template"
       ],
       "test_cmd": "pytest test/test_coinc_stat.py"
     },
@@ -4845,6 +4846,16 @@
       "wave": 2,
       "note": "Commit db3ee8fd1 absorbed into future Wave 2 PR PR-2F ('test/test_gwosc_hdf.py').",
       "timestamp": "2026-10-09T00:12:15.397286"
+    },
+    {
+      "commit_sha": "dfb49408decfa422775b387d8195b2ec3deb7b6e",
+      "commit_msg": "fix(fit_sngls): guard empty sequence in pruning loop in pycbc_fit_sngls_by_template",
+      "file": "bin/all_sky_search/pycbc_fit_sngls_by_template",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-2C",
+      "wave": 2,
+      "note": "Commit dfb49408d absorbed into future Wave 2 PR PR-2C ('bin/all_sky_search/pycbc_fit_sngls_by_template').",
+      "timestamp": "2026-10-09T08:27:39.015912"
     }
   ]
 }

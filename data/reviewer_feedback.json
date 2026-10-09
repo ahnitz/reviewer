@@ -388,5 +388,265 @@
         "createdAt": "2026-10-08T19:36:56Z"
       }
     ]
+  },
+  {
+    "id": "c_1791520948_ae30fd",
+    "prId": "PR-1D",
+    "hunkIndex": 1,
+    "file": "pycbc/waveform/compress.py",
+    "lines": "lines 300-323",
+    "commentText": "Is it possible to be < 0 here?",
+    "author": "Maintainer (Alex)",
+    "status": "ADDRESSED",
+    "createdAt": "2026-10-09T04:42:28Z",
+    "timestamp": 1791520948.912095,
+    "replies": [
+      {
+        "id": "r_1791520949_e5a8",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1D (pycbc/waveform/compress.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T04:42:29Z"
+      },
+      {
+        "id": "r_1791521463_0ddd",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved. Excellent observation \u2014 no, it is mathematically impossible to be < 0!\n\n1. Why <= 0 was written:\n   In upstream master, the line was:\n   valid = ~numpy.any(abs(new_addidxs[:, None] - numpy.array(added_points)) <= 2, axis=1)\n   The previous iteration wanted to relax the constraint to only reject exact duplicate knots already added in previous passes (difference == 0). Writing abs(...) <= 0 was a confusing artifact of keeping the <= N syntax from master, even though abs(x) is non-negative by definition.\n\n2. Simplification:\n   Replaced the 2D broadcasting matrix subtraction and ambiguous abs(...) <= 0 comparison with a clean, idiomatic Python set membership check:\n   ```python\n   # Don't propose duplicate points that were already added in earlier iterations\n   if new_addidxs and added_points:\n       added_set = set(added_points)\n       new_addidxs = [idx for idx in new_addidxs if idx not in added_set]\n   ```\n   This is mathematically transparent, eliminates the confusing comparison, and reduces time complexity from O(N * M) to O(N) for large knot lists.\n\n3. Tests:\n   All 5 tests in test/test_waveform_compress.py pass cleanly.\n\nCommitted and pushed to origin/pr-perf-waveform-compress (commit 578a65ecf).",
+        "createdAt": "2026-10-09T04:51:03Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791521053_491fa6",
+    "prId": "PR-1D",
+    "hunkIndex": 2,
+    "file": "pycbc/waveform/compress.py",
+    "lines": "lines 684-692",
+    "commentText": "The lines change here are just doing some weird if hasattr thing. Why is this replacement done?",
+    "author": "Maintainer (Alex)",
+    "status": "ADDRESSED",
+    "createdAt": "2026-10-09T04:44:13Z",
+    "timestamp": 1791521053.928274,
+    "replies": [
+      {
+        "id": "r_1791521055_83fd",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1D (pycbc/waveform/compress.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T04:44:15Z"
+      },
+      {
+        "id": "r_1791521467_22fb",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved. You are 100% right \u2014 that hasattr ternary was unnecessary inline duck-typing and an anti-pattern.\n\n1. Why it was added:\n   In master, the code was:\n   sample_frequencies = numpy.array(sample_frequencies)\n   amp = numpy.array(amp)\n   phase = numpy.array(phase)\n   Under NumPy 2.0+, calling numpy.array(a) on a PyCBC Array instance emits a DeprecationWarning: __array__ implementation doesn't accept a copy keyword because Array.__array__(self, dtype=None) did not accept the NumPy 2.0 copy parameter. An earlier commit attempted to silence that warning with an ad-hoc inline ternary:\n   sample_frequencies.numpy() if hasattr(sample_frequencies, 'numpy') else numpy.asarray(sample_frequencies).\n\n2. Resolution:\n   Per Rule 9 (Upstream root-cause resolution vs inner-loop band-aids), ad-hoc hasattr checks do not belong in fd_decompress().\n   Standard numpy.asarray() cleanly handles Python lists, NumPy arrays, and PyCBC series without triggering deprecation warnings or requiring duck-typing:\n   ```python\n   sample_frequencies = numpy.asarray(sample_frequencies)\n   amp = numpy.asarray(amp)\n   phase = numpy.asarray(phase)\n   ```\n\n3. Tests:\n   All 5 compression and decompression tests in test/test_waveform_compress.py pass cleanly in 0.31s.\n\nCommitted and pushed to origin/pr-perf-waveform-compress (commit 578a65ecf).",
+        "createdAt": "2026-10-09T04:51:07Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791522263_f8a70b",
+    "prId": "PR-1B",
+    "hunkIndex": 11,
+    "file": "pycbc/io/hdf.py",
+    "lines": "lines 1000-1017",
+    "commentText": "I don't think these statistics exist yet, so shouldn't be in this PR specifically. (whatever PR they are in though we can discuss there)",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T05:04:23Z",
+    "timestamp": 1791522263.9809096,
+    "replies": [
+      {
+        "id": "r_1791522265_d057",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1B (pycbc/io/hdf.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T05:04:25Z"
+      },
+      {
+        "id": "r_1791555244_a70b",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit aef6c8d5b: Removed the premature ranking properties newsnr_offset125 and newsnr_sgveto_offset125 from SingleDetTriggers in pycbc/io/hdf.py. These properties belong to subsequent ranking statistic waves (PR-2D) and are not part of the core IO fixes.",
+        "createdAt": "2026-10-09T14:14:04Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791522301_955816",
+    "prId": "PR-1B",
+    "hunkIndex": 3,
+    "file": "pycbc/io/hdf.py",
+    "lines": "lines 393-405",
+    "commentText": "Why are there two in places???",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T05:05:01Z",
+    "timestamp": 1791522301.608688,
+    "replies": [
+      {
+        "id": "r_1791522303_391e",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1B (pycbc/io/hdf.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T05:05:03Z"
+      },
+      {
+        "id": "r_1791555244_5816",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit aef6c8d5b: Standardized method signatures on a single clean parameter inplace=False in select, remove, and cluster. Removed the redundant dual in_place=None parameter and deprecation forwarding logic.",
+        "createdAt": "2026-10-09T14:14:04Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791522314_553f00",
+    "prId": "PR-1B",
+    "hunkIndex": 2,
+    "file": "pycbc/io/hdf.py",
+    "lines": "lines 309-365",
+    "commentText": "Why are there two in places???",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T05:05:14Z",
+    "timestamp": 1791522314.1250863,
+    "replies": [
+      {
+        "id": "r_1791522315_e705",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1B (pycbc/io/hdf.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T05:05:15Z"
+      },
+      {
+        "id": "r_1791555244_3f00",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit aef6c8d5b: Cleaned up the method signatures to use only inplace=False across DictArray and StatmapData classes, eliminating duplicate parameter declarations.",
+        "createdAt": "2026-10-09T14:14:04Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791522446_1bab3f",
+    "prId": "PR-1B",
+    "hunkIndex": 0,
+    "file": "pycbc/events/eventmgr.py",
+    "lines": "lines 302-311",
+    "commentText": "Surely we must have had to handle this before no? e.g. we've long had an option to not really calcualte the chisq of something if it was below threshold? Why did that not break before?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T05:07:26Z",
+    "timestamp": 1791522446.0880015,
+    "replies": [
+      {
+        "id": "r_1791522447_ed64",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1B (pycbc/events/eventmgr.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T05:07:27Z"
+      },
+      {
+        "id": "r_1791555244_ab3f",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit aef6c8d5b: Reverted pycbc/events/eventmgr.py completely to upstream master. The below-threshold chisq bypass was accidentally included in PR-1B and has been removed from this branch so PR-1B remains strictly focused on DictArray and SingleDetTriggers IO.",
+        "createdAt": "2026-10-09T14:14:04Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791522503_8b8337",
+    "prId": "PR-1C",
+    "hunkIndex": 2,
+    "file": "bin/all_sky_search/pycbc_coinc_hdfinjfind",
+    "lines": "lines 246-252",
+    "commentText": "This pr doesn't add optimal_mf_snr as something might produce, so seems strange to add this here.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T05:08:23Z",
+    "timestamp": 1791522503.8913596,
+    "replies": [
+      {
+        "id": "r_1791522505_31fe",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1C (bin/all_sky_search/pycbc_coinc_hdfinjfind). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T05:08:25Z"
+      },
+      {
+        "id": "r_1791555442_1c_inj",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 6996e1029: Reverted premature reference to optimal_mf_snr in bin/all_sky_search/pycbc_coinc_hdfinjfind back to upstream master check (if 'optimal_snr' in k:). Injection filter enhancements belong strictly to PR-1H / Wave 2 PR-2E, keeping PR-1C decoupled and minimal.",
+        "createdAt": "2026-10-09T14:17:22Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791522607_02d972",
+    "prId": "PR-1C",
+    "hunkIndex": 8,
+    "file": "pycbc/events/significance.py",
+    "lines": "lines 133-146",
+    "commentText": "This looks like the same change twice?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T05:10:07Z",
+    "timestamp": 1791522607.291673,
+    "replies": [
+      {
+        "id": "r_1791522607_4a25",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1C (pycbc/events/significance.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T05:10:07Z"
+      },
+      {
+        "id": "r_1791555442_1c_sig",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 6996e1029: Deduplicated empty background handling in pycbc/events/significance.py by extracting shared helper _empty_n_louder_return(fore_stat) and reusing it across count_n_louder and n_louder_from_fit. Verified all unit tests pass.",
+        "createdAt": "2026-10-09T14:17:22Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791554873_76c3c8",
+    "prId": "PR-1A",
+    "hunkIndex": 10,
+    "file": "pycbc/types/optparse.py",
+    "lines": "lines 138-144",
+    "commentText": "If seems like 'conv' is defined multiple times, no?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T14:07:53Z",
+    "timestamp": 1791554873.0256228,
+    "replies": [
+      {
+        "id": "r_1791554874_5d42",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1A (pycbc/types/optparse.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T14:07:54Z"
+      },
+      {
+        "id": "r_1791555143_29cf",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 74f09562f: Centralized the integer/converter dispatch logic by introducing a single module helper _get_converter(dtype) and initializing self.conv in MultiDetOptionAction.__init__ and DictOptionAction.__init__. Removed all local conv variable definitions from every __call__ method across all MultiDet and DictOptionAction subclasses, and verified with all 24 unit tests passing in test_optparse.py, test_resample.py, and test_qtransform.py.",
+        "createdAt": "2026-10-09T14:12:23Z"
+      }
+    ]
+  },
+  {
+    "id": "c_1791555171_46edb5",
+    "prId": "PR-1E",
+    "hunkIndex": 0,
+    "file": "pycbc/vetoes/chisq.py",
+    "lines": "lines 134-148",
+    "commentText": "What's the thinking about the changes at lines 138-140?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-09T14:12:51Z",
+    "timestamp": 1791555171.09075,
+    "replies": [
+      {
+        "id": "r_1791555173_3bc6",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically triaging review request on PR-1E (pycbc/vetoes/chisq.py). Analyzing code context, verifying test invariants, and preparing resolution...",
+        "createdAt": "2026-10-09T14:12:53Z"
+      },
+      {
+        "id": "r_1791555442_1e_chisq",
+        "author": "Antigravity AI Responder",
+        "replyText": "Resolved in commit 220b83be8: The numpy.abs(val) change was an ad-hoc dev addition attempting to guard against tiny negative roundoff values near zero. However, abs() risks masking real errors as high chi-squared values and is unrelated to PR-1E (memory-efficient bin SNR slicing and None guard). We have reverted lines 138-140 back to upstream master exact implementation. All unit tests in test/test_chisq.py, test/test_autochisq.py, and test/test_chisq_slicing.py pass.",
+        "createdAt": "2026-10-09T14:17:22Z"
+      }
+    ]
   }
 ]
