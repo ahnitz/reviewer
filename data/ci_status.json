@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-10T13:19:33Z",
+  "lastUpdated": "2026-10-10T13:23:42Z",
   "openPrCount": 3,
   "prs": {
     "5475": {
@@ -140,7 +140,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T13:19:31Z"
+      "lastChecked": "2026-10-10T13:23:41Z"
     },
     "5474": {
       "prNumber": 5474,
@@ -280,7 +280,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T13:19:32Z"
+      "lastChecked": "2026-10-10T13:23:41Z"
     },
     "5473": {
       "prNumber": 5473,
@@ -427,7 +427,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T13:19:33Z"
+      "lastChecked": "2026-10-10T13:23:42Z"
     }
   }
 }
