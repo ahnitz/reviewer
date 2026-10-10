@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-09T22:34:24.060515",
+  "last_updated": "2026-10-09T23:08:24.951707",
   "dev_branch": "firinspiral3-multidet-asym",
   "upstream_base": "f6eaed241fd115a0b79b459bca83787b19135875",
-  "last_ingested_commit": "0c453eda0fcbc35952eed3077d56967600e0f733",
-  "ingested_commits_count": 241,
+  "last_ingested_commit": "a5fef05d5f716b1267b6db5320df0c1ccd61a7c2",
+  "ingested_commits_count": 242,
   "prs": {
     "PR-1A": {
       "wave": 1,
@@ -7664,6 +7664,16 @@
       "wave": 4,
       "note": "Commit 5c5a087af absorbed into future Wave 4 PR PR-4B ('bin/pycbc_inspiral_fir').",
       "timestamp": "2026-10-09T22:30:23.956174"
+    },
+    {
+      "commit_sha": "a5fef05d5f716b1267b6db5320df0c1ccd61a7c2",
+      "commit_msg": "fir: gate asymmetric followup on primary trigger NewSNR threshold",
+      "file": "bin/pycbc_inspiral_fir",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-4B",
+      "wave": 4,
+      "note": "Commit a5fef05d5 absorbed into future Wave 4 PR PR-4B ('bin/pycbc_inspiral_fir').",
+      "timestamp": "2026-10-09T23:05:24.912058"
     }
   ]
 }
