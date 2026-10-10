@@ -1,5 +1,5 @@
 {
-  "last_check": "2026-10-10T08:10:00.631646",
+  "last_check": "2026-10-10T08:13:01.998936",
   "upstream_head": "11e3e6da16861da95bd83f3830cdda812d76f227",
   "branches": {
     "pr-fix-core-numpy2-optparse": {
@@ -8,7 +8,7 @@
       "ahead": 10,
       "behind": 2,
       "merge_clean": true,
-      "last_verified": "2026-10-10T08:10:00.646409"
+      "last_verified": "2026-10-10T08:13:02.021001"
     },
     "pr-fix-io-dictarray-indexing": {
       "status": "UP_TO_DATE",
@@ -16,7 +16,7 @@
       "ahead": 2,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T08:10:00.658921"
+      "last_verified": "2026-10-10T08:13:02.034839"
     },
     "pr-fix-events-numpy2-zerolag": {
       "status": "WAITING_DEPENDENCY",
@@ -24,7 +24,7 @@
       "commit_sha": "6996e102959b2f7fb7e605b3ac87bc8f6252fcb7",
       "dependency": "pr-fix-core-numpy2-optparse",
       "note": "Awaiting upstream merge of parent branch pr-fix-core-numpy2-optparse before cascade rebase",
-      "last_verified": "2026-10-10T08:10:00.671558"
+      "last_verified": "2026-10-10T08:13:02.044622"
     },
     "pr-perf-waveform-compress": {
       "status": "UP_TO_DATE",
@@ -32,7 +32,7 @@
       "ahead": 10,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T08:10:00.684718"
+      "last_verified": "2026-10-10T08:13:02.074613"
     },
     "pr-feat-vetoes-chisq-slicing": {
       "status": "UP_TO_DATE",
@@ -40,7 +40,7 @@
       "ahead": 5,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T08:10:00.692321"
+      "last_verified": "2026-10-10T08:13:02.091658"
     },
     "pr-feat-events-eventmgr-multi": {
       "status": "UP_TO_DATE",
@@ -48,7 +48,7 @@
       "ahead": 4,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T08:10:00.701993"
+      "last_verified": "2026-10-10T08:13:02.105770"
     },
     "pr-feat-filter-dynamic-snr-renorm": {
       "status": "UP_TO_DATE",
@@ -56,7 +56,7 @@
       "ahead": 1,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T08:10:00.711397"
+      "last_verified": "2026-10-10T08:13:02.117303"
     },
     "pr-feat-inject-injfilter-optimal-snr": {
       "status": "UP_TO_DATE",
@@ -64,7 +64,7 @@
       "ahead": 6,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T08:10:00.718612"
+      "last_verified": "2026-10-10T08:13:02.129155"
     },
     "pr-feat-psd-robust-estimators": {
       "status": "WAITING_DEPENDENCY",
@@ -72,7 +72,7 @@
       "commit_sha": "639133d2487bebc792ccafef7095596725bb0c4f",
       "dependency": "pr-feat-filter-dynamic-snr-renorm",
       "note": "Awaiting upstream merge of parent branch pr-feat-filter-dynamic-snr-renorm before cascade rebase",
-      "last_verified": "2026-10-10T08:10:00.721666"
+      "last_verified": "2026-10-10T08:13:02.139437"
     },
     "pr-feat-strain-regularized-inpainting": {
       "status": "UP_TO_DATE",
@@ -80,7 +80,7 @@
       "ahead": 4,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T08:10:00.728181"
+      "last_verified": "2026-10-10T08:13:02.155606"
     },
     "pr-feat-frame-gwosc-hdf": {
       "status": "UP_TO_DATE",
@@ -88,14 +88,14 @@
       "ahead": 2,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T08:10:00.733806"
+      "last_verified": "2026-10-10T08:13:02.179834"
     },
     "pr-fix-filter-qtransform": {
       "status": "MERGED",
       "branch": "pr-fix-filter-qtransform",
       "pr_number": 5476,
       "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83",
-      "last_verified": "2026-10-10T08:10:00.635477"
+      "last_verified": "2026-10-10T08:13:02.003294"
     },
     "pr-fix-filter-resample-copy": {
       "status": "UP_TO_DATE",
@@ -103,14 +103,14 @@
       "ahead": 1,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T08:10:00.744146"
+      "last_verified": "2026-10-10T08:13:02.197533"
     },
     "pr-fix-live-hwinj-support": {
       "status": "MERGED",
       "branch": "pr-fix-live-hwinj-support",
       "pr_number": 5476,
       "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83",
-      "last_verified": "2026-10-10T08:10:00.635496"
+      "last_verified": "2026-10-10T08:13:02.003310"
     }
   },
   "upstream_remote": "upstream",
