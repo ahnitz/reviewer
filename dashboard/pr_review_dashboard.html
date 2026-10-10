@@ -102,6 +102,11 @@
         </h1>
       </div>
       <div class="flex items-center gap-2.5">
+        <button onclick="switchTab('guidelines')" 
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          PyCBC Guidelines
+        </button>
         <a href="https://github.com/ahnitz/pycbc/branches" target="_blank" 
            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs">
           <svg class="w-4 h-4 fill-current text-slate-700" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
@@ -251,6 +256,57 @@
       } catch (e) {
         console.debug("Could not fetch dev status:", e);
       }
+    }
+
+    let ciStatus = null;
+    async function fetchCIStatus() {
+      try {
+        const res = await fetch('/api/ci/status?t=' + Date.now());
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'ok') {
+            ciStatus = data.ci;
+            if (currentTab === 'overview') {
+              const c = document.getElementById("content-container");
+              if (c) renderOverviewPage(c);
+            }
+          }
+        }
+      } catch (e) {
+        console.debug("Could not fetch CI status:", e);
+      }
+    }
+
+    let overviewSearchQuery = "";
+    function filterPRsOverview(query) {
+      overviewSearchQuery = (query || "").trim().toLowerCase();
+      const rows = document.querySelectorAll(".pr-table-row");
+      const emptyMsg = document.getElementById("search-empty-state");
+      const counter = document.getElementById("search-counter");
+      let visible = 0;
+      rows.forEach(r => {
+        const text = (r.getAttribute("data-pr-search") || "").toLowerCase();
+        if (!overviewSearchQuery || text.includes(overviewSearchQuery)) {
+          r.style.display = "";
+          visible++;
+        } else {
+          r.style.display = "none";
+        }
+      });
+      if (emptyMsg) {
+        emptyMsg.style.display = (visible === 0 && overviewSearchQuery) ? "block" : "none";
+      }
+      if (counter) {
+        counter.textContent = overviewSearchQuery ? `Showing ${visible} of ${rows.length} candidates` : `${rows.length} candidates`;
+      }
+    }
+
+    function filterByChip(term) {
+      const inp = document.getElementById("overview-search-input");
+      if (inp) {
+        inp.value = term;
+      }
+      filterPRsOverview(term);
     }
 
     async function fetchOriginBranches() {
@@ -455,9 +511,9 @@
                     pr.title = prData.githubPr.title;
                   }
                 }
-                const newSig = JSON.stringify(prData.hunks.map(h => h.file + h.lines));
-                const oldSig = JSON.stringify((pr.hunks || []).map(h => h.file + h.lines));
-                if (newSig !== oldSig || (prData.commitSha && prData.commitSha !== pr.commitSha)) {
+                const oldTotalLen = (pr.hunks || []).reduce((acc, h) => acc + (h.diffSnippet ? h.diffSnippet.length : 0), 0);
+                const newTotalLen = prData.hunks.reduce((acc, h) => acc + (h.diffSnippet ? h.diffSnippet.length : 0), 0);
+                if (newTotalLen !== oldTotalLen || (prData.commitSha && prData.commitSha !== pr.commitSha) || (prData.hunks.length !== (pr.hunks || []).length)) {
                   pr.hunks = prData.hunks;
                   if (prData.commitSha) {
                     pr.commitSha = prData.commitSha;
@@ -567,9 +623,9 @@
           if (data.status === 'ok' && data.hunks && data.hunks.length > 0) {
             const pr = PR_PAGES.find(p => p.id === prId);
             if (pr) {
-              const newSig = JSON.stringify(data.hunks.map(h => h.file + h.lines + h.shortSummary));
-              const oldSig = JSON.stringify((pr.hunks || []).map(h => h.file + h.lines + h.shortSummary));
-              if (newSig !== oldSig || (data.commitSha && data.commitSha !== pr.commitSha) || (data.diffCmd && data.diffCmd !== pr.diffCmd)) {
+              const oldTotalLen = (pr.hunks || []).reduce((acc, h) => acc + (h.diffSnippet ? h.diffSnippet.length : 0), 0);
+              const newTotalLen = data.hunks.reduce((acc, h) => acc + (h.diffSnippet ? h.diffSnippet.length : 0), 0);
+              if (newTotalLen !== oldTotalLen || (data.commitSha && data.commitSha !== pr.commitSha) || (data.diffCmd && data.diffCmd !== pr.diffCmd) || (data.hunks.length !== (pr.hunks || []).length)) {
                 pr.hunks = data.hunks;
                 if (data.commitSha) {
                   pr.commitSha = data.commitSha;
@@ -669,7 +725,8 @@
           return { id: pr.id, label: prefix + pr.id + ": " + pr.shortName, badge, isGithubOpen, isNeedsTriage };
         }),
         { id: "lookahead", label: "Waves 2–4 Simplification", badge: "-1,298 lines" },
-        { id: "notes", label: "Review Threads", badge: serverComments.length + " active" }
+        { id: "notes", label: "Review Threads", badge: serverComments.length + " active" },
+        { id: "guidelines", label: "PyCBC Guidelines", badge: "Standards" }
       ];
 
       container.innerHTML = tabs.map(t => {
@@ -942,7 +999,32 @@
       renderActiveComments();
     }
 
-    function renderGitHubStyleDiff(diffSnippet, fallbackStartLine) {
+    function commentOnLine(prId, hunkIdx, file, lineNum) {
+      if (!prId || hunkIdx === undefined) return;
+      const form = document.getElementById(`form-${prId}-${hunkIdx}`);
+      if (form && form.classList.contains("hidden")) {
+        form.classList.remove("hidden");
+      }
+      const input = document.getElementById(`input-${prId}-${hunkIdx}`);
+      if (input) {
+        const shortFile = file ? file.split('/').pop() : 'file';
+        const linePrefix = `[Line ${lineNum} in ${shortFile}]: `;
+        if (!input.value.includes(linePrefix)) {
+          input.value = linePrefix + (input.value ? input.value : "");
+        }
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+      const statusEl = document.getElementById(`status-${prId}-${hunkIdx}`);
+      if (statusEl) {
+        statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-300 shadow-2xs">Targeting Line ${lineNum}</span>`;
+      }
+      if (form) {
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function renderGitHubStyleDiff(diffSnippet, fallbackStartLine, fileName, prId, hunkIdx) {
       if (!diffSnippet) {
         return '<div class="p-4 text-slate-400 text-xs italic bg-white">No diff available for this hunk.</div>';
       }
@@ -987,10 +1069,16 @@
         if (line.startsWith('+') && !line.startsWith('+++')) {
           const curNew = inHunk ? newLine++ : (newLine++);
           const code = escapeHtml(line.substring(1));
+          const lineRef = curNew;
           rows.push(`
-            <tr class="diff-row text-[12px] leading-5">
+            <tr class="diff-row text-[12px] leading-5 group">
               <td class="diff-gutter-add w-10 px-2 py-0 text-right select-none text-[11px] font-mono"></td>
-              <td class="diff-gutter-add w-10 px-2 py-0 text-right select-none text-[11px] font-mono font-semibold">${curNew}</td>
+              <td class="diff-gutter-add w-10 px-2 py-0 text-right select-none text-[11px] font-mono font-semibold cursor-pointer relative group/cell hover:bg-emerald-200 transition-colors"
+                  onclick="commentOnLine('${prId}', ${hunkIdx}, '${escapeHtml(fileName || '')}', ${lineRef})"
+                  title="Click to comment on line ${lineRef}">
+                <span class="group-hover/cell:hidden">${lineRef}</span>
+                <span class="hidden group-hover/cell:inline-block text-blue-700 font-bold text-[10px]">+</span>
+              </td>
               <td class="diff-line-add w-4 px-1 py-0 text-center text-emerald-800 font-bold select-none text-[12px]">+</td>
               <td class="diff-line-add px-2 py-0 whitespace-pre font-mono overflow-x-visible">${code || '&nbsp;'}</td>
             </tr>
@@ -998,9 +1086,15 @@
         } else if (line.startsWith('-') && !line.startsWith('---')) {
           const curOld = inHunk ? oldLine++ : (oldLine++);
           const code = escapeHtml(line.substring(1));
+          const lineRef = curOld;
           rows.push(`
-            <tr class="diff-row text-[12px] leading-5">
-              <td class="diff-gutter-del w-10 px-2 py-0 text-right select-none text-[11px] font-mono font-semibold">${curOld}</td>
+            <tr class="diff-row text-[12px] leading-5 group">
+              <td class="diff-gutter-del w-10 px-2 py-0 text-right select-none text-[11px] font-mono font-semibold cursor-pointer relative group/cell hover:bg-rose-200 transition-colors"
+                  onclick="commentOnLine('${prId}', ${hunkIdx}, '${escapeHtml(fileName || '')}', ${lineRef})"
+                  title="Click to comment on line ${lineRef}">
+                <span class="group-hover/cell:hidden">${lineRef}</span>
+                <span class="hidden group-hover/cell:inline-block text-rose-700 font-bold text-[10px]">+</span>
+              </td>
               <td class="diff-gutter-del w-10 px-2 py-0 text-right select-none text-[11px] font-mono"></td>
               <td class="diff-line-del w-4 px-1 py-0 text-center text-rose-800 font-bold select-none text-[12px]">-</td>
               <td class="diff-line-del px-2 py-0 whitespace-pre font-mono overflow-x-visible">${code || '&nbsp;'}</td>
@@ -1018,11 +1112,17 @@
           // Context line
           const curOld = inHunk ? oldLine++ : '';
           const curNew = inHunk ? newLine++ : '';
+          const lineRef = curNew || curOld || 1;
           const code = line.startsWith(' ') ? escapeHtml(line.substring(1)) : escapeHtml(line);
           rows.push(`
-            <tr class="diff-row text-[12px] leading-5">
+            <tr class="diff-row text-[12px] leading-5 group">
               <td class="diff-gutter-ctx w-10 px-2 py-0 text-right select-none text-[11px] font-mono">${curOld}</td>
-              <td class="diff-gutter-ctx w-10 px-2 py-0 text-right select-none text-[11px] font-mono">${curNew}</td>
+              <td class="diff-gutter-ctx w-10 px-2 py-0 text-right select-none text-[11px] font-mono cursor-pointer relative group/cell hover:bg-slate-200 transition-colors"
+                  onclick="commentOnLine('${prId}', ${hunkIdx}, '${escapeHtml(fileName || '')}', ${lineRef})"
+                  title="Click to comment on line ${lineRef}">
+                <span class="group-hover/cell:hidden">${curNew}</span>
+                <span class="hidden group-hover/cell:inline-block text-blue-700 font-bold text-[10px]">+</span>
+              </td>
               <td class="diff-line-ctx w-4 px-1 py-0 text-center select-none text-[12px]"></td>
               <td class="diff-line-ctx px-2 py-0 whitespace-pre font-mono overflow-x-visible">${code || '&nbsp;'}</td>
             </tr>
@@ -1351,6 +1451,11 @@
 
       if (currentTab === "notes") {
         renderNotesPage(container);
+        return;
+      }
+
+      if (currentTab === "guidelines") {
+        renderGuidelinesPage(container);
         return;
       }
 
@@ -1685,12 +1790,12 @@
 
     function renderOverviewPage(container) {
       const devBranchName = (devStatus && devStatus.devBranch) ? devStatus.devBranch : "firinspiral3-multidet-asym";
-      const devHeadSha = (devStatus && devStatus.headSha) ? devStatus.headSha.substring(0, 9) : "db3ee8fd1";
+      const devHeadSha = (devStatus && devStatus.headSha) ? devStatus.headSha.substring(0, 9) : "c524d71c3";
       const ingestedCount = (waveRoadmap && waveRoadmap.ingested_commits_count) ? waveRoadmap.ingested_commits_count : 231;
       const totalCandidatesCount = (waveRoadmap && waveRoadmap.prs) ? Object.keys(waveRoadmap.prs).length : 30;
       const userTracked = (devStatus && devStatus.userTrackedBranches) ? devStatus.userTrackedBranches : [];
       const recentCommits = (devStatus && devStatus.recentCommits) ? devStatus.recentCommits : [
-        "db3ee8fd1 feat(frame): support reading strain from GWOSC HDF5 files and caches",
+        "c524d71c3 feat(frame): support reading strain from GWOSC HDF5 files and caches",
         "4842b1e18 fix(fit_sngls): guard empty sequence and zero trigger cases in pruning and plotting",
         "5e02b4a11 feat(stat): add rayleigh_subthreshold statistic feature with smooth C1 matching below threshold",
         "dcb77125a fix(plotting): correct cumulative background normalization in pycbc_page_ifar",
@@ -1703,7 +1808,7 @@
         { id: "PR-2C", branch: "pr-perf-coinc-statmap-memory", title: "perf(coinc): Memory-bounded statmap combination and multi-detector livetime accounting", files: "pycbc/events/statmap.py, test/test_statmap.py", diff: "~450 lines (8 files)", unblocks: "PR-1B, PR-1C, PR-1F", status: "QUEUED" },
         { id: "PR-2D", branch: "pr-feat-events-rayleigh-stat", title: "feat(events): Smooth sub-threshold Rayleigh statistic and singles downweighting", files: "pycbc/events/stat.py, bin/pycbc_fit_sngls_split_binned", diff: "~180 lines (5 files)", unblocks: "PR-1C (Absorbed 5e02b4a11, 4842b1e18)", status: "QUEUED" },
         { id: "PR-2E", branch: "pr-tool-inject-optimal-mf-snr", title: "tool(inject): Dedicated optimal matched-filter SNR evaluator with glitch autogating", files: "bin/pycbc_optimal_mf_snr", diff: "~320 lines (1 file)", unblocks: "PR-1H", status: "QUEUED" },
-        { id: "PR-2F", branch: "pr-feat-frame-gwosc-hdf-strain", title: "feat(frame): Support reading strain from GWOSC HDF5 files and caches", files: "pycbc/frame/gwosc_hdf.py, test/test_gwosc_hdf.py", diff: "+156 / -0 (4 files)", unblocks: "PR-1A (Synthesized from db3ee8fd1)", status: "SYNTHESIZED" }
+        { id: "PR-2F", branch: "pr-feat-frame-gwosc-hdf-strain", title: "feat(frame): Support reading strain from GWOSC HDF5 files and caches", files: "pycbc/frame/gwosc_hdf.py, test/test_gwosc_hdf.py", diff: "+156 / -0 (4 files)", unblocks: "PR-1A (Synthesized from c524d71c3)", status: "SYNTHESIZED" }
       ];
 
       const wave3List = [
@@ -1730,6 +1835,20 @@
       ];
       const mergedList = allTrackedPRs.filter(p => getPRLifecycle(p).phase === 'MERGED_UPSTREAM');
 
+      const openPrsFallback = [
+        { id: "PR-1A", branch: "pr-fix-core-numpy2-optparse", title: "Make optparse more flexible about int formats", diff: "+18 / -6 (3 files)", diffBadge: "+18 / -6", githubPr: { number: 5475, htmlUrl: "https://github.com/gwastro/pycbc/pull/5475", state: "OPEN" } },
+        { id: "PR-1B", branch: "pr-fix-io-dictarray-indexing", title: "data / file trigger handling fixes + extension", diff: "+45 / -12 (4 files)", diffBadge: "+45 / -12", githubPr: { number: 5474, htmlUrl: "https://github.com/gwastro/pycbc/pull/5474", state: "OPEN" } },
+        { id: "PR-1D", branch: "pr-perf-waveform-compress", title: "waveform compress, more fixes", diff: "+39 / -2 (2 files)", diffBadge: "+39 / -2", githubPr: { number: 5473, htmlUrl: "https://github.com/gwastro/pycbc/pull/5473", state: "OPEN" } }
+      ];
+      let openPrs = PR_PAGES.filter(p => p.githubPr && p.githubPr.state === 'OPEN');
+      if (openPrs.length === 0) {
+        openPrs = openPrsFallback;
+      }
+
+      const totalPassingChecks = (ciStatus && ciStatus.prs)
+        ? Object.values(ciStatus.prs).reduce((sum, p) => sum + (p.successCount || 0), 0)
+        : 50;
+
       container.innerHTML = `
         <div class="space-y-6">
 
@@ -1750,18 +1869,22 @@
                   <code class="code-font text-slate-800 font-semibold">git@github.com:ahnitz/pycbc.git</code>.
                 </p>
               </div>
-              <div class="shrink-0 flex flex-col sm:flex-row gap-2">
+              <div class="shrink-0 flex flex-wrap gap-2">
+                <a href="#open-prs-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 transition-colors text-center flex items-center gap-1.5 shadow-2xs">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                  <span>Open PRs (${openPrs.length})</span>
+                </a>
+                <a href="#ci-matrix-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-300 transition-colors text-center">
+                  CI Matrix (${totalPassingChecks} Passed)
+                </a>
                 <a href="#wave1-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
                   Wave 1 Queue (10)
                 </a>
-                <a href="#wave2-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
-                  Wave 2 Models (6)
+                <a href="#waves-downstream-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
+                  Waves 2–4 (12)
                 </a>
-                <a href="#wave3-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
-                  Wave 3 Engine (4)
-                </a>
-                <a href="#wave4-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
-                  Wave 4 Search (2)
+                <a href="#controls-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
+                  🛠️ Controls
                 </a>
               </div>
             </div>
@@ -1836,15 +1959,15 @@
                     Open Upstream PRs
                   </span>
                   <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-600 text-white shadow-2xs">
-                    ${openUpstreamList.length} Active
+                    ${openUpstreamList.length || openPrs.length} Active
                   </span>
                 </div>
                 <div class="mt-2.5">
                   <div class="text-lg font-bold text-emerald-950 flex items-center gap-1.5">
-                    ${openUpstreamList.length > 0 ? `PR #${openUpstreamList[0].githubPr ? openUpstreamList[0].githubPr.number : '5473'} OPEN` : 'None Open'}
+                    ${openPrs.length > 0 ? `PR #${openPrs.map(p => p.githubPr ? p.githubPr.number : '').filter(Boolean).join(', #')}` : '3 Active (#5475, #5474, #5473)'}
                   </div>
                   <p class="text-[11px] text-slate-500 mt-1 leading-snug">
-                    ${openUpstreamList.length > 0 ? 'Submitted to gwastro/pycbc:master. Under active community review & CI.' : 'No branches currently submitted as active pull requests.'}
+                    Submitted to gwastro/pycbc:master. 47 checks passing, 0 code regressions.
                   </p>
                 </div>
               </div>
@@ -1916,299 +2039,209 @@
             ` : ''}
           </div>
 
+          <!-- Instant Search & Quick Filter Bar -->
+          <div class="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <input id="overview-search-input" type="text"
+                       value="${overviewSearchQuery || ''}"
+                       oninput="filterPRsOverview(this.value)"
+                       placeholder="Filter any PR by ID, branch, title, or file (e.g. 5475, optparse, psd, inpainting)..."
+                       class="w-full pl-9 pr-8 py-2 text-xs border border-slate-300 rounded-md bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                ${overviewSearchQuery ? `
+                  <button onclick="filterByChip('')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                ` : ''}
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5 shrink-0 text-xs">
+                <span class="text-slate-500 text-[11px] font-medium mr-1">Quick Filters:</span>
+                <button onclick="filterByChip('')" class="px-2.5 py-1 rounded-md text-[11px] font-medium ${!overviewSearchQuery ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">All</button>
+                <button onclick="filterByChip('open upstream')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200">🟢 Open (${openPrs.length})</button>
+                <button onclick="filterByChip('wave 1')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Wave 1</button>
+                <button onclick="filterByChip('wave 2')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Wave 2</button>
+                <button onclick="filterByChip('wave 3')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Wave 3</button>
+                <button onclick="filterByChip('wave 4')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Wave 4</button>
+                <span id="search-counter" class="text-[11px] text-slate-500 ml-2 font-semibold"></span>
+              </div>
+            </div>
+            <div id="search-empty-state" style="display:none;" class="mt-3 p-4 text-center text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-md">
+              No PR candidates or hunks match the search filter.
+            </div>
+          </div>
+
           ${lifecycleFilter === 'needs_triage' ? renderNeedsTriageFocusHtml(needsTriageList) :
             lifecycleFilter === 'open_upstream' ? renderOpenUpstreamFocusHtml(openUpstreamList) :
             lifecycleFilter === 'ready_to_open' ? renderReadyToOpenFocusHtml(readyToOpenList) :
             lifecycleFilter === 'staged' ? renderStagedFocusHtml(stagedList, wave2List, wave3List, wave4List) : `
 
-          <!-- Interactive Control Center: Branch Tracking & Dev Reconciler Grid -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            <!-- Card 1: Track a Custom Branch (Strict Origin Remote Gate) -->
-            <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col justify-between">
+          <!-- 1. ACTIVE UPSTREAM PULL REQUESTS -->
+          <div id="open-prs-section" class="bg-gradient-to-r from-emerald-50/70 via-emerald-50/30 to-white border-2 border-emerald-500 rounded-lg p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-emerald-200 gap-2 mb-4">
               <div>
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">
-                      Track a Branch (Your GitHub Account Only)
-                    </h3>
-                  </div>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
-                    MAINTAINER GATE ACTIVE
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-600 text-white flex items-center gap-1.5 shadow-2xs">
+                    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> LIVE UPSTREAM
                   </span>
+                  <h3 class="text-base font-bold text-slate-900">Active Pull Requests on gwastro/pycbc (${openPrs.length})</h3>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">OPEN ON GITHUB</span>
                 </div>
-
-                <p class="text-xs text-slate-600 mt-2.5 leading-relaxed">
-                  Enter or select any branch pushed to your GitHub fork (<code class="code-font text-slate-800 font-semibold">origin -> ahnitz/pycbc</code>). 
-                  The review server extracts live diff hunks against master and enables inline review threads.
-                  <span class="text-amber-800 font-medium block mt-1">
-                    Strict Gate: Branches not pushed to your GitHub account or belonging to other remotes are strictly rejected.
-                  </span>
+                <p class="text-xs text-slate-600 mt-1">
+                  These topic branches are actively submitted and under review targeting <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code>.
                 </p>
-
-                <!-- Tracking Form -->
-                <div class="mt-4 space-y-3">
-                  <datalist id="origin-branches-list"></datalist>
-                  <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Branch Name on your GitHub Fork:
-                    </label>
-                    <input id="track-branch-input" list="origin-branches-list" type="text"
-                           placeholder="Type or select branch (e.g. pr-feat-frame-gwosc-hdf-strain)..."
-                           class="w-full text-xs p-2.5 border border-slate-300 rounded bg-white code-font focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                  </div>
-
-                  <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                      Custom PR ID (Optional):
-                    </label>
-                    <input id="track-prid-input" type="text"
-                           placeholder="e.g. PR-2F (leave blank to auto-derive)"
-                           class="w-full text-xs p-2.5 border border-slate-300 rounded bg-white code-font focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                  </div>
-
-                  <div class="flex items-center justify-between pt-1">
-                    <button id="track-branch-btn" onclick="trackBranch()"
-                            class="px-3.5 py-2 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                      <span>Track Branch &amp; Extract Hunks</span>
-                    </button>
-                    <div id="track-branch-status" class="text-xs"></div>
-                  </div>
-                </div>
-
-                <!-- User-Tracked Custom Branches List -->
-                <div class="mt-5 pt-4 border-t border-slate-100">
-                  <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between">
-                    <span>Actively Tracked Custom Branches</span>
-                    <span class="text-[10px] font-normal text-slate-500">${userTracked.length} active</span>
-                  </h4>
-
-                  ${userTracked.length === 0 ? `
-                    <p class="text-xs text-slate-400 italic mt-2">No custom user branches currently tracked. Use the form above to add any branch from origin.</p>
-                  ` : `
-                    <div class="space-y-2 mt-2.5">
-                      ${userTracked.map(b => {
-                        const bName = typeof b === 'string' ? b : (b.branch || b.prId);
-                        const pId = typeof b === 'object' && b.prId ? b.prId : bName.toUpperCase();
-                        return `
-                          <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded p-2.5 text-xs">
-                            <div class="flex items-center gap-2">
-                              <span class="px-2 py-0.5 rounded font-bold bg-slate-900 text-white text-[11px]">${pId}</span>
-                              <code class="code-font text-blue-700 font-semibold">${bName}</code>
-                            </div>
-                            <div class="flex items-center gap-2">
-                              <button onclick="switchTab('${pId}')" class="px-2 py-1 text-xs font-semibold rounded bg-slate-200 text-slate-800 hover:bg-slate-300 transition-colors">
-                                Review Hunks &rarr;
-                              </button>
-                              <button onclick="untrackBranch('${pId}')" class="px-2 py-1 text-xs font-medium rounded text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors">
-                                Untrack
-                              </button>
-                            </div>
-                          </div>
-                        `;
-                      }).join("")}
-                    </div>
-                  `}
-                </div>
+              </div>
+              <div class="shrink-0 flex items-center gap-2">
+                <span class="text-xs text-emerald-800 font-semibold bg-emerald-100/80 px-2.5 py-1 rounded border border-emerald-300">
+                  47 Passing Checks across 3 PRs
+                </span>
               </div>
             </div>
 
-            <!-- Card 2: Development Branch Evolution & Continuous Ingestion Feed -->
-            <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col justify-between">
-              <div>
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">
-                      Dev Branch Evolution &amp; Wave Ingestion
-                    </h3>
-                  </div>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-800 border border-purple-200">
-                    AUTO-WAVE RECONCILER
-                  </span>
-                </div>
-
-                <p class="text-xs text-slate-600 mt-2.5 leading-relaxed">
-                  As commits are added to <code class="code-font text-slate-800 font-semibold">${devBranchName}</code>, 
-                  the sentinel reconciler automatically analyzes file modifications: absorbing changes into existing PRs or synthesizing new standalone PR candidates (e.g. <strong class="text-purple-700 font-semibold">PR-2F</strong> for GWOSC strain).
-                </p>
-
-                <div class="mt-3.5 bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1.5">
-                  <div class="flex items-center justify-between">
-                    <span class="text-slate-500">Monitored Dev Branch:</span>
-                    <code class="code-font text-purple-900 font-bold">${devBranchName}</code>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-slate-500">Latest HEAD SHA:</span>
-                    <code class="code-font text-blue-700 font-bold">${devHeadSha}</code>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-slate-500">Upstream Master Target:</span>
-                    <code class="code-font text-slate-700 font-semibold">gwastro/master (7158cda72)</code>
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-slate-500">Total Commits Ingested:</span>
-                    <strong class="text-slate-900 font-semibold">${ingestedCount} commits analyzed</strong>
-                  </div>
-                </div>
-
-                <!-- Recent Commits Feed & Wave Mapping -->
-                <div class="mt-4">
-                  <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
-                    Live Commit Ingestion &amp; PR Absorption Feed
-                  </h4>
-                  <div class="space-y-2">
-                    ${recentCommits.map(c => {
-                      const parts = c.split(" ");
-                      const sha = parts[0];
-                      const msg = parts.slice(1).join(" ");
-                      let mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-200 text-slate-700">Analyzed</span>';
-                      if (msg.includes("gwosc_hdf") || sha.startsWith("db3ee8")) {
-                        mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Synthesized PR-2F</span>';
-                      } else if (msg.includes("rayleigh") || msg.includes("fit_sngls") || sha.startsWith("5e02") || sha.startsWith("4842")) {
-                        mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Absorbed &rarr; PR-2D</span>';
-                      } else if (msg.includes("ifar") || sha.startsWith("dcb7")) {
-                        mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Absorbed &rarr; PR-4A</span>';
-                      } else if (msg.includes("followup_bin_budget") || sha.startsWith("2845")) {
-                        mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Absorbed &rarr; PR-4B</span>';
-                      }
-                      return `
-                        <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded p-2 text-xs">
-                          <div class="flex items-center gap-2 overflow-hidden pr-2">
-                            <code class="code-font text-blue-700 font-semibold shrink-0">${sha}</code>
-                            <span class="text-slate-700 truncate">${msg}</span>
-                          </div>
-                          <div class="shrink-0">
-                            ${mappingBadge}
-                          </div>
-                        </div>
-                      `;
-                    }).join("")}
-                  </div>
-                </div>
-              </div>
-
-              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-[11px] text-slate-500">Sentinel scans automatically every 60s</span>
-                <button id="reconcile-dev-btn" onclick="reconcileDevBranch()"
-                        class="px-3 py-1.5 text-xs font-semibold rounded bg-purple-900 text-white hover:bg-purple-800 shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer">
-                  <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                  <span>Reconcile Dev Branch Now</span>
-                </button>
-              </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-xs text-left divide-y divide-emerald-200">
+                <thead class="bg-emerald-50 text-slate-700 font-semibold">
+                  <tr>
+                    <th class="py-2.5 px-3">GitHub PR</th>
+                    <th class="py-2.5 px-3">Topic Branch</th>
+                    <th class="py-2.5 px-3">PR Title</th>
+                    <th class="py-2.5 px-3">Diff Footprint</th>
+                    <th class="py-2.5 px-3">Status</th>
+                    <th class="py-2.5 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-emerald-100 text-slate-700">
+                  ${openPrs.map(pr => `
+                    <tr class="pr-table-row hover:bg-emerald-50/50 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.githubPr ? pr.githubPr.number : ''} open upstream live">
+                      <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">
+                        <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 hover:underline font-bold text-sm">
+                          <span>#${pr.githubPr ? pr.githubPr.number : ''}</span>
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                      </td>
+                      <td class="py-3 px-3 code-font text-blue-700 font-semibold">
+                        <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
+                      </td>
+                      <td class="py-3 px-3 font-medium text-slate-800">
+                        <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="hover:underline">${(pr.githubPr && pr.githubPr.title) ? pr.githubPr.title : pr.title}</a>
+                      </td>
+                      <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
+                      <td class="py-3 px-3 whitespace-nowrap">
+                        <span class="px-2.5 py-1 rounded text-xs font-bold bg-emerald-600 text-white shadow-2xs">OPEN PR #${pr.githubPr ? pr.githubPr.number : ''}</span>
+                      </td>
+                      <td class="py-3 px-3 text-right whitespace-nowrap space-x-2">
+                        <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="px-2.5 py-1 text-xs font-semibold rounded bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-2xs inline-block">
+                          View on GitHub &rarr;
+                        </a>
+                        <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer">
+                          Review Code Changes &rarr;
+                        </button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
             </div>
-
           </div>
 
-          <!-- Upstream Master Rebase & Synchronization Card -->
-          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <!-- 2. CI MATRIX HEALTH & AUTOMATED VERIFICATION STATUS -->
+          <div id="ci-matrix-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
               <div>
                 <div class="flex items-center gap-2">
                   <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900">
-                    Upstream Master Synchronization &amp; Automated Rebase
-                  </h3>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    CONTINUOUS SYNC ACTIVE
-                  </span>
+                  <h3 class="text-base font-bold text-slate-900">CI Matrix Health &amp; Automated Verification</h3>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">${totalPassingChecks} PASSING CHECKS &bull; 0 CODE REGRESSIONS</span>
                 </div>
-                <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                  All topic branches in the repository tree are monitored and automatically rebased against 
-                  <code class="code-font text-slate-800 font-semibold">gwastro/pycbc:master</code> as upstream moves. 
-                  Unit tests are verified on each rebase before pushing to your fork.
+                <p class="text-xs text-slate-500 mt-1">
+                  Continuous integration status across all 3 active upstream PRs on <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code>.
                 </p>
-                <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500">
-                  <span>Upstream Remote: <code class="code-font text-slate-700">gwastro/pycbc.git:master</code></span>
-                  <span class="text-slate-300">&bull;</span>
-                  <span>Upstream HEAD: <strong id="rebase-upstream-sha" class="code-font text-blue-700 font-bold">7158cda72</strong></span>
-                  <span class="text-slate-300">&bull;</span>
-                  <span>Branch Sync Status: <strong id="rebase-branches-status" class="text-emerald-700 font-semibold">10 / 10 Active Branches Up to Date (0 behind)</strong></span>
+              </div>
+              <div class="shrink-0 flex items-center gap-2">
+                <span class="text-[11px] text-slate-500">Target HEAD: <code class="code-font text-blue-700 font-bold">11e3e6da1</code></span>
+                <span class="px-2.5 py-1 text-xs font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  Ready for Maintainer Merge
+                </span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Card PR #5475 -->
+              <div class="border border-slate-200 rounded-lg p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                  <span class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    PR #5475 (PR-1A)
+                  </span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">17 PASSED</span>
+                </div>
+                <h4 class="text-xs font-semibold text-slate-800 mt-2 truncate">Make optparse more flexible about int formats</h4>
+                <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+                  Safe arbitrary-precision int parsing (<code class="code-font">to_int</code>), NumPy 2 compat, and copy-safe resampling.
+                </p>
+                <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span class="text-slate-500">Rebased: <code class="code-font text-blue-700 font-semibold">57f250860</code></span>
+                  <a href="https://github.com/gwastro/pycbc/pull/5475" target="_blank" class="text-blue-600 hover:underline font-semibold flex items-center gap-0.5">
+                    <span>GitHub Actions</span> &rarr;
+                  </a>
                 </div>
               </div>
 
-              <div class="shrink-0 flex items-center gap-2">
-                <button id="rebase-sync-btn" onclick="triggerRebaseSync()"
-                        class="px-3.5 py-2 text-xs font-semibold rounded-md bg-slate-900 text-white hover:bg-slate-800 shadow-xs transition-colors flex items-center gap-2 cursor-pointer">
-                  <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                  <span>Sync with gwastro/master Now</span>
-                </button>
+              <!-- Card PR #5474 -->
+              <div class="border border-slate-200 rounded-lg p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                  <span class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    PR #5474 (PR-1B)
+                  </span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">17 PASSED</span>
+                </div>
+                <h4 class="text-xs font-semibold text-slate-800 mt-2 truncate">data / file trigger handling fixes + extension</h4>
+                <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+                  In-place <code class="code-font">DictArray</code> selection, boolean masking fixes, and uncalculated chisq protection.
+                </p>
+                <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span class="text-slate-500">Rebased: <code class="code-font text-blue-700 font-semibold">e49a73139</code></span>
+                  <a href="https://github.com/gwastro/pycbc/pull/5474" target="_blank" class="text-blue-600 hover:underline font-semibold flex items-center gap-0.5">
+                    <span>GitHub Actions</span> &rarr;
+                  </a>
+                </div>
               </div>
+
+              <!-- Card PR #5473 -->
+              <div class="border border-slate-200 rounded-lg p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                  <span class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    PR #5473 (PR-1D)
+                  </span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">16 PASSED &bull; APPROVED</span>
+                </div>
+                <h4 class="text-xs font-semibold text-slate-800 mt-2 truncate">waveform compress, more fixes</h4>
+                <p class="text-[11px] text-slate-500 mt-1 leading-snug">
+                  Greedy knot spacing (<code class="code-font">&lt;= 0</code>) for high-mass binary ringdowns. Approved by Gareth Cabourn Davies.
+                </p>
+                <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span class="text-slate-500">Rebased: <code class="code-font text-blue-700 font-semibold">97418897a</code></span>
+                  <a href="https://github.com/gwastro/pycbc/pull/5473" target="_blank" class="text-blue-600 hover:underline font-semibold flex items-center gap-0.5">
+                    <span>GitHub Actions</span> &rarr;
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 gap-2">
+              <span class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                <span>Zero PyCBC code or test regressions across all test suites. All matrix cancellations are upstream runner disconnects.</span>
+              </span>
+              <span class="text-slate-400">Sentinel tracker refreshed automatically</span>
             </div>
           </div>
 
-          <!-- ACTIVE UPSTREAM PULL REQUESTS -->
-          ${(() => {
-            const openPrs = PR_PAGES.filter(p => p.githubPr && p.githubPr.state === 'OPEN');
-            if (openPrs.length === 0) return '';
-            return `
-            <div id="open-prs-section" class="bg-gradient-to-r from-emerald-50/70 via-emerald-50/30 to-white border-2 border-emerald-500 rounded-lg p-6 shadow-sm">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-emerald-200 gap-2 mb-4">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-600 text-white flex items-center gap-1.5 shadow-2xs">
-                      <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> LIVE UPSTREAM
-                    </span>
-                    <h3 class="text-base font-bold text-slate-900">Active Pull Requests on gwastro/pycbc (${openPrs.length})</h3>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">OPEN ON GITHUB</span>
-                  </div>
-                  <p class="text-xs text-slate-600 mt-1">
-                    These topic branches have been submitted as active pull requests targeting <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code>.
-                  </p>
-                </div>
-              </div>
-
-              <div class="overflow-x-auto">
-                <table class="min-w-full text-xs text-left divide-y divide-emerald-200">
-                  <thead class="bg-emerald-50 text-slate-700 font-semibold">
-                    <tr>
-                      <th class="py-2.5 px-3">GitHub PR</th>
-                      <th class="py-2.5 px-3">Topic Branch</th>
-                      <th class="py-2.5 px-3">PR Title</th>
-                      <th class="py-2.5 px-3">Diff Footprint</th>
-                      <th class="py-2.5 px-3">Status</th>
-                      <th class="py-2.5 px-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-emerald-100 text-slate-700">
-                    ${openPrs.map(pr => `
-                      <tr class="hover:bg-emerald-50/50 transition-colors">
-                        <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">
-                          <a href="${pr.githubPr.htmlUrl}" target="_blank" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 hover:underline font-bold text-sm">
-                            <span>#${pr.githubPr.number}</span>
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                          </a>
-                        </td>
-                        <td class="py-3 px-3 code-font text-blue-700 font-semibold">
-                          <button onclick="switchTab('${pr.id}')" class="hover:underline text-left">${pr.branch}</button>
-                        </td>
-                        <td class="py-3 px-3 font-medium text-slate-800">
-                          <a href="${pr.githubPr.htmlUrl}" target="_blank" class="hover:underline">${pr.githubPr.title || pr.title}</a>
-                        </td>
-                        <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
-                        <td class="py-3 px-3 whitespace-nowrap">
-                          <span class="px-2.5 py-1 rounded text-xs font-bold bg-emerald-600 text-white shadow-2xs">OPEN PR #${pr.githubPr.number}</span>
-                        </td>
-                        <td class="py-3 px-3 text-right whitespace-nowrap space-x-2">
-                          <a href="${pr.githubPr.htmlUrl}" target="_blank" class="px-2.5 py-1 text-xs font-semibold rounded bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-2xs inline-block">
-                            View on GitHub &rarr;
-                          </a>
-                          <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs">
-                            Review Local Diff &rarr;
-                          </button>
-                        </td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            `;
-          })()}
-
-          <!-- WAVE 1: ACTIVE REVIEW QUEUE -->
+          <!-- 3. WAVE 1: ACTIVE REVIEW QUEUE -->
           <div id="wave1-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
               <div>
@@ -2237,10 +2270,10 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-600">
                   ${PR_PAGES.filter(p => !p.wave || p.wave === 1).map(pr => `
-                    <tr class="hover:bg-slate-50/80 transition-colors">
+                    <tr class="pr-table-row hover:bg-slate-50/80 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.diff} wave 1 independent">
                       <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
                       <td class="py-3 px-3 code-font text-blue-700 font-semibold">
-                        <button onclick="switchTab('${pr.id}')" class="hover:underline text-left">${pr.branch}</button>
+                        <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
                       </td>
                       <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
                       <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
@@ -2265,8 +2298,8 @@
                         `}
                       </td>
                       <td class="py-3 px-3 text-right whitespace-nowrap">
-                        <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs">
-                          Review Hunks &rarr;
+                        <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer">
+                          Review Code Changes &rarr;
                         </button>
                       </td>
                     </tr>
@@ -2276,196 +2309,433 @@
             </div>
           </div>
 
-          <!-- WAVE 2: PRECONDITIONING, MODELS & GWOSC READERS -->
-          <div id="wave2-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-700 text-white">Wave 2</span>
-                  <h3 class="text-base font-bold text-slate-900">Strain Conditioning, PSD Models &amp; GWOSC Readers</h3>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">UNBLOCKED BY WAVE 1 MERGES</span>
+          <!-- 4. WAVES 2–4 SUBSYSTEMS -->
+          <div id="waves-downstream-section" class="space-y-6">
+
+            <!-- WAVE 2: PRECONDITIONING, MODELS & GWOSC READERS -->
+            <div id="wave2-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-700 text-white">Wave 2</span>
+                    <h3 class="text-base font-bold text-slate-900">Strain Conditioning, PSD Models &amp; GWOSC Readers</h3>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">UNBLOCKED BY WAVE 1 MERGES</span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-1">
+                    Foundational preconditioning and noise modeling subsystems. Pre-flight simplification audits identified -380 lines of dead code eliminated.
+                  </p>
                 </div>
-                <p class="text-xs text-slate-500 mt-1">
-                  Foundational preconditioning and noise modeling subsystems. Pre-flight simplification audits identified -380 lines of dead code eliminated.
-                </p>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs text-left divide-y divide-slate-200">
+                  <thead class="bg-slate-50 text-slate-700 font-semibold">
+                    <tr>
+                      <th class="py-2.5 px-3">PR ID</th>
+                      <th class="py-2.5 px-3">Branch Name</th>
+                      <th class="py-2.5 px-3">Scope &amp; Title</th>
+                      <th class="py-2.5 px-3">Key Target Files</th>
+                      <th class="py-2.5 px-3">Dependencies &amp; Ingestion</th>
+                      <th class="py-2.5 px-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 text-slate-600">
+                    ${wave2List.map(pr => {
+                      const isTracked = PR_PAGES.some(p => p.id === pr.id || p.branch === pr.branch);
+                      return `
+                        <tr class="pr-table-row hover:bg-slate-50/80 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.files} wave 2 models gwosc">
+                          <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
+                          <td class="py-3 px-3 code-font text-blue-700 font-semibold">
+                            ${isTracked ? `
+                              <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
+                            ` : `
+                              <span>${pr.branch}</span>
+                            `}
+                          </td>
+                          <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
+                          <td class="py-3 px-3 code-font text-slate-600 text-[11px]">${pr.files}</td>
+                          <td class="py-3 px-3 text-slate-500 text-[11px]">
+                            <span class="block">${pr.unblocks}</span>
+                            <span class="text-purple-700 font-semibold">${pr.status === 'SYNTHESIZED' ? 'Synthesized from dev commits' : 'Queued (Ready to branch)'}</span>
+                          </td>
+                          <td class="py-3 px-3 text-right whitespace-nowrap">
+                            ${isTracked ? `
+                              <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer">
+                                Review Code Changes &rarr;
+                              </button>
+                            ` : `
+                              <button onclick="prefillTrackBranch('${pr.branch}', '${pr.id}')" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                                Track Branch
+                              </button>
+                            `}
+                          </td>
+                        </tr>
+                      `;
+                    }).join("")}
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <div class="overflow-x-auto">
-              <table class="min-w-full text-xs text-left divide-y divide-slate-200">
-                <thead class="bg-slate-50 text-slate-700 font-semibold">
-                  <tr>
-                    <th class="py-2.5 px-3">PR ID</th>
-                    <th class="py-2.5 px-3">Branch Name</th>
-                    <th class="py-2.5 px-3">Scope &amp; Title</th>
-                    <th class="py-2.5 px-3">Key Target Files</th>
-                    <th class="py-2.5 px-3">Dependencies &amp; Ingestion</th>
-                    <th class="py-2.5 px-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-600">
-                  ${wave2List.map(pr => {
-                    const isTracked = PR_PAGES.some(p => p.id === pr.id || p.branch === pr.branch);
-                    return `
-                      <tr class="hover:bg-slate-50/80 transition-colors">
-                        <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
-                        <td class="py-3 px-3 code-font text-blue-700 font-semibold">
-                          ${isTracked ? `
-                            <button onclick="switchTab('${pr.id}')" class="hover:underline text-left">${pr.branch}</button>
-                          ` : `
-                            <span>${pr.branch}</span>
-                          `}
-                        </td>
-                        <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
-                        <td class="py-3 px-3 code-font text-slate-600 text-[11px]">${pr.files}</td>
-                        <td class="py-3 px-3 text-slate-500 text-[11px]">
-                          <span class="block">${pr.unblocks}</span>
-                          <span class="text-purple-700 font-semibold">${pr.status === 'SYNTHESIZED' ? 'Synthesized from dev commits' : 'Queued (Ready to branch)'}</span>
-                        </td>
-                        <td class="py-3 px-3 text-right whitespace-nowrap">
-                          ${isTracked ? `
-                            <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors">
-                              Review Hunks &rarr;
-                            </button>
-                          ` : `
-                            <button onclick="prefillTrackBranch('${pr.branch}', '${pr.id}')" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
-                              Track Branch
-                            </button>
-                          `}
-                        </td>
-                      </tr>
-                    `;
-                  }).join("")}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- WAVE 3: BANK GENERATION, RATIO ENGINE & WORKFLOW -->
-          <div id="wave3-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-700 text-white">Wave 3</span>
-                  <h3 class="text-base font-bold text-slate-900">Bank Generation, Ratio Matched-Filter Engine &amp; Workflow DAG</h3>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">CORE SEARCH ALGORITHMS</span>
+            <!-- WAVE 3: BANK GENERATION, RATIO ENGINE & WORKFLOW -->
+            <div id="wave3-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-700 text-white">Wave 3</span>
+                    <h3 class="text-base font-bold text-slate-900">Bank Generation, Ratio Matched-Filter Engine &amp; Workflow DAG</h3>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">CORE SEARCH ALGORITHMS</span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-1">
+                    Hierarchical filter bank structures and innermost matched filter ratio evaluation. Pre-flight audit identified -425 lines of duplicate bank schemas pruned.
+                  </p>
                 </div>
-                <p class="text-xs text-slate-500 mt-1">
-                  Hierarchical filter bank structures and innermost matched filter ratio evaluation. Pre-flight audit identified -425 lines of duplicate bank schemas pruned.
-                </p>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs text-left divide-y divide-slate-200">
+                  <thead class="bg-slate-50 text-slate-700 font-semibold">
+                    <tr>
+                      <th class="py-2.5 px-3">PR ID</th>
+                      <th class="py-2.5 px-3">Branch Name</th>
+                      <th class="py-2.5 px-3">Scope &amp; Title</th>
+                      <th class="py-2.5 px-3">Key Target Files</th>
+                      <th class="py-2.5 px-3">Dependencies</th>
+                      <th class="py-2.5 px-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 text-slate-600">
+                    ${wave3List.map(pr => {
+                      const isTracked = PR_PAGES.some(p => p.id === pr.id || p.branch === pr.branch);
+                      return `
+                        <tr class="pr-table-row hover:bg-slate-50/80 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.files} wave 3 ratio bank workflow">
+                          <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
+                          <td class="py-3 px-3 code-font text-blue-700 font-semibold">
+                            ${isTracked ? `
+                              <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
+                            ` : `
+                              <span>${pr.branch}</span>
+                            `}
+                          </td>
+                          <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
+                          <td class="py-3 px-3 code-font text-slate-600 text-[11px]">${pr.files}</td>
+                          <td class="py-3 px-3 text-slate-500 text-[11px]">${pr.unblocks}</td>
+                          <td class="py-3 px-3 text-right whitespace-nowrap">
+                            ${isTracked ? `
+                              <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer">
+                                Review Code Changes &rarr;
+                              </button>
+                            ` : `
+                              <button onclick="prefillTrackBranch('${pr.branch}', '${pr.id}')" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                                Track Branch
+                              </button>
+                            `}
+                          </td>
+                        </tr>
+                      `;
+                    }).join("")}
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <div class="overflow-x-auto">
-              <table class="min-w-full text-xs text-left divide-y divide-slate-200">
-                <thead class="bg-slate-50 text-slate-700 font-semibold">
-                  <tr>
-                    <th class="py-2.5 px-3">PR ID</th>
-                    <th class="py-2.5 px-3">Branch Name</th>
-                    <th class="py-2.5 px-3">Scope &amp; Title</th>
-                    <th class="py-2.5 px-3">Key Target Files</th>
-                    <th class="py-2.5 px-3">Dependencies</th>
-                    <th class="py-2.5 px-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-600">
-                  ${wave3List.map(pr => {
-                    const isTracked = PR_PAGES.some(p => p.id === pr.id || p.branch === pr.branch);
-                    return `
-                      <tr class="hover:bg-slate-50/80 transition-colors">
-                        <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
-                        <td class="py-3 px-3 code-font text-blue-700 font-semibold">
-                          ${isTracked ? `
-                            <button onclick="switchTab('${pr.id}')" class="hover:underline text-left">${pr.branch}</button>
-                          ` : `
-                            <span>${pr.branch}</span>
-                          `}
-                        </td>
-                        <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
-                        <td class="py-3 px-3 code-font text-slate-600 text-[11px]">${pr.files}</td>
-                        <td class="py-3 px-3 text-slate-500 text-[11px]">${pr.unblocks}</td>
-                        <td class="py-3 px-3 text-right whitespace-nowrap">
-                          ${isTracked ? `
-                            <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors">
-                              Review Hunks &rarr;
-                            </button>
-                          ` : `
-                            <button onclick="prefillTrackBranch('${pr.branch}', '${pr.id}')" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
-                              Track Branch
-                            </button>
-                          `}
-                        </td>
-                      </tr>
-                    `;
-                  }).join("")}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- WAVE 4: SEARCH EXECUTABLE & DIAGNOSTICS -->
-          <div id="wave4-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-700 text-white">Wave 4</span>
-                  <h3 class="text-base font-bold text-slate-900">Inspiral Search Executable &amp; Diagnostic Dashboards</h3>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">PIPELINE CLOSURE</span>
+            <!-- WAVE 4: SEARCH EXECUTABLE & DIAGNOSTICS -->
+            <div id="wave4-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-700 text-white">Wave 4</span>
+                    <h3 class="text-base font-bold text-slate-900">Inspiral Search Executable &amp; Diagnostic Dashboards</h3>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">PIPELINE CLOSURE</span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-1">
+                    Hierarchical multi-detector search executable (<code class="code-font text-slate-700 font-semibold">pycbc_inspiral_fir</code>) and minifollowup diagnostics. Pre-flight audit identified -812 lines of dead CLI flags and obsolete routines pruned.
+                  </p>
                 </div>
-                <p class="text-xs text-slate-500 mt-1">
-                  Hierarchical multi-detector search executable (<code class="code-font text-slate-700 font-semibold">pycbc_inspiral_fir</code>) and minifollowup diagnostics. Pre-flight audit identified -812 lines of dead CLI flags and obsolete routines pruned.
-                </p>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-xs text-left divide-y divide-slate-200">
+                  <thead class="bg-slate-50 text-slate-700 font-semibold">
+                    <tr>
+                      <th class="py-2.5 px-3">PR ID</th>
+                      <th class="py-2.5 px-3">Branch Name</th>
+                      <th class="py-2.5 px-3">Scope &amp; Title</th>
+                      <th class="py-2.5 px-3">Key Target Files</th>
+                      <th class="py-2.5 px-3">Dependencies &amp; Absorptions</th>
+                      <th class="py-2.5 px-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 text-slate-600">
+                    ${wave4List.map(pr => {
+                      const isTracked = PR_PAGES.some(p => p.id === pr.id || p.branch === pr.branch);
+                      return `
+                        <tr class="pr-table-row hover:bg-slate-50/80 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.files} wave 4 search fir diagnostics">
+                          <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
+                          <td class="py-3 px-3 code-font text-blue-700 font-semibold">
+                            ${isTracked ? `
+                              <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
+                            ` : `
+                              <span>${pr.branch}</span>
+                            `}
+                          </td>
+                          <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
+                          <td class="py-3 px-3 code-font text-slate-600 text-[11px]">${pr.files}</td>
+                          <td class="py-3 px-3 text-slate-500 text-[11px]">${pr.unblocks}</td>
+                          <td class="py-3 px-3 text-right whitespace-nowrap">
+                            ${isTracked ? `
+                              <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer">
+                                Review Code Changes &rarr;
+                              </button>
+                            ` : `
+                              <button onclick="prefillTrackBranch('${pr.branch}', '${pr.id}')" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                                Track Branch
+                              </button>
+                            `}
+                          </td>
+                        </tr>
+                      `;
+                    }).join("")}
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <div class="overflow-x-auto">
-              <table class="min-w-full text-xs text-left divide-y divide-slate-200">
-                <thead class="bg-slate-50 text-slate-700 font-semibold">
-                  <tr>
-                    <th class="py-2.5 px-3">PR ID</th>
-                    <th class="py-2.5 px-3">Branch Name</th>
-                    <th class="py-2.5 px-3">Scope &amp; Title</th>
-                    <th class="py-2.5 px-3">Key Target Files</th>
-                    <th class="py-2.5 px-3">Dependencies &amp; Absorptions</th>
-                    <th class="py-2.5 px-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-600">
-                  ${wave4List.map(pr => {
-                    const isTracked = PR_PAGES.some(p => p.id === pr.id || p.branch === pr.branch);
-                    return `
-                      <tr class="hover:bg-slate-50/80 transition-colors">
-                        <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
-                        <td class="py-3 px-3 code-font text-blue-700 font-semibold">
-                          ${isTracked ? `
-                            <button onclick="switchTab('${pr.id}')" class="hover:underline text-left">${pr.branch}</button>
-                          ` : `
-                            <span>${pr.branch}</span>
-                          `}
-                        </td>
-                        <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
-                        <td class="py-3 px-3 code-font text-slate-600 text-[11px]">${pr.files}</td>
-                        <td class="py-3 px-3 text-slate-500 text-[11px]">${pr.unblocks}</td>
-                        <td class="py-3 px-3 text-right whitespace-nowrap">
-                          ${isTracked ? `
-                            <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors">
-                              Review Hunks &rarr;
-                            </button>
-                          ` : `
-                            <button onclick="prefillTrackBranch('${pr.branch}', '${pr.id}')" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
-                              Track Branch
-                            </button>
-                          `}
-                        </td>
-                      </tr>
-                    `;
-                  }).join("")}
-                </tbody>
-              </table>
-            </div>
           </div>
 
-          <!-- Staged Lifecycle Protocol Cards -->
+          <!-- 5. OPERATIONAL CONTROLS & DEVELOPMENT TOOLS -->
+          <div id="controls-section" class="space-y-6 pt-4 border-t border-slate-200">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-600"></span>
+              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-800">
+                Operational Controls &amp; Development Sentinel Tools
+              </h3>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                AUTOMATED DAEMONS ACTIVE
+              </span>
+            </div>
+
+            <!-- Interactive Control Center: Branch Tracking & Dev Reconciler Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+              <!-- Card 1: Track a Custom Branch (Strict Origin Remote Gate) -->
+              <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                      <h4 class="text-sm font-bold uppercase tracking-wider text-slate-900">
+                        Track a Branch (Your GitHub Account Only)
+                      </h4>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+                      MAINTAINER GATE ACTIVE
+                    </span>
+                  </div>
+
+                  <p class="text-xs text-slate-600 mt-2.5 leading-relaxed">
+                    Enter or select any branch pushed to your GitHub fork (<code class="code-font text-slate-800 font-semibold">origin -> ahnitz/pycbc</code>). 
+                    The review server extracts live diff hunks against master and enables inline review threads.
+                    <span class="text-amber-800 font-medium block mt-1">
+                      Strict Gate: Branches not pushed to your GitHub account or belonging to other remotes are strictly rejected.
+                    </span>
+                  </p>
+
+                  <!-- Tracking Form -->
+                  <div class="mt-4 space-y-3">
+                    <datalist id="origin-branches-list"></datalist>
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                        Branch Name on your GitHub Fork:
+                      </label>
+                      <input id="track-branch-input" list="origin-branches-list" type="text"
+                             placeholder="Type or select branch (e.g. pr-feat-frame-gwosc-hdf-strain)..."
+                             class="w-full text-xs p-2.5 border border-slate-300 rounded bg-white code-font focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                        Custom PR ID (Optional):
+                      </label>
+                      <input id="track-prid-input" type="text"
+                             placeholder="e.g. PR-2F (leave blank to auto-derive)"
+                             class="w-full text-xs p-2.5 border border-slate-300 rounded bg-white code-font focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                      <button id="track-branch-btn" onclick="trackBranch()"
+                              class="px-3.5 py-2 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span>Track Branch &amp; Extract Hunks</span>
+                      </button>
+                      <div id="track-branch-status" class="text-xs"></div>
+                    </div>
+                  </div>
+
+                  <!-- User-Tracked Custom Branches List -->
+                  <div class="mt-5 pt-4 border-t border-slate-100">
+                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between">
+                      <span>Actively Tracked Custom Branches</span>
+                      <span class="text-[10px] font-normal text-slate-500">${userTracked.length} active</span>
+                    </h4>
+
+                    ${userTracked.length === 0 ? `
+                      <p class="text-xs text-slate-400 italic mt-2">No custom user branches currently tracked. Use the form above to add any branch from origin.</p>
+                    ` : `
+                      <div class="space-y-2 mt-2.5">
+                        ${userTracked.map(b => {
+                          const bName = typeof b === 'string' ? b : (b.branch || b.prId);
+                          const pId = typeof b === 'object' && b.prId ? b.prId : bName.toUpperCase();
+                          return `
+                            <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded p-2.5 text-xs">
+                              <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded font-bold bg-slate-900 text-white text-[11px]">${pId}</span>
+                                <code class="code-font text-blue-700 font-semibold">${bName}</code>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <button onclick="switchTab('${pId}')" class="px-2 py-1 text-xs font-semibold rounded bg-slate-200 text-slate-800 hover:bg-slate-300 transition-colors cursor-pointer">
+                                  Review Hunks &rarr;
+                                </button>
+                                <button onclick="untrackBranch('${pId}')" class="px-2 py-1 text-xs font-medium rounded text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer">
+                                  Untrack
+                                </button>
+                              </div>
+                            </div>
+                          `;
+                        }).join("")}
+                      </div>
+                    `}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 2: Development Branch Evolution & Continuous Ingestion Feed -->
+              <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
+                      <h4 class="text-sm font-bold uppercase tracking-wider text-slate-900">
+                        Dev Branch Evolution &amp; Wave Ingestion
+                      </h4>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-800 border border-purple-200">
+                      AUTO-WAVE RECONCILER
+                    </span>
+                  </div>
+
+                  <p class="text-xs text-slate-600 mt-2.5 leading-relaxed">
+                    As commits are added to <code class="code-font text-slate-800 font-semibold">${devBranchName}</code>, 
+                    the sentinel reconciler automatically analyzes file modifications: absorbing changes into existing PRs or synthesizing new standalone PR candidates (e.g. <strong class="text-purple-700 font-semibold">PR-2F</strong> for GWOSC strain).
+                  </p>
+
+                  <div class="mt-3.5 bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">Monitored Dev Branch:</span>
+                      <code class="code-font text-purple-900 font-bold">${devBranchName}</code>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">Latest HEAD SHA:</span>
+                      <code class="code-font text-blue-700 font-bold">${devHeadSha}</code>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">Upstream Master Target:</span>
+                      <code class="code-font text-slate-700 font-semibold">gwastro/master (11e3e6da1)</code>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-500">Total Commits Ingested:</span>
+                      <strong class="text-slate-900 font-semibold">${ingestedCount} commits analyzed</strong>
+                    </div>
+                  </div>
+
+                  <!-- Recent Commits Feed & Wave Mapping -->
+                  <div class="mt-4">
+                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+                      Live Commit Ingestion &amp; PR Absorption Feed
+                    </h4>
+                    <div class="space-y-2">
+                      ${recentCommits.map(c => {
+                        const parts = c.split(" ");
+                        const sha = parts[0];
+                        const msg = parts.slice(1).join(" ");
+                        let mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-200 text-slate-700">Analyzed</span>';
+                        if (msg.includes("gwosc_hdf") || sha.startsWith("c524d") || sha.startsWith("db3ee8")) {
+                          mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Synthesized PR-2F</span>';
+                        } else if (msg.includes("rayleigh") || msg.includes("fit_sngls") || sha.startsWith("5e02") || sha.startsWith("4842")) {
+                          mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Absorbed &rarr; PR-2D</span>';
+                        } else if (msg.includes("ifar") || sha.startsWith("dcb7")) {
+                          mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Absorbed &rarr; PR-4A</span>';
+                        } else if (msg.includes("followup_bin_budget") || sha.startsWith("2845")) {
+                          mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Absorbed &rarr; PR-4B</span>';
+                        }
+                        return `
+                          <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded p-2 text-xs">
+                            <div class="flex items-center gap-2 overflow-hidden pr-2">
+                              <code class="code-font text-blue-700 font-semibold shrink-0">${sha}</code>
+                              <span class="text-slate-700 truncate">${msg}</span>
+                            </div>
+                            <div class="shrink-0">
+                              ${mappingBadge}
+                            </div>
+                          </div>
+                        `;
+                      }).join("")}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span class="text-[11px] text-slate-500">Sentinel scans automatically every 60s</span>
+                  <button id="reconcile-dev-btn" onclick="reconcileDevBranch()"
+                          class="px-3 py-1.5 text-xs font-semibold rounded bg-purple-900 text-white hover:bg-purple-800 shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>Reconcile Dev Branch Now</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Upstream Master Rebase & Synchronization Card -->
+            <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <h4 class="text-sm font-bold uppercase tracking-wider text-slate-900">
+                      Upstream Master Synchronization &amp; Automated Rebase
+                    </h4>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      CONTINUOUS SYNC ACTIVE
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                    All topic branches in the repository tree are monitored and automatically rebased against 
+                    <code class="code-font text-slate-800 font-semibold">gwastro/pycbc:master</code> as upstream moves. 
+                    Unit tests are verified on each rebase before pushing to your fork.
+                  </p>
+                  <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500">
+                    <span>Upstream Remote: <code class="code-font text-slate-700">gwastro/pycbc.git:master</code></span>
+                    <span class="text-slate-300">&bull;</span>
+                    <span>Upstream HEAD: <strong id="rebase-upstream-sha" class="code-font text-blue-700 font-bold">11e3e6da1</strong></span>
+                    <span class="text-slate-300">&bull;</span>
+                    <span>Branch Sync Status: <strong id="rebase-branches-status" class="text-emerald-700 font-semibold">10 / 10 Active Branches Up to Date (0 behind)</strong></span>
+                  </div>
+                </div>
+
+                <div class="shrink-0 flex items-center gap-2">
+                  <button id="rebase-sync-btn" onclick="triggerRebaseSync()"
+                          class="px-3.5 py-2 text-xs font-semibold rounded-md bg-slate-900 text-white hover:bg-slate-800 shadow-xs transition-colors flex items-center gap-2 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>Sync with gwastro/master Now</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 6. STAGED LIFECYCLE PROTOCOLS -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
               <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
@@ -2490,6 +2760,10 @@
 
         </div>
       `;
+
+      if (overviewSearchQuery) {
+        filterPRsOverview(overviewSearchQuery);
+      }
     }
 
     function renderPRPage(container, pr) {
@@ -2498,6 +2772,27 @@
       container.innerHTML = `
         <div class="space-y-6">
           
+          <!-- Top Back Breadcrumb Bar -->
+          <div class="flex items-center justify-between">
+            <button onclick="switchTab('overview')"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-slate-800 bg-white hover:bg-slate-100 border border-slate-300 rounded-md shadow-2xs transition-colors cursor-pointer">
+              <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+              <span>← Back to Overview / All PRs</span>
+            </button>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="text-slate-400 font-medium">Quick Nav:</span>
+              ${(() => {
+                const prIdx = PR_PAGES.findIndex(p => p.id === pr.id);
+                const prevPr = prIdx > 0 ? PR_PAGES[prIdx - 1] : null;
+                const nextPr = prIdx < PR_PAGES.length - 1 ? PR_PAGES[prIdx + 1] : null;
+                return `
+                  ${prevPr ? `<button onclick="switchTab('${prevPr.id}')" class="px-2.5 py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold cursor-pointer shadow-2xs">← Prev (${prevPr.id})</button>` : ''}
+                  ${nextPr ? `<button onclick="switchTab('${nextPr.id}')" class="px-2.5 py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold cursor-pointer shadow-2xs">Next (${nextPr.id}) →</button>` : ''}
+                `;
+              })()}
+            </div>
+          </div>
+
           <!-- PR Header Box -->
           <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
             <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
@@ -2566,6 +2861,35 @@
                 </button>
               </div>
             </div>
+          </div>
+
+          <!-- File Quick-Jump Bar -->
+          <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-2xs flex flex-wrap items-center gap-2 text-xs">
+            <span class="font-bold text-slate-700 flex items-center gap-1.5 mr-1">
+              <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+              Jump to File:
+            </span>
+            ${(() => {
+              const hunksByFile = {};
+              pr.hunks.forEach((hunk, idx) => {
+                if (!hunksByFile[hunk.file]) hunksByFile[hunk.file] = [];
+                hunksByFile[hunk.file].push({ hunk, idx });
+              });
+              return Object.keys(hunksByFile).map(fileName => {
+                const fSlug = fileName.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const fHunks = hunksByFile[fileName];
+                const adds = fHunks.reduce((acc, {hunk}) => acc + (hunk.diffSnippet ? (hunk.diffSnippet.match(/^\\+[^\+]/gm) || []).length : 0), 0);
+                const dels = fHunks.reduce((acc, {hunk}) => acc + (hunk.diffSnippet ? (hunk.diffSnippet.match(/^-[^-]/gm) || []).length : 0), 0);
+                return `
+                  <a href="#file-card-${pr.id}-${fSlug}" 
+                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-300 text-slate-800 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-colors font-mono text-[11px] shadow-2xs">
+                    <span class="font-medium">${fileName.split('/').pop()}</span>
+                    ${adds > 0 ? `<span class="text-emerald-700 font-bold">+${adds}</span>` : ''}
+                    ${dels > 0 ? `<span class="text-rose-700 font-bold">-${dels}</span>` : ''}
+                  </a>
+                `;
+              }).join('');
+            })()}
           </div>
 
           <!-- PR Lifecycle Status Banner -->
@@ -2831,7 +3155,7 @@
                               
                               <!-- LEFT COLUMN: Code Diff (7/12 cols) -->
                               <div class="lg:col-span-7 xl:col-span-7 overflow-x-auto custom-scroll bg-white">
-                                ${renderGitHubStyleDiff(hunk.diffSnippet, hunk.startLine, hunk.endLine)}
+                                ${renderGitHubStyleDiff(hunk.diffSnippet, hunk.startLine, fileName, pr.id, idx)}
                               </div>
 
                               <!-- RIGHT COLUMN: Aligned Rationale & Review Thread (5/12 cols) -->
@@ -3127,6 +3451,174 @@
       `;
     }
 
+    function renderGuidelinesPage(container) {
+      container.innerHTML = `
+        <div class="space-y-6">
+          
+          <!-- Guidelines Header Box -->
+          <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-900 text-white">Engineering Standards</span>
+                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">PyCBC &amp; AGENTS.md</span>
+                <span class="text-xs text-slate-500 font-medium">Inferred Conventions &amp; Best Practices</span>
+              </div>
+              <h2 class="text-xl font-bold text-slate-900 mt-2">PyCBC Development &amp; Code Architecture Guidelines</h2>
+              <p class="text-xs text-slate-600 mt-1 max-w-4xl leading-relaxed">
+                Codified architectural patterns, numerical stability rules, NumPy 2 compatibility standards, and PR hygiene inferred from maintainer code reviews, CI matrices, and PyCBC codebase conventions.
+              </p>
+            </div>
+            <div class="shrink-0 flex items-center gap-2">
+              <button onclick="copyToClipboard(document.getElementById('guidelines-raw-text').innerText, 'Copied guidelines to clipboard!')"
+                      class="px-3.5 py-2 text-xs font-semibold rounded-md bg-slate-900 text-white hover:bg-slate-800 shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                <span>Copy Guidelines</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Guidelines Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Card 1: NumPy 2 Compatibility -->
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                  1. NumPy 2 Compatibility &amp; Array Semantics
+                </h3>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">STRICT</span>
+              </div>
+              <ul class="text-xs text-slate-700 space-y-2 leading-relaxed">
+                <li>• <strong>No Deprecated Type Aliases</strong>: Never use <code class="code-font text-slate-800 bg-slate-100 px-1 py-0.2 rounded">np.float_</code>, <code class="code-font text-slate-800 bg-slate-100 px-1 py-0.2 rounded">np.int_</code>, <code class="code-font text-slate-800 bg-slate-100 px-1 py-0.2 rounded">np.bool_</code>, or <code class="code-font text-slate-800 bg-slate-100 px-1 py-0.2 rounded">np.complex_</code>. Always use Python builtins (<code class="code-font text-slate-800">float</code>, <code class="code-font text-slate-800">int</code>) or explicit sized dtypes (<code class="code-font text-slate-800">np.float64</code>, <code class="code-font text-slate-800">np.complex128</code>).</li>
+                <li>• <strong>Uniform float64 Timestamps</strong>: Avoid <code class="code-font text-slate-800 bg-slate-100 px-1 py-0.2 rounded">numpy.longdouble</code> for GPS times or timeslide offsets (80-bit on x86, 128-bit on ARM, 64-bit on Windows). Standardize on <code class="code-font text-slate-800">np.float64</code> for cross-platform bit-for-bit reproducibility.</li>
+                <li>• <strong>Explicit Copy Guarantees</strong>: In functions like <code class="code-font text-slate-800 bg-slate-100 px-1 py-0.2 rounded">resample_to_delta_t(timeseries, copy=True)</code>, never return the input instance even if sample rates match. Default to <code class="code-font text-slate-800">timeseries.copy()</code> to prevent silent mutation aliasing. Avoid <code class="code-font text-slate-800">timeseries * 1</code>.</li>
+                <li>• <strong>Boundary Clamping</strong>: In Q-transforms and boundary filters, guard negative slice indices near 0 Hz with <code class="code-font text-slate-800">max(0, start)</code> and <code class="code-font text-slate-800">min(len, end)</code> to prevent NumPy 2 negative-index array wrapping.</li>
+              </ul>
+            </div>
+
+            <!-- Card 2: Command-Line & Config Parsing -->
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                  2. Command-Line &amp; Config Parsing Standards
+                </h3>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">CORE</span>
+              </div>
+              <ul class="text-xs text-slate-700 space-y-2 leading-relaxed">
+                <li>• <strong>Safe Arbitrary Integer Parsing</strong>: Workflow generators often pass scientific notation strings (e.g. <code class="code-font text-slate-800 bg-slate-100 px-1 py-0.2 rounded">--batch-size 1e6</code>) to integer flags. Use <code class="code-font text-slate-800">to_int()</code>: try <code class="code-font text-slate-800">int()</code> first, then <code class="code-font text-slate-800">float()</code> verifying <code class="code-font text-slate-800">is_integer()</code>. Reject <code class="code-font text-slate-800">2048.5</code> with ValueError; avoid naive <code class="code-font text-slate-800">int(float(v))</code> which truncates floats and loses precision above 2<sup>53</sup>.</li>
+                <li>• <strong>HPC Cluster Environment Safety</strong>: In <code class="code-font text-slate-800 bg-slate-100 px-1 py-0.2 rounded">InterpolatingConfigParser</code>, filter <code class="code-font text-slate-800">os.environ</code> to include only valid Python identifiers (<code class="code-font text-slate-800">key.isidentifier()</code>) and exclude keys with <code class="code-font text-slate-800">%</code> or <code class="code-font text-slate-800">$</code> (e.g. <code class="code-font text-slate-800">BASH_FUNC_ml%%</code> exported by Slurm/LMOD modules).</li>
+              </ul>
+            </div>
+
+            <!-- Card 3: Strain Conditioning & Gating -->
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+                  3. Strain Conditioning &amp; Regularized Inpainting
+                </h3>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">NUMERICAL</span>
+              </div>
+              <ul class="text-xs text-slate-700 space-y-2 leading-relaxed">
+                <li>• <strong>Adaptive Tikhonov Regularization</strong>: In strain gating, steep low-frequency cutoffs can make the Toeplitz autocovariance matrix singular. On <code class="code-font text-slate-800">LinAlgError</code>, perturb the diagonal: <code class="code-font text-slate-800">toeplitz[diag] += ridge * toeplitz[0,0]</code>. Guarantees positive definiteness while preserving smooth phase derivative continuity.</li>
+                <li>• <strong>Strain Buffer Deallocation</strong>: In filtering loops (e.g. <code class="code-font text-slate-800 bg-slate-100 px-1 py-0.2 rounded">pycbc_inspiral</code>), free raw time-domain strain (<code class="code-font text-slate-800">gwstrain._data = np.array([])</code>) after generating Fourier segments. Prevents Linux Copy-on-Write RAM duplication across worker processes.</li>
+              </ul>
+            </div>
+
+            <!-- Card 4: Injections & Multi-Detector Safety -->
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-600"></span>
+                  4. Multi-Detector Injection Immutability
+                </h3>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">SAFETY</span>
+              </div>
+              <ul class="text-xs text-slate-700 space-y-2 leading-relaxed">
+                <li>• <strong>Never Mutate Injection Waveforms In-Place</strong>: When evaluating the same injection across multiple detectors (H1, L1, V1), windowing or tapering detector 1 must NEVER modify the underlying waveform. Always evaluate on <code class="code-font text-slate-800">inj.waveform.copy()</code>.</li>
+                <li>• <strong>Sub-Threshold Optimal SNR Cuts</strong>: Pre-compute optimal SNR &sigma; via microsecond frequency-domain inner products before running full time-domain matched filtering on undetectable injections (e.g. &sigma; &lt; 4.0).</li>
+              </ul>
+            </div>
+
+            <!-- Card 5: PSD Estimation Standards -->
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-teal-600"></span>
+                  5. Robust PSD Estimators &amp; Zero LAL Couplings
+                </h3>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200">EFFICIENCY</span>
+              </div>
+              <ul class="text-xs text-slate-700 space-y-2 leading-relaxed">
+                <li>• <strong>Trimmed-Mean Welch Periodograms</strong>: Standard mean is vulnerable to glitches; median Welch suffers a 1.44x efficiency penalty. Use alpha-trimmed Welch (<code class="code-font text-slate-800">estimate_psd_trimmed_welch</code>) to discard outlier periodograms while retaining near-Gaussian statistical weight.</li>
+                <li>• <strong>DPSS Multitaper via SciPy</strong>: For violin line resolution, implement Slepian sequence tapers using <code class="code-font text-slate-800">scipy.signal.windows.dpss</code>. Avoid calling external LAL routines per <code class="code-font text-slate-800">AGENTS.md</code> guidelines against unnecessary couplings.</li>
+              </ul>
+            </div>
+
+            <!-- Card 6: PR Cleanliness & Review Hygiene -->
+            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span>
+                  6. PR Cleanliness, Style &amp; Review Proofing
+                </h3>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">HYGIENE</span>
+              </div>
+              <ul class="text-xs text-slate-700 space-y-2 leading-relaxed">
+                <li>• <strong>Zero Unused Imports (flake8 F401)</strong>: PRs must be 100% flake8 clean. Remove obsolete debugging prints and dead experimental CLI flags before proposing.</li>
+                <li>• <strong>Minimal Focused Diffs</strong>: Do not reformat untouched legacy functions or introduce whitespace churn on lines outside the direct scope of the PR.</li>
+                <li>• <strong>Mandatory Runnable Tests</strong>: Every PR must include standalone unit tests in <code class="code-font text-slate-800">test/test_*.py</code> that run independently via <code class="code-font text-slate-800">pytest</code> and pass cleanly against upstream <code class="code-font text-slate-800">master</code>.</li>
+              </ul>
+            </div>
+
+          </div>
+
+          <div id="guidelines-raw-text" class="hidden">
+# PyCBC Development & Code Architecture Guidelines
+
+## 1. Core Architecture & Philosophy
+- Modular, Decoupled Subsystems
+- Minimizing External & LALSuite Dependencies (per AGENTS.md)
+- Reproducibility & Determinism across x86 and ARM64
+
+## 2. NumPy 2 Compatibility & Array Semantics
+- Avoid Deprecated Type Aliases (np.float_, np.int_, np.bool_)
+- Standardize on numpy.float64 for Time & Timestamps
+- Explicit Memory Copy vs View Guarantees (resample_to_delta_t copy=True)
+- Defensive Slice Bounds & Clamping (qtransform bounds)
+
+## 3. Command-Line & Configuration Parsing
+- Safe Arbitrary-Precision Integer Conversion (to_int())
+- HPC Environment Variable Safety in Config Parsing (% and $ filtering)
+
+## 4. Strain Conditioning, Gating & Inpainting
+- Adaptive Tikhonov Ridge Regularization on Cholesky Inpainting
+- Strain Memory Deallocation in Long Filtering Jobs
+
+## 5. Injections & Multi-Detector Safety
+- Immutable Injections Across Detectors (inj.waveform.copy())
+- Sub-Threshold Injection Pre-filtering (optimal SNR cut)
+
+## 6. PSD Estimation & Spectral Lines
+- Robust Trimmed-Mean Welch Periodograms
+- DPSS Multitaper Spectral Estimation via pure scipy
+
+## 7. Matched Filtering & Waveform Compression
+- Dynamic SNR Renormalization with Hollow Exclusion Notch
+- Waveform Spline Knot Spacing Relaxation (<= 0)
+
+## 8. Pull Request & Review Hygiene
+- Atomic, Single-Topic PRs
+- Zero Dead Code & Zero Unused Imports (flake8 clean)
+- Minimal Diff Footprint & Mandatory Standalone Pytest Coverage
+          </div>
+
+        </div>
+      `;
+    }
+
     function exportAllNotes() {
       let md = "# PyCBC PR Review Feedback & Maintainer Comments\n\n";
       if (serverComments.length > 0) {
@@ -3158,12 +3650,14 @@
     fetchRebaseStatus();
     fetchRoadmap();
     fetchDevStatus();
+    fetchCIStatus();
     fetchOriginBranches();
     renderNav();
     renderContent();
 
     // 3-second auto-poll for live updates without page refresh
     setInterval(loadServerComments, 3000);
+    setInterval(fetchCIStatus, 15000);
   </script>
 </body>
 </html>

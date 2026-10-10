@@ -406,7 +406,7 @@ def get_live_pr_hunks(branch_or_id):
         hunk_splits = re.split(r'(@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@.*)', block)
         if len(hunk_splits) <= 1:
             body_lines = [l for l in lines[1:] if not (l.startswith('index ') or l.startswith('--- ') or l.startswith('+++ ') or l.startswith('new file mode'))]
-            snippet = '\n'.join(body_lines[:35])
+            snippet = '\n'.join(body_lines)
             meta = match_curated_hunk(pr_id, file_name, 1, len(body_lines), body_lines)
             if not meta:
                 meta = synthesize_hunk_rationale(file_name, 1, len(body_lines), body_lines, REPO_DIR)
@@ -438,9 +438,7 @@ def get_live_pr_hunks(branch_or_id):
             end_line = start_line + max(count - 1, 0)
             
             body_lines = [l for l in (header + '\n' + body).splitlines() if not (l.startswith('index ') or l.startswith('--- ') or l.startswith('+++ ') or l.startswith('new file mode'))]
-            snippet = '\n'.join(body_lines[:40])
-            if len(body_lines) > 40:
-                snippet += f'\n... (+{len(body_lines) - 40} more lines in hunk)'
+            snippet = '\n'.join(body_lines)
 
             line_str = f"lines {start_line}-{end_line}" if end_line > start_line else f"line {start_line}"
             line_hash = f"#L{start_line}-L{end_line}" if end_line > start_line else f"#L{start_line}"
@@ -521,18 +519,50 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
+    def do_HEAD(self):
+        if self.path in ("/", "", "/index.html", "/pr_review_dashboard.html"):
+            dashboard_candidates = [
+                os.path.join(ROOT_DIR, "dashboard", "pr_review_dashboard.html"),
+                os.path.join(ROOT_DIR, "pr_review_dashboard.html"),
+                os.path.join(REPO_DIR, "search_dev_notes", "pr_review_dashboard.html"),
+                os.path.abspath(os.path.join(SERVER_DIR, "..", "search_dev_notes", "pr_review_dashboard.html")),
+                os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "dashboard", "pr_review_dashboard.html")),
+            ]
+            for cand in dashboard_candidates:
+                if os.path.exists(cand):
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Content-Length", str(os.path.getsize(cand)))
+                    self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                    self.send_header("Pragma", "no-cache")
+                    self.send_header("Expires", "0")
+                    self.end_headers()
+                    return
+        super().do_HEAD()
+
     def do_GET(self):
-        # Auto-redirect root to dashboard if index.html is absent or user requests dashboard
-        if self.path in ("/", ""):
-            dashboard_file = os.path.join(ROOT_DIR, "dashboard", "pr_review_dashboard.html")
-            if not os.path.exists(dashboard_file):
-                dashboard_file = os.path.join(ROOT_DIR, "pr_review_dashboard.html")
-            if os.path.exists(dashboard_file) and not os.path.exists(os.path.join(ROOT_DIR, "index.html")):
-                self.send_response(302)
-                target_url = "/dashboard/pr_review_dashboard.html" if os.path.exists(os.path.join(ROOT_DIR, "dashboard", "pr_review_dashboard.html")) else "/pr_review_dashboard.html"
-                self.send_header("Location", target_url)
-                self.end_headers()
-                return
+        # Direct serve dashboard on root or index.html with no-cache headers
+        if self.path in ("/", "", "/index.html", "/pr_review_dashboard.html"):
+            dashboard_candidates = [
+                os.path.join(ROOT_DIR, "dashboard", "pr_review_dashboard.html"),
+                os.path.join(ROOT_DIR, "pr_review_dashboard.html"),
+                os.path.join(REPO_DIR, "search_dev_notes", "pr_review_dashboard.html"),
+                os.path.abspath(os.path.join(SERVER_DIR, "..", "search_dev_notes", "pr_review_dashboard.html")),
+                os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "dashboard", "pr_review_dashboard.html")),
+            ]
+            for cand in dashboard_candidates:
+                if os.path.exists(cand):
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    with open(cand, "rb") as f:
+                        content = f.read()
+                    self.send_header("Content-Length", str(len(content)))
+                    self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                    self.send_header("Pragma", "no-cache")
+                    self.send_header("Expires", "0")
+                    self.end_headers()
+                    self.wfile.write(content)
+                    return
 
         if self.path == "/api/health":
             comments = load_feedback()
