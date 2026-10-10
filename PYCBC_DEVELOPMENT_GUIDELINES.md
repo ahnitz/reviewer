@@ -186,10 +186,12 @@ When refactoring or introducing large feature sets (such as multi-detector searc
 
 When supporting modern or alternative container formats (such as GWOSC HDF5 alongside traditional `.gwf` frame files):
 
-1. **Unify Cache Handling and Sieving Up to the Point of Data Ingestion**:
+1. **Pure-Python Unified Cache Architecture & NumPy Vectorized Interval Filtering**:
    - Do not branch early into disparate format-specific cache, glob, or regex parsing functions.
-   - Route all input sources (single files, globs, file lists, `.cache`, and `.lcf` manifests) through a single unified `locations_to_cache()` and `lal.CacheSieve()` pipeline.
-   - Let the shared LAL cache pipeline handle regex filtering (`sieve`) and GPS time-interval bounds identically across all formats. Only branch to format-specific reader engines (e.g., LAL frame stream vs. HDF5 dataset slicing) once the sieved, ordered list of target files has been produced.
+   - Do not rely on SWIG `lal.Cache` wrappers, `lal.CacheImport`, `lal.CacheExport`, or temporary files for cache management.
+   - Route all input sources (single files, globs, file lists, `.cache`, and `.lcf` manifests) through a single unified `locations_to_cache()` returning a pure-Python `FrameCache`.
+   - Perform time-interval filtering and regex sieving using vectorized NumPy boolean array comparisons (`mask = (ends > start_time) & (starts < end_time)`). This eliminates temporary disk I/O, prevents SWIG iterator bugs, and delivers sub-millisecond cache sieving across thousands of files.
+   - Only branch to format-specific reader engines (pure-Python HDF5 dataset slicing vs. LAL frame stream) once the sieved, ordered list of target files has been produced.
 2. **Format Detection by Extension, Not Speculative File Probing**:
    - Detect container formats by standard file extension (`.hdf5`, `.h5`, `.hdf` vs. `.gwf`).
    - Never execute speculative file-opening probes (e.g., invoking `h5py.is_hdf5(path)`) during format classification or cache building. Speculative file opens introduce unnecessary disk/network latency, fail on offline or remote URLs, and add fragility. Rely on users and workflow generators to provide standard file extensions.
