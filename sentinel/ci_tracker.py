@@ -168,6 +168,7 @@ class CITracker:
             "pr-fix-io-dictarray-indexing": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr",
             "pr-perf-waveform-compress": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr1d",
             "pr-feat-events-eventmgr-multi": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr1f",
+            "ci-fix-pixi-python": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pixi-fix",
         }
         wt_dir = wt_map.get(branch_name)
         if not wt_dir or not os.path.exists(wt_dir):

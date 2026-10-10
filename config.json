@@ -36,12 +36,17 @@
       "PR-1K": "pr-feat-frame-gwosc-hdf",
       "PR-1L": "pr-fix-filter-qtransform",
       "PR-1M": "pr-fix-filter-resample-copy",
-      "PR-FIX-MISC-ROBUSTNESS": "fix/misc-robustness"
+      "PR-FIX-MISC-ROBUSTNESS": "fix/misc-robustness",
+      "PR-CI-PIXI-FIX": "ci-fix-pixi-python"
     },
     "user_requested_branches": [
       {
         "prId": "PR-FIX-MISC-ROBUSTNESS",
         "branch": "fix/misc-robustness"
+      },
+      {
+        "prId": "PR-CI-PIXI-FIX",
+        "branch": "ci-fix-pixi-python"
       }
     ]
   },

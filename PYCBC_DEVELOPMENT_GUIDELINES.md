@@ -179,3 +179,24 @@ When refactoring or introducing large feature sets (such as multi-detector searc
 3. **Automated Cascading Rebases**:
    - Maintainer bots and sentinel monitors continuously track the upstream merge base (`git merge-base upstream/master <branch>`).
    - When any parent branch merges into `upstream/master`, the sentinel immediately rebases the child branch onto the new master HEAD, validates tests in isolation, and promotes the child to `READY_TO_OPEN`.
+
+---
+
+## 10. Frame I/O & Unified File Format Pipelines
+
+When supporting modern or alternative container formats (such as GWOSC HDF5 alongside traditional `.gwf` frame files):
+
+1. **Unify Cache Handling and Sieving Up to the Point of Data Ingestion**:
+   - Do not branch early into disparate format-specific cache, glob, or regex parsing functions.
+   - Route all input sources (single files, globs, file lists, `.cache`, and `.lcf` manifests) through a single unified `locations_to_cache()` and `lal.CacheSieve()` pipeline.
+   - Let the shared LAL cache pipeline handle regex filtering (`sieve`) and GPS time-interval bounds identically across all formats. Only branch to format-specific reader engines (e.g., LAL frame stream vs. HDF5 dataset slicing) once the sieved, ordered list of target files has been produced.
+2. **Format Detection by Extension, Not Speculative File Probing**:
+   - Detect container formats by standard file extension (`.hdf5`, `.h5`, `.hdf` vs. `.gwf`).
+   - Never execute speculative file-opening probes (e.g., invoking `h5py.is_hdf5(path)`) during format classification or cache building. Speculative file opens introduce unnecessary disk/network latency, fail on offline or remote URLs, and add fragility. Rely on users and workflow generators to provide standard file extensions.
+3. **Generic LIGO Filename Parsing (T050017)**:
+   - The standard LIGO T050017 naming convention (`[OBS]-[IFO]_[DESC]-[GPS]-[DUR].[EXT]`) is completely container-agnostic.
+   - Keep filename parsers generic (`parse_frame_filename`) so the exact same logic parses `.gwf`, `.hdf5`, or `.xml` filenames without format-specific forks.
+4. **Strict Metadata Validation Over Silent Fallback Defaults**:
+   - Never introduce silent defaults for fundamental metadata (e.g., defaulting `ifo = 'H1'` if the detector attribute cannot be read).
+   - Real detector strain files from GWOSC/LVK consistently provide canonical metadata (`meta/Detector`, `meta/GPSstart`, `meta/Duration`, `meta/Observatory`).
+   - If guaranteed metadata cannot be read from the file or parsed from the filename, fail fast and explicitly with a descriptive `ValueError`. Silent defaults mask corrupt or mislabeled data and cause silent cross-detector errors.
