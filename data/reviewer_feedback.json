@@ -1502,5 +1502,221 @@
         "createdAt": "2026-10-10T18:06:44Z"
       }
     ]
+  },
+  {
+    "id": "c_1791656164_6412be",
+    "prId": "PR-1K",
+    "hunkIndex": 1,
+    "file": "pycbc/frame/frame.py",
+    "lines": "lines 104-119",
+    "commentText": "If h5py has its own method, is this just adding a try / except? Or does h5py already essentially replace this method and we can just call it directly without the added cruft?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-10T18:16:04Z",
+    "timestamp": 1791656164.7758243,
+    "replies": [
+      {
+        "id": "r_1791656165_f77b",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1K (pycbc/frame/frame.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-10T18:16:05Z"
+      },
+      {
+        "id": "r_1791656618_12be",
+        "author": "Antigravity AI Team",
+        "replyText": "Completely agree. Rather than wrapping h5py.is_hdf5 in a separate _is_hdf5() try/except helper, we have removed _is_hdf5() entirely. Following your guidance below, format detection is now based strictly on file extension checks (.hdf5, .h5, .hdf), relying on users to provide valid file paths or cache files without unnecessary disk/inspection overhead. Updated in commit 2cc8ca16d.",
+        "createdAt": "2026-10-10T18:24:00Z"
+      }
+    ],
+    "resolvedAt": "2026-10-10T18:24:00Z"
+  },
+  {
+    "id": "c_1791656231_c8d250",
+    "prId": "PR-1K",
+    "hunkIndex": 3,
+    "file": "pycbc/frame/frame.py",
+    "lines": "lines 219-260",
+    "commentText": "maybe just properly import the module at the top and then call directly, no? which is cleaner?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-10T18:17:11Z",
+    "timestamp": 1791656231.3415182,
+    "replies": [
+      {
+        "id": "r_1791656231_32ea",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1K (pycbc/frame/frame.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-10T18:17:11Z"
+      },
+      {
+        "id": "r_1791656618_d250",
+        "author": "Antigravity AI Team",
+        "replyText": "Done! Removed the inline imports from inside read_frame(). Imported is_gwosc_hdf_source, read_frame_gwosc_hdf, and get_gwosc_hdf_metadata directly at the top level of pycbc/frame/frame.py, keeping read_frame() clean and straightforward. Updated in commit 2cc8ca16d.",
+        "createdAt": "2026-10-10T18:24:00Z"
+      }
+    ],
+    "resolvedAt": "2026-10-10T18:24:00Z"
+  },
+  {
+    "id": "c_1791656254_dfe994",
+    "prId": "PR-1K",
+    "hunkIndex": 3,
+    "file": "pycbc/frame/frame.py",
+    "lines": "lines 219-260",
+    "commentText": "A lot of this logic seems imilar to me to what we havle already. Is that true? Or is this really different and we can't consolidate at all?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-10T18:17:34Z",
+    "timestamp": 1791656254.7307746,
+    "replies": [
+      {
+        "id": "r_1791656256_9935",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1K (pycbc/frame/frame.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-10T18:17:36Z"
+      },
+      {
+        "id": "r_1791656618_e994",
+        "author": "Antigravity AI Team",
+        "replyText": "Great observation. The inline location-unpacking and cache-probing logic in read_frame() has been consolidated into a single clean helper is_gwosc_hdf_source(locations) in pycbc.frame.gwosc_hdf. This reduces the modification inside read_frame() to just 7 lines:\n\nAll standard argument validation and delegation are now unified, eliminating duplicated probing code. Updated in commit 2cc8ca16d.",
+        "createdAt": "2026-10-10T18:24:00Z"
+      }
+    ],
+    "resolvedAt": "2026-10-10T18:24:00Z"
+  },
+  {
+    "id": "c_1791656406_010121",
+    "prId": "PR-1K",
+    "hunkIndex": 3,
+    "file": "pycbc/frame/frame.py",
+    "lines": "lines 219-260",
+    "commentText": "The is gwosc hdf file function seem to really jsut be checking the extension in most cases. It often wont' be able to even attempt ot open the file, so I think just simplifyign this whole structure would be better. As long as the extension is right it shoudl treat it as an hdf file for the purpose of the cache. We wil rely on people providing a sane cache file. That shoud simplify much of the code I think.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-10T18:20:06Z",
+    "timestamp": 1791656406.144797,
+    "replies": [
+      {
+        "id": "r_1791656407_8906",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1K (pycbc/frame/frame.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-10T18:20:06Z"
+      },
+      {
+        "id": "r_1791656618_0121",
+        "author": "Antigravity AI Team",
+        "replyText": "Implemented! is_gwosc_hdf_file(file_path) now strictly checks the filename extension against HDF5_EXTENSIONS = (\".hdf5\", \".h5\", \".hdf\") via fast URL/path splitting. All speculative h5py.is_hdf5 file-opening attempts have been removed. This eliminates disk I/O during format detection and ensures remote URLs or cache entries that aren't locally accessible are handled cleanly without exceptions. Unit tests (14/14) pass in 0.12s. Updated in commit 2cc8ca16d.",
+        "createdAt": "2026-10-10T18:24:00Z"
+      }
+    ],
+    "resolvedAt": "2026-10-10T18:24:00Z"
+  },
+  {
+    "id": "c_1791656428_8ae6df",
+    "prId": "PR-1K",
+    "hunkIndex": 4,
+    "file": "pycbc/frame/gwosc_hdf.py",
+    "lines": "lines 1-515",
+    "commentText": "See other comments but I'm not convined we need the is gwosc hdf file function",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-10T18:20:28Z",
+    "timestamp": 1791656428.5768185,
+    "replies": [
+      {
+        "id": "r_1791656429_9087",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1K (pycbc/frame/gwosc_hdf.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-10T18:20:29Z"
+      },
+      {
+        "id": "r_1791656703_e6df",
+        "author": "Antigravity AI Team",
+        "replyText": "Agreed. In pycbc.frame.frame, we removed direct calls to is_gwosc_hdf_file and now rely on is_gwosc_hdf_source(locations), which simply checks the file extension against .hdf5, .h5, .hdf. is_gwosc_hdf_file has been reduced to a simple extension checker kept only as a lightweight alias. Updated in commits 2cc8ca16d & f6d4d6ab4.",
+        "createdAt": "2026-10-10T18:25:00Z"
+      }
+    ],
+    "resolvedAt": "2026-10-10T18:25:00Z"
+  },
+  {
+    "id": "c_1791656469_597f43",
+    "prId": "PR-1K",
+    "hunkIndex": 4,
+    "file": "pycbc/frame/gwosc_hdf.py",
+    "lines": "lines 1-515",
+    "commentText": "The parsing function is also not really specific to hdf, no? that' sgeneric. Maybe could help in unifying the gwf / hdf paths more?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-10T18:21:09Z",
+    "timestamp": 1791656469.8290293,
+    "replies": [
+      {
+        "id": "r_1791656471_8973",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1K (pycbc/frame/gwosc_hdf.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-10T18:21:11Z"
+      },
+      {
+        "id": "r_1791656703_7f43",
+        "author": "Antigravity AI Team",
+        "replyText": "Spot on. The filename parser adheres to the standard LIGO T050017 convention ([OBS]-[IFO]_[DESC]-[GPS]-[DUR].[EXT]), which applies identically to both .gwf and .hdf5. We have generalized the core function to parse_frame_filename() (with parse_gwosc_hdf_filename retained as an alias for compatibility). This makes it generic across all frame file types. Updated in commit f6d4d6ab4.",
+        "createdAt": "2026-10-10T18:25:00Z"
+      }
+    ],
+    "resolvedAt": "2026-10-10T18:25:00Z"
+  },
+  {
+    "id": "c_1791656577_af323f",
+    "prId": "PR-1K",
+    "hunkIndex": 4,
+    "file": "pycbc/frame/gwosc_hdf.py",
+    "lines": "lines 1-515",
+    "commentText": "The parse metadata part seems a bit dangerous. It is default some values to things if it can't read them. Does this occur in practice for real gwosc files? or was that an artefact of our resampled ones? if that we should fix the metadata in our resample files rather than adding hacks in. It should probably fail if guaranteed metadaat (from real files) is not there, no?",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-10T18:22:57Z",
+    "timestamp": 1791656577.006967,
+    "replies": [
+      {
+        "id": "r_1791656578_8b40",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1K (pycbc/frame/gwosc_hdf.py). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-10T18:22:58Z"
+      },
+      {
+        "id": "r_1791656703_323f",
+        "author": "Antigravity AI Team",
+        "replyText": "Completely agree\u2014falling back to \"H1\" was a dangerous default that could mask corrupt or mislabeled files. We audited real GWOSC files from O2/O3/O4 in /home/ahnitz/gwdata and verified that real files always supply meta/Detector, meta/GPSstart, meta/Duration, and meta/Observatory. We removed the silent default to \"H1\". If guaranteed metadata cannot be parsed from the filename or read from the HDF5 group, get_gwosc_hdf_metadata() now explicitly raises ValueError(f\"Could not determine detector for GWOSC HDF file: {path}\"). Added unit test test_missing_metadata_raises (15/15 tests pass). Updated in commit f6d4d6ab4.",
+        "createdAt": "2026-10-10T18:25:00Z"
+      }
+    ],
+    "resolvedAt": "2026-10-10T18:25:00Z"
+  },
+  {
+    "id": "c_1791656651_27ac5d",
+    "prId": "PR-1K",
+    "hunkIndex": -1,
+    "file": "PR-level discussion",
+    "lines": "General",
+    "commentText": "Overall, I think a lot of line scan be saved (and fragility) by unfiying the gwf / hdf paths up to the point of actaully getting the data out of the file. Even the cache handling.",
+    "author": "Maintainer (Alex)",
+    "status": "RESOLVED",
+    "createdAt": "2026-10-10T18:24:11Z",
+    "timestamp": 1791656651.9437318,
+    "replies": [
+      {
+        "id": "r_1791656652_254f",
+        "author": "Antigravity AI Responder",
+        "replyText": "\u26a1 Automatically queued review request on PR-1K (PR-level discussion). Triage agent notified to verify test invariants and prepare resolution...",
+        "createdAt": "2026-10-10T18:24:12Z"
+      },
+      {
+        "id": "r_1791656803_27ac5d",
+        "author": "Antigravity AI Team",
+        "replyText": "Brilliant suggestion\u2014this eliminates duplication and makes the entire pipeline significantly cleaner. We have fully unified the cache handling and filtering between .gwf and .hdf5:\n1. read_frame() now routes both formats through locations_to_cache(locations), building a unified cum_cache (whether from single files, file lists, globs, or .cache/.lcf files).\n2. All regular expression sieving (lal.CacheSieve(cum_cache, 0, 0, None, None, sieve)) and GPS time-interval filtering are executed identically in the shared pipeline.\n3. Only after cache resolution and sieving, if the sieved entries point to HDF5 files, the sieved file paths are exported and read directly. Otherwise, it opens the LAL stream lalframe.FrStreamCacheOpen(cum_cache).\nAll 15 unit tests pass in 0.11s. Updated in commit e97613b63.",
+        "createdAt": "2026-10-10T18:27:00Z"
+      }
+    ],
+    "resolvedAt": "2026-10-10T18:27:00Z"
   }
 ]
