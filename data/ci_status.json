@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-10T01:09:43Z",
+  "lastUpdated": "2026-10-10T01:11:47Z",
   "openPrCount": 3,
   "prs": {
     "5475": {
@@ -140,7 +140,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T01:09:40Z"
+      "lastChecked": "2026-10-10T01:11:46Z"
     },
     "5474": {
       "prNumber": 5474,
@@ -149,9 +149,9 @@
       "headSha": "e49a73139a0b7a95f3b4b14aef007df5c5b07bab",
       "overallStatus": "IN_PROGRESS",
       "totalChecks": 35,
-      "successCount": 11,
+      "successCount": 14,
       "failureCount": 17,
-      "inProgressCount": 6,
+      "inProgressCount": 3,
       "actionableCount": 0,
       "failures": [
         {
@@ -280,7 +280,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T01:09:41Z"
+      "lastChecked": "2026-10-10T01:11:47Z"
     },
     "5473": {
       "prNumber": 5473,
@@ -427,7 +427,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T01:09:43Z"
+      "lastChecked": "2026-10-10T01:11:47Z"
     }
   }
 }
