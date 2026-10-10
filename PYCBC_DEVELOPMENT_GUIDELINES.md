@@ -29,9 +29,11 @@ PyCBC supports both modern NumPy 2.0+ and legacy NumPy 1.x environments. Follow 
    - Do not use `numpy.longdouble` for GPS times, timeslide offsets, or coincidence clustering.
    - On x86, `longdouble` is 80-bit; on ARM/M1/Graviton, it is 128-bit; on Windows, it is 64-bit. This disparity causes subtle precision mismatches and NaN comparisons. Standardizing on `float64` guarantees uniform 53-bit mantissa precision (~15-17 decimal digits, sub-microsecond GPS resolution) across all architectures.
 3. **Explicit Memory Copy vs View Guarantees**:
-   - When a function returns a modified or filtered version of an input series, do not return the input reference even if no modification was needed.
-   - Example: In `resample_to_delta_t(timeseries, delta_t, copy=True)`, if the sample rate already matches, return `timeseries.copy()` by default. Returning the original reference causes silent in-place mutation aliasing bugs when callers modify the result. Allow opt-in `copy=False` for zero-copy performance in hot loops.
-   - Avoid arithmetic copies like `timeseries * 1`; use `timeseries.copy()` explicitly.
+   - When a transformation or filtering utility returns an output series that may subsequently be modified in-place, avoid returning an uncopied view/reference of the input even if no actual resample or filter operation was required.
+   - **Signature Cleanliness Over Parameter Creep**: Do NOT add ad-hoc parameters like `copy=True/False` to existing core utility signatures (such as `resample_to_delta_t(timeseries, delta_t, method='butterworth')`). Keep function signatures minimal, clean, and backward-compatible.
+   - **Safe by Default, Opt-In Optimization at Call-Site**:
+     - The function itself should unconditionally return `timeseries.copy()` when inputs already match the target rate/filter (replacing legacy arithmetic idioms like `timeseries * 1`). This guarantees that mutating the returned series will never unexpectedly mutate the caller's input.
+     - Callers operating in performance-critical hot loops who wish to avoid redundant memory copies should check the condition (e.g. `if not timeseries.sample_rate_close(1.0 / delta_t):`) at the call-site before invoking the function.
 4. **Defensive Slice Bounds & Clamping**:
    - In windowing and slicing (e.g., Q-transform `qseries`), never assume window indices will be within `[0, len)`. Near $f=0$ or large Q, `start` can become negative.
    - Under NumPy 2.0, negative slice indices wrap to the end of the array, silently corrupting the frequency window.
@@ -155,6 +157,10 @@ PyCBC supports both modern NumPy 2.0+ and legacy NumPy 1.x environments. Follow 
      2. The solution and implementation rationale
      3. Alternative approaches considered and why they were rejected
      4. Runnable test commands and timing results
+6. **Centralize Tests and Prevent Test File Proliferation**:
+   - When introducing enhancements or regression tests for an existing subsystem that already has a canonical test file (e.g. `test/test_chisq.py` for vetoes or `test/test_resample.py` for filtering), always integrate new test cases directly into the existing test suite.
+   - Do NOT create standalone single-test files (e.g. `test/test_chisq_slicing.py`).
+   - Adding tests to existing files keeps the test directory organized, ensures tests run as part of the standard subsystem suite without requiring new CI matrix entries, and minimizes repository bloat.
 
 
 ---
