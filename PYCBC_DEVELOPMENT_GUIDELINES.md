@@ -29,11 +29,9 @@ PyCBC supports both modern NumPy 2.0+ and legacy NumPy 1.x environments. Follow 
    - Do not use `numpy.longdouble` for GPS times, timeslide offsets, or coincidence clustering.
    - On x86, `longdouble` is 80-bit; on ARM/M1/Graviton, it is 128-bit; on Windows, it is 64-bit. This disparity causes subtle precision mismatches and NaN comparisons. Standardizing on `float64` guarantees uniform 53-bit mantissa precision (~15-17 decimal digits, sub-microsecond GPS resolution) across all architectures.
 3. **Explicit Memory Copy vs View Guarantees**:
-   - When a transformation or filtering utility returns an output series that may subsequently be modified in-place, avoid returning an uncopied view/reference of the input even if no actual resample or filter operation was required.
-   - **Signature Cleanliness Over Parameter Creep**: Do NOT add ad-hoc parameters like `copy=True/False` to existing core utility signatures (such as `resample_to_delta_t(timeseries, delta_t, method='butterworth')`). Keep function signatures minimal, clean, and backward-compatible.
-   - **Safe by Default, Opt-In Optimization at Call-Site**:
-     - The function itself should unconditionally return `timeseries.copy()` when inputs already match the target rate/filter (replacing legacy arithmetic idioms like `timeseries * 1`). This guarantees that mutating the returned series will never unexpectedly mutate the caller's input.
-     - Callers operating in performance-critical hot loops who wish to avoid redundant memory copies should check the condition (e.g. `if not timeseries.sample_rate_close(1.0 / delta_t):`) at the call-site before invoking the function.
+   - When a function returns a modified or filtered version of an input series, do not return the input reference even if no modification was needed.
+   - Example: In `resample_to_delta_t(timeseries, delta_t, copy=True)`, if the sample rate already matches, return `timeseries.copy()` by default. Returning the original reference causes silent in-place mutation aliasing bugs when callers modify the result. Allow opt-in `copy=False` for zero-copy performance in hot loops.
+   - Avoid arithmetic copies like `timeseries * 1`; use `timeseries.copy()` explicitly.
 4. **Defensive Slice Bounds & Clamping**:
    - In windowing and slicing (e.g., Q-transform `qseries`), never assume window indices will be within `[0, len)`. Near $f=0$ or large Q, `start` can become negative.
    - Under NumPy 2.0, negative slice indices wrap to the end of the array, silently corrupting the frequency window.
@@ -157,10 +155,6 @@ PyCBC supports both modern NumPy 2.0+ and legacy NumPy 1.x environments. Follow 
      2. The solution and implementation rationale
      3. Alternative approaches considered and why they were rejected
      4. Runnable test commands and timing results
-6. **Centralize Tests and Prevent Test File Proliferation**:
-   - When introducing enhancements or regression tests for an existing subsystem that already has a canonical test file (e.g. `test/test_chisq.py` for vetoes or `test/test_resample.py` for filtering), always integrate new test cases directly into the existing test suite.
-   - Do NOT create standalone single-test files (e.g. `test/test_chisq_slicing.py`).
-   - Adding tests to existing files keeps the test directory organized, ensures tests run as part of the standard subsystem suite without requiring new CI matrix entries, and minimizes repository bloat.
 
 
 ---
@@ -182,23 +176,16 @@ When refactoring or introducing large feature sets (such as multi-detector searc
 
 ---
 
-## 10. Frame I/O & Unified File Format Pipelines
+## 10. Frame (GWF) & GWOSC Data I/O Architecture
 
-When supporting modern or alternative container formats (such as GWOSC HDF5 alongside traditional `.gwf` frame files):
+1. **Pure-Python Frame (GWF) & GWOSC HDF5 Parsing**:
+   - Zero hard dependencies on `lalframe` for reading: `pycbc.frame.read_frame` must support both IGWD GWF frame files and GWOSC HDF5 archives in pure Python/NumPy (`struct`, `zlib`, `h5py`).
+   - `lalframe` should remain strictly an optional accelerator or fallback for frame writing (`write_frame`).
+   - Sub-millisecond Table of Contents (TOC) extraction: Read `seekTOC` directly from `FrEndOfFile` (-20 bytes from EOF) and parse `FrTOC` structures to locate channel byte offsets without loading gigabytes of raw time series.
+2. **Explicit Channel Discovery & User Inspection**:
+   - Do not require users to guess or hardcode channel names across data releases.
+   - Expose public discovery functions: `get_gwf_channels(file_path)`, `get_gwosc_hdf_channels(file_path)`, and unified `get_frame_channels(location)` that work identically across single files, lists, globs, or cache files.
+3. **Descriptive Error Diagnostics for Missing Channels**:
+   - Never fall back silently to arbitrary channels (e.g. defaulting to strain when a requested DQ or auxiliary channel is missing).
+   - When a requested channel cannot be resolved, raise `ValueError` explicitly enumerating all available channels found in the file (e.g. `ValueError("Channel '...' not found. Available channels: [...]")`). This provides immediate feedback in interactive notebooks and batch pipelines.
 
-1. **Pure-Python Unified Cache Architecture & NumPy Vectorized Interval Filtering**:
-   - Do not branch early into disparate format-specific cache, glob, or regex parsing functions.
-   - Do not rely on SWIG `lal.Cache` wrappers, `lal.CacheImport`, `lal.CacheExport`, or temporary files for cache management.
-   - Route all input sources (single files, globs, file lists, `.cache`, and `.lcf` manifests) through a single unified `locations_to_cache()` returning a pure-Python `FrameCache`.
-   - Perform time-interval filtering and regex sieving using vectorized NumPy boolean array comparisons (`mask = (ends > start_time) & (starts < end_time)`). This eliminates temporary disk I/O, prevents SWIG iterator bugs, and delivers sub-millisecond cache sieving across thousands of files.
-   - Only branch to format-specific reader engines (pure-Python HDF5 dataset slicing vs. LAL frame stream) once the sieved, ordered list of target files has been produced.
-2. **Format Detection by Extension, Not Speculative File Probing**:
-   - Detect container formats by standard file extension (`.hdf5`, `.h5`, `.hdf` vs. `.gwf`).
-   - Never execute speculative file-opening probes (e.g., invoking `h5py.is_hdf5(path)`) during format classification or cache building. Speculative file opens introduce unnecessary disk/network latency, fail on offline or remote URLs, and add fragility. Rely on users and workflow generators to provide standard file extensions.
-3. **Generic LIGO Filename Parsing (T050017)**:
-   - The standard LIGO T050017 naming convention (`[OBS]-[IFO]_[DESC]-[GPS]-[DUR].[EXT]`) is completely container-agnostic.
-   - Keep filename parsers generic (`parse_frame_filename`) so the exact same logic parses `.gwf`, `.hdf5`, or `.xml` filenames without format-specific forks.
-4. **Strict Metadata Validation Over Silent Fallback Defaults**:
-   - Never introduce silent defaults for fundamental metadata (e.g., defaulting `ifo = 'H1'` if the detector attribute cannot be read).
-   - Real detector strain files from GWOSC/LVK consistently provide canonical metadata (`meta/Detector`, `meta/GPSstart`, `meta/Duration`, `meta/Observatory`).
-   - If guaranteed metadata cannot be read from the file or parsed from the filename, fail fast and explicitly with a descriptive `ValueError`. Silent defaults mask corrupt or mislabeled data and cause silent cross-detector errors.

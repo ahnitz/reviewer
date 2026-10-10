@@ -20,16 +20,50 @@ ROADMAP_FILE = os.path.join(BASE_DIR, "search_dev_notes", "data", "wave_roadmap.
 TEMPLATE_FILE = os.path.join(BASE_DIR, "pycbc-work", "apogee", ".github", "pull_request_template.md")
 
 def load_prs():
-    if not os.path.exists(DASHBOARD_FILE):
-        return []
-    with open(DASHBOARD_FILE, "r", encoding="utf-8") as f:
-        content = f.read()
-    m = re.search(r"const PR_PAGES = (\[.*?\]);\s*\n\s*let currentTab", content, re.DOTALL)
-    if m:
-        try:
-            return json.loads(m.group(1))
-        except Exception as e:
-            print(f"Error parsing PR_PAGES: {e}", file=sys.stderr)
+    # 1. First try live review server /api/prs
+    try:
+        import urllib.request
+        req = urllib.request.Request("http://127.0.0.1:8080/api/prs", headers={"User-Agent": "PyCBC-PR-Helper"})
+        with urllib.request.urlopen(req, timeout=2) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if "prs" in data and isinstance(data["prs"], dict):
+                prs_list = []
+                for pid, pdata in data["prs"].items():
+                    if isinstance(pdata, dict):
+                        pcopy = dict(pdata)
+                        pcopy.setdefault("id", pid)
+                        prs_list.append(pcopy)
+                return prs_list
+    except Exception:
+        pass
+
+    # 2. Try loading from wave_roadmap.json
+    roadmap = load_roadmap()
+    if roadmap and "prs" in roadmap:
+        return list(roadmap["prs"].values())
+    if roadmap and "waves" in roadmap:
+        res = []
+        for w in roadmap["waves"].values():
+            res.extend(w.get("prs", []))
+        if res:
+            return res
+
+    # 3. Fallback to parsing dashboard files
+    for dash in [
+        DASHBOARD_FILE,
+        os.path.join(BASE_DIR, "pr_review_dashboard.html"),
+        os.path.join(BASE_DIR, "agent-dual-review", "dashboard", "pr_review_dashboard.html"),
+    ]:
+        if os.path.exists(dash):
+            try:
+                with open(dash, "r", encoding="utf-8") as f:
+                    content = f.read()
+                m = re.search(r"const PR_PAGES = (\[.*?\]);\s*\n\s*let currentTab", content, re.DOTALL)
+                if m:
+                    return json.loads(m.group(1))
+            except Exception:
+                pass
+
     return []
 
 def load_roadmap():
@@ -178,7 +212,9 @@ def main():
     target = sys.argv[1].strip()
     target_pr = None
     for p in prs:
-        if p.get("id").upper() == target.upper() or p.get("branch") == target:
+        pid = str(p.get("id") or p.get("prId") or "").upper()
+        pbranch = str(p.get("branch") or "")
+        if pid == target.upper() or pbranch == target:
             target_pr = p
             break
 
