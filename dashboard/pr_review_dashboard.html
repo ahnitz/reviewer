@@ -837,29 +837,36 @@
     function toggleFileCollapse(prId, fileSlug) {
       const body = document.getElementById(`file-body-${prId}-${fileSlug}`);
       const icon = document.getElementById(`file-icon-${prId}-${fileSlug}`);
+      const sbIcon = document.getElementById(`sidebar-icon-${prId}-${fileSlug}`);
       if (!body) return;
       body.classList.toggle('hidden');
       const isHidden = body.classList.contains('hidden');
       if (icon) {
         icon.style.transform = isHidden ? 'rotate(-90deg)' : 'rotate(0deg)';
       }
+      if (sbIcon) {
+        sbIcon.style.transform = isHidden ? 'rotate(-90deg)' : 'rotate(0deg)';
+      }
     }
 
     function setAllFilesCollapsed(collapsed) {
-      const pr = PR_PAGES.find(p => p.id === currentTab);
+      const pr = (typeof serverPRs !== 'undefined' && serverPRs && (serverPRs[currentTab] || Object.values(serverPRs).find(p => p.id === currentTab))) || PR_PAGES.find(p => p.id === currentTab);
       if (!pr || !pr.hunks) return;
       const files = [...new Set(pr.hunks.map(h => h.file))];
       files.forEach(f => {
         const slug = f.replace(/[^a-zA-Z0-9_-]/g, '_');
         const body = document.getElementById(`file-body-${pr.id}-${slug}`);
         const icon = document.getElementById(`file-icon-${pr.id}-${slug}`);
+        const sbIcon = document.getElementById(`sidebar-icon-${pr.id}-${slug}`);
         if (body) {
           if (collapsed) {
             body.classList.add('hidden');
             if (icon) icon.style.transform = 'rotate(-90deg)';
+            if (sbIcon) sbIcon.style.transform = 'rotate(-90deg)';
           } else {
             body.classList.remove('hidden');
             if (icon) icon.style.transform = 'rotate(0deg)';
+            if (sbIcon) sbIcon.style.transform = 'rotate(0deg)';
           }
         }
       });
@@ -1573,7 +1580,7 @@
     }
 
     function copyPRDescriptionMarkdown(prId) {
-      const pr = PR_PAGES.find(p => p.id === prId);
+      const pr = (typeof serverPRs !== 'undefined' && serverPRs && (serverPRs[prId] || Object.values(serverPRs).find(p => p.id === prId))) || PR_PAGES.find(p => p.id === prId);
       if (!pr) return;
       const md = generatePRDescriptionMarkdown(pr);
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1586,7 +1593,7 @@
     }
 
     function openGitHubPRWithDescription(prId) {
-      const pr = PR_PAGES.find(p => p.id === prId);
+      const pr = (typeof serverPRs !== 'undefined' && serverPRs && (serverPRs[prId] || Object.values(serverPRs).find(p => p.id === prId))) || PR_PAGES.find(p => p.id === prId);
       if (!pr) return;
       const md = generatePRDescriptionMarkdown(pr);
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1596,7 +1603,7 @@
           showToast('Opening GitHub PR page...');
         });
       }
-      let url = pr.ghCreatePrUrl || pr.ghCompareUrl;
+      let url = pr.ghCreatePrUrl || (pr.lifecycle && pr.lifecycle.actionUrl) || pr.ghCompareUrl || (pr.branch ? `https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:${pr.branch}?expand=1` : null);
       if (url) {
         const encodedTitle = encodeURIComponent(pr.title || '');
         const encodedBody = encodeURIComponent(md);
@@ -3462,8 +3469,8 @@
               `;
             })()}
 
-            <!-- Continuous GitHub-Style Files with Aligned Review Column -->
-            <div class="space-y-6">
+            <!-- Continuous GitHub-Style Files with Aligned Review Column & Sticky File Tree Navigation -->
+            <div class="flex flex-col lg:flex-row gap-6 items-start">
               ${(() => {
                 const hunksByFile = {};
                 pr.hunks.forEach((hunk, idx) => {
@@ -3472,7 +3479,45 @@
                 });
                 const fileList = Object.keys(hunksByFile);
 
-                return fileList.map((fileName) => {
+                const sidebarHtml = fileList.length > 1 ? `
+                  <aside class="w-full lg:w-72 shrink-0 lg:sticky lg:top-4 bg-white border border-slate-200 rounded-lg p-3 shadow-xs space-y-3 max-h-[calc(100vh-2rem)] overflow-y-auto">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <div class="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                        <span>Files Changed (${fileList.length})</span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <button onclick="setAllFilesCollapsed(true)" class="px-1.5 py-0.5 text-[10px] font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded transition-colors cursor-pointer" title="Collapse all files">Collapse All</button>
+                        <button onclick="setAllFilesCollapsed(false)" class="px-1.5 py-0.5 text-[10px] font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded transition-colors cursor-pointer" title="Expand all files">Expand All</button>
+                      </div>
+                    </div>
+                    <div class="space-y-1 text-xs">
+                      ${fileList.map(fileName => {
+                        const fSlug = fileName.replace(/[^a-zA-Z0-9_-]/g, '_');
+                        const fHunks = hunksByFile[fileName];
+                        const fAdd = fHunks.reduce((acc, {hunk}) => acc + (hunk.diffSnippet ? (hunk.diffSnippet.match(/^\\+[^\+]/gm) || []).length : 0), 0);
+                        const fDel = fHunks.reduce((acc, {hunk}) => acc + (hunk.diffSnippet ? (hunk.diffSnippet.match(/^-[^-]/gm) || []).length : 0), 0);
+                        return `
+                          <div class="group flex items-center justify-between p-1.5 rounded hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
+                            <a href="#file-card-${pr.id}-${fSlug}" onclick="document.getElementById('file-card-${pr.id}-${fSlug}')?.scrollIntoView({behavior:'smooth'}); return false;" class="flex items-center gap-1.5 min-w-0 flex-1 text-slate-700 hover:text-blue-600">
+                              <span class="text-[11px] truncate font-mono">${fileName.split('/').pop()}</span>
+                              <span class="text-[10px] text-slate-400">(${fHunks.length})</span>
+                            </a>
+                            <div class="flex items-center gap-1 shrink-0 font-mono text-[10px]">
+                              ${fAdd > 0 ? `<span class="text-emerald-700 font-semibold">+${fAdd}</span>` : ''}
+                              ${fDel > 0 ? `<span class="text-rose-700 font-semibold">-${fDel}</span>` : ''}
+                              <button onclick="toggleFileCollapse('${pr.id}', '${fSlug}')" class="p-0.5 text-slate-400 hover:text-slate-700 rounded hover:bg-slate-200 cursor-pointer" title="Toggle collapse">
+                                <svg id="sidebar-icon-${pr.id}-${fSlug}" class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                              </button>
+                            </div>
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
+                  </aside>
+                ` : '';
+
+                const cardsHtml = fileList.map((fileName) => {
                   const fileHunks = hunksByFile[fileName];
                   const fileSlug = fileName.replace(/[^a-zA-Z0-9_-]/g, '_');
                   const fileAddCount = fileHunks.reduce((acc, {hunk}) => acc + (hunk.diffSnippet ? (hunk.diffSnippet.match(/^\\+[^\+]/gm) || []).length : 0), 0);
@@ -3635,12 +3680,17 @@
                         }).join('')}
                       </div>
 
-                    </div>
                   `;
                 }).join('');
+
+                return `
+                  ${sidebarHtml}
+                  <div class="flex-1 min-w-0 space-y-6">
+                    ${cardsHtml}
+                  </div>
+                `;
               })()}
             </div>
-          </div>
 
           <!-- Section 3: Simplifications over Dev Prototype -->
           <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-3">

@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-10T19:35:06Z",
+  "lastUpdated": "2026-10-10T19:38:26Z",
   "openPrCount": 7,
   "prs": {
     "5481": {
@@ -140,7 +140,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T19:35:03Z"
+      "lastChecked": "2026-10-10T19:38:22Z"
     },
     "5480": {
       "prNumber": 5480,
@@ -279,7 +279,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-10T19:35:03Z"
+      "lastChecked": "2026-10-10T19:38:22Z"
     },
     "5479": {
       "prNumber": 5479,
@@ -418,7 +418,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-10T19:35:03Z"
+      "lastChecked": "2026-10-10T19:38:22Z"
     },
     "5478": {
       "prNumber": 5478,
@@ -564,7 +564,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-10T19:35:03Z"
+      "lastChecked": "2026-10-10T19:38:22Z"
     },
     "5475": {
       "prNumber": 5475,
@@ -704,7 +704,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T19:35:04Z"
+      "lastChecked": "2026-10-10T19:38:24Z"
     },
     "5474": {
       "prNumber": 5474,
@@ -844,7 +844,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T19:35:05Z"
+      "lastChecked": "2026-10-10T19:38:25Z"
     },
     "5473": {
       "prNumber": 5473,
@@ -991,7 +991,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T19:35:06Z"
+      "lastChecked": "2026-10-10T19:38:26Z"
     }
   }
 }
