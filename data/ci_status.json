@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-10T01:00:19Z",
+  "lastUpdated": "2026-10-10T01:05:28Z",
   "openPrCount": 3,
   "prs": {
     "5475": {
@@ -140,7 +140,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T01:00:17Z"
+      "lastChecked": "2026-10-10T01:05:27Z"
     },
     "5474": {
       "prNumber": 5474,
@@ -149,9 +149,9 @@
       "headSha": "e49a73139a0b7a95f3b4b14aef007df5c5b07bab",
       "overallStatus": "IN_PROGRESS",
       "totalChecks": 35,
-      "successCount": 9,
+      "successCount": 10,
       "failureCount": 17,
-      "inProgressCount": 8,
+      "inProgressCount": 7,
       "actionableCount": 0,
       "failures": [
         {
@@ -280,7 +280,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T01:00:18Z"
+      "lastChecked": "2026-10-10T01:05:28Z"
     },
     "5473": {
       "prNumber": 5473,
@@ -289,9 +289,9 @@
       "headSha": "97418897a2e796334993dc67b9088f87e0423b21",
       "overallStatus": "IN_PROGRESS",
       "totalChecks": 35,
-      "successCount": 8,
+      "successCount": 10,
       "failureCount": 18,
-      "inProgressCount": 8,
+      "inProgressCount": 6,
       "actionableCount": 0,
       "failures": [
         {
@@ -427,7 +427,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T01:00:19Z"
+      "lastChecked": "2026-10-10T01:05:28Z"
     }
   }
 }
