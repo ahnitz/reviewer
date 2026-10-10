@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-10T01:24:18Z",
+  "lastUpdated": "2026-10-10T01:29:35Z",
   "openPrCount": 3,
   "prs": {
     "5475": {
@@ -140,18 +140,18 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T01:24:16Z"
+      "lastChecked": "2026-10-10T01:29:34Z"
     },
     "5474": {
       "prNumber": 5474,
       "title": "data / file trigger handling fixes + extension",
       "branch": "pr-fix-io-dictarray-indexing",
       "headSha": "e49a73139a0b7a95f3b4b14aef007df5c5b07bab",
-      "overallStatus": "IN_PROGRESS",
+      "overallStatus": "RUNNER_ENVIRONMENT",
       "totalChecks": 35,
-      "successCount": 15,
+      "successCount": 17,
       "failureCount": 17,
-      "inProgressCount": 2,
+      "inProgressCount": 0,
       "actionableCount": 0,
       "failures": [
         {
@@ -280,18 +280,18 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T01:24:17Z"
+      "lastChecked": "2026-10-10T01:29:35Z"
     },
     "5473": {
       "prNumber": 5473,
       "title": "waveform compress, more fixes",
       "branch": "pr-perf-waveform-compress",
       "headSha": "97418897a2e796334993dc67b9088f87e0423b21",
-      "overallStatus": "IN_PROGRESS",
+      "overallStatus": "RUNNER_ENVIRONMENT",
       "totalChecks": 35,
-      "successCount": 15,
+      "successCount": 16,
       "failureCount": 18,
-      "inProgressCount": 1,
+      "inProgressCount": 0,
       "actionableCount": 0,
       "failures": [
         {
@@ -427,7 +427,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-10T01:24:18Z"
+      "lastChecked": "2026-10-10T01:29:35Z"
     }
   }
 }
