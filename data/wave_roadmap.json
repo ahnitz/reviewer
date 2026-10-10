@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-09T23:44:25.689859",
+  "last_updated": "2026-10-10T00:00:25.954910",
   "dev_branch": "firinspiral3-multidet-asym",
   "upstream_base": "f6eaed241fd115a0b79b459bca83787b19135875",
-  "last_ingested_commit": "a5fef05d5f716b1267b6db5320df0c1ccd61a7c2",
-  "ingested_commits_count": 242,
+  "last_ingested_commit": "c524d71c338eecf5ac9e8b501968e8a3a746673c",
+  "ingested_commits_count": 243,
   "prs": {
     "PR-1A": {
       "wave": 1,
@@ -7674,6 +7674,26 @@
       "wave": 4,
       "note": "Commit a5fef05d5 absorbed into future Wave 4 PR PR-4B ('bin/pycbc_inspiral_fir').",
       "timestamp": "2026-10-09T23:05:24.912058"
+    },
+    {
+      "commit_sha": "c524d71c338eecf5ac9e8b501968e8a3a746673c",
+      "commit_msg": "Support auto/autochi aliases and sngl_ranking parameter in trigger cuts and chisq choices",
+      "file": "pycbc/events/cuts.py",
+      "action": "ACTIVE_PR_UPDATE",
+      "pr_id": "PR-1C",
+      "wave": 1,
+      "note": "Commit c524d71c3 touches active PR PR-1C file 'pycbc/events/cuts.py'. Evaluate for staging/cherry-pick.",
+      "timestamp": "2026-10-09T23:57:25.895205"
+    },
+    {
+      "commit_sha": "c524d71c338eecf5ac9e8b501968e8a3a746673c",
+      "commit_msg": "Support auto/autochi aliases and sngl_ranking parameter in trigger cuts and chisq choices",
+      "file": "pycbc/io/hdf.py",
+      "action": "ACTIVE_PR_UPDATE",
+      "pr_id": "PR-1B",
+      "wave": 1,
+      "note": "Commit c524d71c3 touches active PR PR-1B file 'pycbc/io/hdf.py'. Evaluate for staging/cherry-pick.",
+      "timestamp": "2026-10-09T23:57:25.895226"
     }
   ]
 }
