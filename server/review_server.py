@@ -842,6 +842,37 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                 self._send_json({"status": "error", "message": "Comment ID not found"}, status=404)
             return
 
+        if self.path == "/api/comments/resolve":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length)
+            try:
+                data = json.loads(body.decode("utf-8"))
+            except Exception as e:
+                self._send_json({"status": "error", "message": f"Invalid JSON: {e}"}, status=400)
+                return
+
+            comment_id = data.get("commentId") or data.get("id")
+            comments = load_feedback()
+            found = False
+            for c in comments:
+                if c["id"] == comment_id:
+                    c["status"] = "RESOLVED"
+                    c.setdefault("replies", []).append({
+                        "id": "r_" + str(int(time.time())) + "_" + uuid.uuid4().hex[:4],
+                        "author": data.get("author", "Maintainer"),
+                        "replyText": "Marked as resolved by maintainer.",
+                        "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                    })
+                    found = True
+                    break
+
+            if found:
+                save_feedback(comments)
+                self._send_json({"status": "ok", "message": "Comment resolved"})
+            else:
+                self._send_json({"status": "error", "message": "Comment ID not found"}, status=404)
+            return
+
         if self.path == "/api/prs/track":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)

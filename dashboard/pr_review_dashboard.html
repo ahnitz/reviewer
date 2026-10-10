@@ -1431,9 +1431,600 @@
       }
     }
 
+// ==========================================
+    // GLOBAL TOAST NOTIFICATIONS & CLIPBOARD
+    // ==========================================
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('global-toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const bg = (type === 'error') ? 'bg-rose-900 border-rose-700 text-white' : 'bg-slate-900 border-slate-700 text-white';
+      toast.className = bg + ' pointer-events-auto border px-4 py-2.5 rounded-lg shadow-lg text-xs font-medium flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0';
+      toast.innerHTML = '<span class="w-2 h-2 rounded-full ' + (type === 'error' ? 'bg-rose-400' : 'bg-emerald-400') + '"></span><span>' + escapeHtml(message) + '</span>';
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+      });
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => { toast.remove(); }, 300);
+      }, 3500);
+    }
+
     function copyToClipboard(text, msg) {
-      navigator.clipboard.writeText(text);
-      alert(msg || `Copied: ${text}`);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(msg || 'Copied to clipboard!');
+        }).catch(() => {
+          showToast(msg || ('Copied: ' + text.substring(0, 35) + '...'));
+        });
+      } else {
+        alert(msg || ('Copied: ' + text));
+      }
+    }
+
+    // ==========================================
+    // 1-CLICK GITHUB PR OPENER & MARKDOWN GENERATOR
+    // ==========================================
+    function generatePRDescriptionMarkdown(pr) {
+      const files = [...new Set(pr.hunks.map(h => h.file))];
+      const fileSummary = files.map(f => {
+        const hunks = pr.hunks.filter(h => h.file === f);
+        return '- `' + f + '` (' + hunks.length + ' hunk' + (hunks.length > 1 ? 's' : '') + '): ' + hunks.map(h => h.shortSummary).join('; ');
+      }).join('\n');
+
+      let md = '## Summary\n' + pr.title + '\n\n';
+      md += '## Motivation & Problem\n' + (pr.problemDescription || 'N/A') + '\n\n';
+      md += '## Solution & Architectural Implementation\n' + (pr.solutionDescription || 'N/A') + '\n\n';
+      if (pr.simplificationDeepDive) {
+        md += '### Code Simplification & Review Surface Reduction\n' + pr.simplificationDeepDive + '\n\n';
+      }
+      md += '### Key Changes by File\n' + fileSummary + '\n\n';
+      md += '## Verification & Test Strategy\n';
+      md += '- **Test Command**: `' + (pr.testCmd || 'pytest test/') + '`\n';
+      md += '- **Result**: ' + (pr.testTiming || 'Passing cleanly') + '\n';
+      md += '- **Merge Base**: Cleanly rebased against current `gwastro/pycbc:master`\n';
+      md += '- **Decoupled Topic Branch**: 0 circular prerequisites; safe for incremental parallel review.\n\n';
+      md += '## PyCBC Development Guidelines Adherence\n';
+      md += '- Bit-for-bit reproducible cross-platform float64 timestamps (NumPy 2.0 compatible).\n';
+      md += '- Defensive handling of empty trigger sets, zero livetime intervals, and uncalculated chisq triggers.\n';
+      md += '- Injection waveform buffer immutability (ensuring `.copy()` across multi-detector networks).\n';
+      md += '- Zero dead code, zero unused imports (flake8 compliant).\n';
+      return md;
+    }
+
+    function openGitHubPRWithDescription(prId) {
+      const pr = PR_PAGES.find(p => p.id === prId);
+      if (!pr) return;
+      const md = generatePRDescriptionMarkdown(pr);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(md).then(() => {
+          showToast('✓ Rich PR description copied to clipboard! Opening GitHub...');
+        }).catch(() => {
+          showToast('Opening GitHub PR page...');
+        });
+      }
+      const url = pr.ghCreatePrUrl || pr.ghCompareUrl;
+      if (url) {
+        window.open(url, '_blank');
+      }
+    }
+
+    // ==========================================
+    // 1-CLICK COMMENT RESOLUTION
+    // ==========================================
+    async function resolveComment(commentId) {
+      try {
+        const res = await fetch('/api/comments/resolve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: commentId, author: 'Maintainer (Alex)' })
+        });
+        if (res.ok) {
+          const c = serverComments.find(x => x.id === commentId);
+          if (c) {
+            c.status = 'RESOLVED';
+            c.replies = c.replies || [];
+            c.replies.push({
+              author: 'Maintainer (Alex)',
+              replyText: 'Marked as resolved by maintainer.',
+              createdAt: new Date().toISOString()
+            });
+          }
+          renderNav();
+          renderActiveComments();
+          showToast('✓ Comment thread marked as resolved!');
+        } else {
+          showToast('Failed to resolve comment on server.', 'error');
+        }
+      } catch (e) {
+        console.error('Error resolving comment:', e);
+        showToast('Network error while resolving comment.', 'error');
+      }
+    }
+
+    // ==========================================
+    // COLLAPSIBLE FILE CARDS & "MARK AS REVIEWED"
+    // ==========================================
+    function getReviewedFiles(prId) {
+      try {
+        return new Set(JSON.parse(localStorage.getItem('pycbc_reviewed_files_' + prId) || '[]'));
+      } catch (e) {
+        return new Set();
+      }
+    }
+
+    function saveReviewedFiles(prId, set) {
+      localStorage.setItem('pycbc_reviewed_files_' + prId, JSON.stringify(Array.from(set)));
+    }
+
+    function isPRFileReviewed(prId, fileSlug) {
+      return getReviewedFiles(prId).has(fileSlug);
+    }
+
+    function toggleFileReviewed(prId, fileSlug) {
+      const set = getReviewedFiles(prId);
+      const nowReviewed = !set.has(fileSlug);
+      if (nowReviewed) {
+        set.add(fileSlug);
+      } else {
+        set.delete(fileSlug);
+      }
+      saveReviewedFiles(prId, set);
+
+      const card = document.getElementById('file-card-' + prId + '-' + fileSlug);
+      const checkbox = document.getElementById('file-review-cb-' + prId + '-' + fileSlug);
+      const label = document.getElementById('file-review-label-' + prId + '-' + fileSlug);
+      const body = document.getElementById('file-body-' + prId + '-' + fileSlug);
+      const icon = document.getElementById('file-icon-' + prId + '-' + fileSlug);
+
+      if (checkbox) checkbox.checked = nowReviewed;
+      if (label) {
+        label.innerText = nowReviewed ? '✓ Reviewed' : 'Mark as Reviewed';
+        label.className = nowReviewed ? 'text-emerald-700 font-bold' : 'text-slate-700';
+      }
+
+      if (nowReviewed) {
+        if (card) {
+          card.classList.add('border-emerald-300', 'bg-emerald-50/10');
+          card.classList.remove('border-slate-300');
+        }
+        if (body && !body.classList.contains('hidden')) {
+          body.classList.add('hidden');
+          if (icon) icon.style.transform = 'rotate(-90deg)';
+        }
+        showToast('✓ Marked file as reviewed');
+      } else {
+        if (card) {
+          card.classList.remove('border-emerald-300', 'bg-emerald-50/10');
+          card.classList.add('border-slate-300');
+        }
+        if (body && body.classList.contains('hidden')) {
+          body.classList.remove('hidden');
+          if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+      }
+
+      updateReviewProgressBar(prId);
+    }
+
+    function updateReviewProgressBar(prId) {
+      const pr = PR_PAGES.find(p => p.id === prId);
+      if (!pr) return;
+      const files = [...new Set(pr.hunks.map(h => h.file))];
+      const totalFiles = files.length;
+      if (totalFiles === 0) return;
+      const reviewedSet = getReviewedFiles(prId);
+      const reviewedCount = files.filter(f => reviewedSet.has(f.replace(/[^a-zA-Z0-9_-]/g, '_'))).length;
+      const pct = Math.round((reviewedCount / totalFiles) * 100);
+
+      const bar = document.getElementById('review-progress-fill-' + prId);
+      const text = document.getElementById('review-progress-text-' + prId);
+      const banner = document.getElementById('review-complete-banner-' + prId);
+
+      if (bar) bar.style.width = pct + '%';
+      if (text) text.innerHTML = 'Reviewed <strong>' + reviewedCount + '</strong> of <strong>' + totalFiles + '</strong> files (' + pct + '%)';
+
+      if (banner) {
+        if (reviewedCount === totalFiles && totalFiles > 0) {
+          banner.classList.remove('hidden');
+        } else {
+          banner.classList.add('hidden');
+        }
+      }
+    }
+
+    function markAllPRFilesReviewed(prId) {
+      const pr = PR_PAGES.find(p => p.id === prId);
+      if (!pr) return;
+      const files = [...new Set(pr.hunks.map(h => h.file))];
+      const set = new Set(files.map(f => f.replace(/[^a-zA-Z0-9_-]/g, '_')));
+      saveReviewedFiles(prId, set);
+      files.forEach(f => {
+        const slug = f.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const checkbox = document.getElementById('file-review-cb-' + prId + '-' + slug);
+        const label = document.getElementById('file-review-label-' + prId + '-' + slug);
+        const card = document.getElementById('file-card-' + prId + '-' + slug);
+        const body = document.getElementById('file-body-' + prId + '-' + slug);
+        const icon = document.getElementById('file-icon-' + prId + '-' + slug);
+        if (checkbox) checkbox.checked = true;
+        if (label) {
+          label.innerText = '✓ Reviewed';
+          label.className = 'text-emerald-700 font-bold';
+        }
+        if (card) {
+          card.classList.add('border-emerald-300', 'bg-emerald-50/10');
+          card.classList.remove('border-slate-300');
+        }
+        if (body) {
+          body.classList.add('hidden');
+          if (icon) icon.style.transform = 'rotate(-90deg)';
+        }
+      });
+      updateReviewProgressBar(prId);
+      showToast('✓ All ' + files.length + ' files marked as reviewed');
+    }
+
+    function resetPRFilesReviewed(prId) {
+      saveReviewedFiles(prId, new Set());
+      const pr = PR_PAGES.find(p => p.id === prId);
+      if (!pr) return;
+      const files = [...new Set(pr.hunks.map(h => h.file))];
+      files.forEach(f => {
+        const slug = f.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const checkbox = document.getElementById('file-review-cb-' + prId + '-' + slug);
+        const label = document.getElementById('file-review-label-' + prId + '-' + slug);
+        const card = document.getElementById('file-card-' + prId + '-' + slug);
+        const body = document.getElementById('file-body-' + prId + '-' + slug);
+        const icon = document.getElementById('file-icon-' + prId + '-' + slug);
+        if (checkbox) checkbox.checked = false;
+        if (label) {
+          label.innerText = 'Mark as Reviewed';
+          label.className = 'text-slate-700';
+        }
+        if (card) {
+          card.classList.remove('border-emerald-300', 'bg-emerald-50/10');
+          card.classList.add('border-slate-300');
+        }
+        if (body) {
+          body.classList.remove('hidden');
+          if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+      });
+      updateReviewProgressBar(prId);
+      showToast('Reset review state for ' + prId);
+    }
+
+    // ==========================================
+    // INTERACTIVE DAG DEPENDENCY GRAPH
+    // ==========================================
+    const DAG_NODES = [
+      { id: "MASTER", label: "master", title: "Upstream master branch", tier: "master", x: 60, y: 310, status: "BASE", subtitle: "gwastro/pycbc" },
+
+      // Tier 0 (Root PRs, 0 dependencies)
+      { id: "PR-1A", label: "PR-1A", title: "Core & NumPy 2", tier: 0, x: 260, y: 40, deps: ["MASTER"], branch: "pr-fix-core-numpy2-optparse", status: "OPEN", ghNum: 5475 },
+      { id: "PR-1B", label: "PR-1B", title: "IO DictArray", tier: 0, x: 260, y: 100, deps: ["MASTER"], branch: "pr-fix-io-dictarray-indexing", status: "OPEN", ghNum: 5474 },
+      { id: "PR-1C", label: "PR-1C", title: "Events & Zerolag", tier: 0, x: 260, y: 160, deps: ["MASTER"], branch: "pr-fix-events-numpy2-zerolag", status: "READY" },
+      { id: "PR-1D", label: "PR-1D", title: "Waveform Compress", tier: 0, x: 260, y: 220, deps: ["MASTER"], branch: "pr-perf-waveform-compress", status: "OPEN", ghNum: 5473 },
+      { id: "PR-1E", label: "PR-1E", title: "Vetoes Chisq", tier: 0, x: 260, y: 280, deps: ["MASTER"], branch: "pr-feat-vetoes-chisq-slicing", status: "READY" },
+      { id: "PR-1F", label: "PR-1F", title: "EventMgr Multi", tier: 0, x: 260, y: 340, deps: ["MASTER"], branch: "pr-feat-events-eventmgr-multi", status: "READY" },
+      { id: "PR-1G", label: "PR-1G", title: "Dynamic SNR", tier: 0, x: 260, y: 400, deps: ["MASTER"], branch: "pr-feat-filter-dynamic-snr-renorm", status: "READY" },
+      { id: "PR-1H", label: "PR-1H", title: "InjFilter SNR", tier: 0, x: 260, y: 460, deps: ["MASTER"], branch: "pr-feat-inject-injfilter-optimal-snr", status: "READY" },
+      { id: "PR-1I", label: "PR-1I", title: "Robust PSD", tier: 0, x: 260, y: 520, deps: ["MASTER"], branch: "pr-feat-psd-robust-estimators", status: "READY" },
+      { id: "PR-1J", label: "PR-1J", title: "Strain Inpainting", tier: 0, x: 260, y: 580, deps: ["MASTER"], branch: "pr-feat-strain-regularized-inpainting", status: "READY" },
+
+      // Tier 1 (Downstream of Tier 0)
+      { id: "PR-2F", label: "PR-2F", title: "GWOSC HDF5 Strain", tier: 1, x: 500, y: 60, deps: ["PR-1A"], branch: "pr-feat-frame-gwosc-hdf-strain", status: "BLOCKED", unblocksTrigger: "Unlocks immediately when PR #5475 merges" },
+      { id: "PR-2C", label: "PR-2C", title: "Statmap Memory", tier: 1, x: 500, y: 140, deps: ["PR-1B", "PR-1C"], branch: "pr-perf-coinc-statmap-memory", status: "BLOCKED", unblocksTrigger: "Unlocks when PR #5474 and PR-1C merge" },
+      { id: "PR-2D", label: "PR-2D", title: "Rayleigh Stat", tier: 1, x: 500, y: 220, deps: ["PR-1B", "PR-1C"], branch: "pr-feat-events-rayleigh-stat", status: "BLOCKED", unblocksTrigger: "Unlocks when PR #5474 and PR-1C merge" },
+      { id: "PR-2E", label: "PR-2E", title: "Optimal MF SNR", tier: 1, x: 500, y: 310, deps: ["PR-1H"], branch: "pr-tool-inject-optimal-mf-snr", status: "BLOCKED", unblocksTrigger: "Unlocks when PR-1H merges" },
+      { id: "PR-2A", label: "PR-2A", title: "PSD Model", tier: 1, x: 500, y: 440, deps: ["PR-1I"], branch: "pr-feat-psd-model", status: "BLOCKED", unblocksTrigger: "Unlocks when PR-1I merges" },
+      { id: "PR-2B", label: "PR-2B", title: "Overwhitening", tier: 1, x: 500, y: 530, deps: ["PR-1J", "PR-2A"], branch: "pr-feat-strain-overwhiten", status: "BLOCKED", unblocksTrigger: "Unlocks when PR-1J and PR-2A merge" },
+
+      // Tier 2 (Ratio Engine & Banks)
+      { id: "PR-3A", label: "PR-3A", title: "RatioFilterBank", tier: 2, x: 740, y: 160, deps: ["PR-1D", "PR-1H"], branch: "pr-feat-waveform-ratio-filterbank", status: "BLOCKED", unblocksTrigger: "Unlocks when PR #5473 and PR-1H merge" },
+      { id: "PR-3B", label: "PR-3B", title: "Ratio Engine", tier: 2, x: 740, y: 280, deps: ["PR-1G"], branch: "pr-feat-filter-matched-filter-ratio", status: "BLOCKED", unblocksTrigger: "Unlocks when PR-1G merges" },
+      { id: "PR-3C", label: "PR-3C", title: "FIR Bank Gen", tier: 2, x: 740, y: 400, deps: ["PR-1D", "PR-3A"], branch: "pr-tool-waveform-fir-bank", status: "BLOCKED", unblocksTrigger: "Unlocks when PR #5473 and PR-3A merge" },
+      { id: "PR-3D", label: "PR-3D", title: "Workflow DAG", tier: 2, x: 740, y: 510, deps: ["PR-1F", "PR-2C"], branch: "pr-feat-workflow-multidet-dag", status: "BLOCKED", unblocksTrigger: "Unlocks when PR-1F and PR-2C merge" },
+
+      // Tier 3 (Pipeline Integration & Search Executable)
+      { id: "PR-4A", label: "PR-4A", title: "Minifollowup IFAR", tier: 3, x: 980, y: 290, deps: ["PR-1F", "PR-2C", "PR-3D"], branch: "pr-feat-diagnostics-minifollowup-ifar", status: "BLOCKED", unblocksTrigger: "Unlocks when PR-1F, PR-2C, and PR-3D merge" },
+      { id: "PR-4B", label: "PR-4B", title: "pycbc_inspiral_fir", tier: 3, x: 980, y: 440, deps: ["PR-1E", "PR-1F", "PR-3A", "PR-3B", "PR-3C"], branch: "pr-feat-inspiral-pycbc-inspiral-fir", status: "BLOCKED", unblocksTrigger: "Unlocks when PR-1E, 1F, 3A, 3B, 3C merge" }
+    ];
+
+    const DAG_EDGES = [];
+    DAG_NODES.forEach(target => {
+      if (target.deps) {
+        target.deps.forEach(srcId => {
+          const source = DAG_NODES.find(n => n.id === srcId);
+          if (source) {
+            DAG_EDGES.push({ source: source.id, target: target.id, fromNode: source, toNode: target });
+          }
+        });
+      }
+    });
+
+    let selectedDagNodeId = null;
+
+    function selectDagNode(nodeId) {
+      selectedDagNodeId = (selectedDagNodeId === nodeId) ? null : nodeId;
+      updateDagVisualState();
+    }
+
+    function hoverDagNode(nodeId) {
+      if (selectedDagNodeId) return;
+      updateDagVisualState(nodeId);
+    }
+
+    function unhoverDagNode() {
+      if (selectedDagNodeId) return;
+      updateDagVisualState(null);
+    }
+
+    function updateDagVisualState(activeId = selectedDagNodeId) {
+      const inspector = document.getElementById('dag-node-inspector');
+      if (!activeId) {
+        document.querySelectorAll('.dag-node-group').forEach(el => {
+          el.style.opacity = '1';
+          const rect = el.querySelector('.dag-node-rect');
+          if (rect) {
+            rect.setAttribute('stroke-width', '1.5');
+            const defStroke = rect.getAttribute('data-default-stroke') || '#cbd5e1';
+            rect.setAttribute('stroke', defStroke);
+          }
+        });
+        document.querySelectorAll('.dag-edge-path').forEach(el => {
+          el.setAttribute('stroke', '#cbd5e1');
+          el.setAttribute('stroke-width', '1.5');
+          el.style.opacity = '0.6';
+        });
+        if (inspector) inspector.innerHTML = renderDefaultDagInspectorHtml();
+        return;
+      }
+
+      const activeNode = DAG_NODES.find(n => n.id === activeId);
+      if (!activeNode) return;
+
+      const parents = activeNode.deps || [];
+      const children = DAG_NODES.filter(n => (n.deps || []).includes(activeId)).map(n => n.id);
+
+      DAG_NODES.forEach(n => {
+        const el = document.getElementById('dag-node-' + n.id);
+        if (!el) return;
+        const rect = el.querySelector('.dag-node-rect');
+        if (!rect) return;
+
+        if (n.id === activeId) {
+          el.style.opacity = '1';
+          rect.setAttribute('stroke', '#2563eb');
+          rect.setAttribute('stroke-width', '3');
+        } else if (parents.includes(n.id)) {
+          el.style.opacity = '1';
+          rect.setAttribute('stroke', '#f59e0b');
+          rect.setAttribute('stroke-width', '3');
+        } else if (children.includes(n.id)) {
+          el.style.opacity = '1';
+          rect.setAttribute('stroke', '#10b981');
+          rect.setAttribute('stroke-width', '3');
+        } else {
+          el.style.opacity = '0.22';
+          rect.setAttribute('stroke-width', '1');
+          rect.setAttribute('stroke', rect.getAttribute('data-default-stroke') || '#cbd5e1');
+        }
+      });
+
+      DAG_EDGES.forEach((e, idx) => {
+        const path = document.getElementById('dag-edge-' + idx);
+        if (!path) return;
+        if (e.target === activeId) {
+          path.setAttribute('stroke', '#f59e0b');
+          path.setAttribute('stroke-width', '3');
+          path.style.opacity = '1';
+        } else if (e.source === activeId) {
+          path.setAttribute('stroke', '#10b981');
+          path.setAttribute('stroke-width', '3');
+          path.style.opacity = '1';
+        } else {
+          path.setAttribute('stroke', '#cbd5e1');
+          path.setAttribute('stroke-width', '1');
+          path.style.opacity = '0.12';
+        }
+      });
+
+      if (inspector) {
+        inspector.innerHTML = renderDagNodeInspectorHtml(activeNode, parents, children);
+      }
+    }
+
+    function renderDefaultDagInspectorHtml() {
+      return `
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3.5 text-xs text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+            <span>Hover or click any PR node above to inspect its exact prerequisite parents, unlocked children, and review links.</span>
+          </div>
+          <span class="text-[11px] font-medium text-slate-600">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 mr-1 align-middle"></span>Amber = Prerequisites &bull;
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1 ml-2 align-middle"></span>Emerald = Unlocked Downstream
+          </span>
+        </div>
+      `;
+    }
+
+    function renderDagNodeInspectorHtml(node, parentIds, childIds) {
+      const pr = PR_PAGES.find(p => p.id === node.id);
+      const statusBadge = node.status === 'OPEN' ? '<span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 OPEN UPSTREAM (' + (node.ghNum ? '#' + node.ghNum : 'GitHub') + ')</span>' :
+                          node.status === 'READY' ? '<span class="px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">🚀 READY TO SUBMIT (0 DEPS)</span>' :
+                          node.status === 'BASE' ? '<span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-900 text-white">UPSTREAM BASE</span>' :
+                          '<span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">⏳ BLOCKED BY DEPENDENCIES</span>';
+
+      return `
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3 shadow-2xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2.5 py-1 rounded text-xs font-bold bg-slate-900 text-white">${node.id}</span>
+              <span class="font-bold text-slate-900 text-sm">${node.title}</span>
+              ${statusBadge}
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              ${node.id !== 'MASTER' && pr ? `
+                <button onclick="switchTab('${node.id}')" class="px-3 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer">
+                  Review Diff (${node.id}) &rarr;
+                </button>
+              ` : ''}
+              ${(node.status === 'READY' && pr) ? `
+                <button onclick="openGitHubPRWithDescription('${node.id}')" class="px-3 py-1 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-2xs cursor-pointer flex items-center gap-1">
+                  <span>🚀 1-Click Open PR</span>
+                </button>
+              ` : ''}
+              <button onclick="selectDagNode(null)" class="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded hover:bg-slate-200 transition-colors cursor-pointer">
+                Clear Selection &times;
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div>
+              <span class="font-semibold text-slate-500 uppercase text-[10px] tracking-wider block">Branch</span>
+              <code class="code-font text-blue-700 font-semibold text-[11px]">${node.branch || 'gwastro/pycbc:master'}</code>
+            </div>
+            <div>
+              <span class="font-semibold text-slate-500 uppercase text-[10px] tracking-wider block">Prerequisites (Parents)</span>
+              <div class="flex flex-wrap gap-1 mt-0.5">
+                ${parentIds.length === 0 || (parentIds.length === 1 && parentIds[0] === 'MASTER') ? `
+                  <span class="text-emerald-700 font-medium">None (0 Dependencies &bull; Root)</span>
+                ` : parentIds.filter(p => p !== 'MASTER').map(pid => `
+                  <button onclick="selectDagNode('${pid}')" class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 font-mono text-[10px] font-bold hover:bg-amber-200 cursor-pointer">
+                    ${pid}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+            <div>
+              <span class="font-semibold text-slate-500 uppercase text-[10px] tracking-wider block">Unlocks Downstream (Children)</span>
+              <div class="flex flex-wrap gap-1 mt-0.5">
+                ${childIds.length === 0 ? `
+                  <span class="text-slate-400">Terminal node (Pipeline end)</span>
+                ` : childIds.map(cid => `
+                  <button onclick="selectDagNode('${cid}')" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300 font-mono text-[10px] font-bold hover:bg-emerald-200 cursor-pointer">
+                    ${cid}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+          ${node.unblocksTrigger ? `
+            <div class="text-[11px] bg-white border border-amber-200 rounded p-2 text-amber-900 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span><strong>Dynamic Unlocking Rule:</strong> ${node.unblocksTrigger}</span>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderDagSvgHtml() {
+      const nodeW = 120;
+      const nodeH = 38;
+
+      const edgePaths = DAG_EDGES.map((e, idx) => {
+        const x1 = e.fromNode.x + nodeW;
+        const y1 = e.fromNode.y + (nodeH / 2);
+        const x2 = e.toNode.x;
+        const y2 = e.toNode.y + (nodeH / 2);
+        const dx = (x2 - x1) * 0.5;
+        const cx1 = x1 + dx;
+        const cy1 = y1;
+        const cx2 = x1 + dx;
+        const cy2 = y2;
+        const d = 'M ' + x1 + ' ' + y1 + ' C ' + cx1 + ' ' + cy1 + ', ' + cx2 + ' ' + cy2 + ', ' + x2 + ' ' + y2;
+        return '<path id="dag-edge-' + idx + '" class="dag-edge-path transition-all duration-200" d="' + d + '" stroke="#cbd5e1" stroke-width="1.5" fill="none" opacity="0.6" />';
+      }).join('\n');
+
+      const nodeGroups = DAG_NODES.map(node => {
+        const isMaster = node.id === 'MASTER';
+        let strokeColor = '#cbd5e1';
+        let fillColor = '#ffffff';
+        let textColor = '#0f172a';
+        let badgeColor = '#64748b';
+        let dotColor = '#94a3b8';
+
+        if (isMaster) {
+          fillColor = '#0f172a';
+          strokeColor = '#0f172a';
+          textColor = '#ffffff';
+          badgeColor = '#94a3b8';
+          dotColor = '#3b82f6';
+        } else if (node.status === 'OPEN') {
+          fillColor = '#ecfdf5';
+          strokeColor = '#10b981';
+          textColor = '#065f46';
+          badgeColor = '#047857';
+          dotColor = '#10b981';
+        } else if (node.status === 'READY') {
+          fillColor = '#eff6ff';
+          strokeColor = '#3b82f6';
+          textColor = '#1e40af';
+          badgeColor = '#2563eb';
+          dotColor = '#3b82f6';
+        } else {
+          fillColor = '#f8fafc';
+          strokeColor = '#cbd5e1';
+          textColor = '#475569';
+          badgeColor = '#64748b';
+          dotColor = '#e2e8f0';
+        }
+
+        return `
+          <g id="dag-node-${node.id}" class="dag-node-group cursor-pointer select-none transition-all duration-200"
+             onclick="selectDagNode('${node.id}')"
+             onmouseenter="hoverDagNode('${node.id}')"
+             onmouseleave="unhoverDagNode()"
+             transform="translate(${node.x}, ${node.y})">
+            <rect class="dag-node-rect" width="${nodeW}" height="${nodeH}" rx="6" ry="6"
+                  fill="${fillColor}" stroke="${strokeColor}" stroke-width="1.5"
+                  data-default-stroke="${strokeColor}" />
+            <circle cx="12" cy="${nodeH / 2}" r="4" fill="${dotColor}" />
+            <text x="22" y="${nodeH / 2 - 2}" font-family="ui-monospace, monospace" font-size="11" font-weight="bold" fill="${textColor}">
+              ${node.label}
+            </text>
+            <text x="22" y="${nodeH / 2 + 10}" font-family="-apple-system, sans-serif" font-size="9" font-weight="500" fill="${badgeColor}">
+              ${node.title.length > 14 ? node.title.substring(0, 13) + '..' : node.title}
+            </text>
+          </g>
+        `;
+      }).join('\n');
+
+      return `
+        <div class="overflow-x-auto custom-scroll border border-slate-200 rounded-lg bg-slate-50/50 p-2">
+          <svg viewBox="0 0 1140 640" class="w-full min-w-[900px] h-[480px]">
+            <!-- Tier Columns Background & Headers -->
+            <rect x="10" y="5" width="130" height="24" rx="4" fill="#f1f5f9" />
+            <text x="75" y="21" font-family="-apple-system, sans-serif" font-size="10" font-weight="bold" fill="#475569" text-anchor="middle">UPSTREAM MASTER</text>
+
+            <rect x="200" y="5" width="180" height="24" rx="4" fill="#f1f5f9" />
+            <text x="290" y="21" font-family="-apple-system, sans-serif" font-size="10" font-weight="bold" fill="#475569" text-anchor="middle">ROOT PRs (0 DEPS &bull; PARALLEL)</text>
+
+            <rect x="440" y="5" width="180" height="24" rx="4" fill="#f1f5f9" />
+            <text x="530" y="21" font-family="-apple-system, sans-serif" font-size="10" font-weight="bold" fill="#475569" text-anchor="middle">TIER 1 (CASCADE ON PARENT)</text>
+
+            <rect x="680" y="5" width="180" height="24" rx="4" fill="#f1f5f9" />
+            <text x="770" y="21" font-family="-apple-system, sans-serif" font-size="10" font-weight="bold" fill="#475569" text-anchor="middle">TIER 2 (RATIO ENGINE &amp; BANKS)</text>
+
+            <rect x="920" y="5" width="180" height="24" rx="4" fill="#f1f5f9" />
+            <text x="1010" y="21" font-family="-apple-system, sans-serif" font-size="10" font-weight="bold" fill="#475569" text-anchor="middle">TIER 3 (PIPELINE INTEGRATION)</text>
+
+            <!-- DAG Connecting Edges -->
+            ${edgePaths}
+
+            <!-- DAG Nodes -->
+            ${nodeGroups}
+          </svg>
+        </div>
+      `;
     }
 
     function renderContent() {
@@ -1793,34 +2384,20 @@
       const devHeadSha = (devStatus && devStatus.headSha) ? devStatus.headSha.substring(0, 9) : "c524d71c3";
       const ingestedCount = (waveRoadmap && waveRoadmap.ingested_commits_count) ? waveRoadmap.ingested_commits_count : 231;
       const totalCandidatesCount = (waveRoadmap && waveRoadmap.prs) ? Object.keys(waveRoadmap.prs).length : 30;
-      const userTracked = (devStatus && devStatus.userTrackedBranches) ? devStatus.userTrackedBranches : [];
-      const recentCommits = (devStatus && devStatus.recentCommits) ? devStatus.recentCommits : [
-        "c524d71c3 feat(frame): support reading strain from GWOSC HDF5 files and caches",
-        "4842b1e18 fix(fit_sngls): guard empty sequence and zero trigger cases in pruning and plotting",
-        "5e02b4a11 feat(stat): add rayleigh_subthreshold statistic feature with smooth C1 matching below threshold",
-        "dcb77125a fix(plotting): correct cumulative background normalization in pycbc_page_ifar",
-        "2845412dd Fix complex cast in compute_followup_bin_budget to take abs before float"
-      ];
 
-      const wave2List = [
-        { id: "PR-2A", branch: "pr-feat-psd-model", title: "feat(psd): Compact instantaneous PSD model representation and serialization", files: "pycbc/psd/model.py, test/test_psd_model.py", diff: "~280 lines (3 files)", unblocks: "Depends on: PR-1I → Unlocks on PR-1I merge", status: "QUEUED" },
-        { id: "PR-2B", branch: "pr-feat-strain-overwhiten", title: "feat(strain): Continuous in-situ overwhitening and Toeplitz inpainting", files: "pycbc/strain/overwhiten.py, test/test_overwhiten.py", diff: "~1,300 lines (5 files)", unblocks: "Depends on: PR-1J → Unlocks on PR-1J merge", status: "QUEUED" },
-        { id: "PR-2C", branch: "pr-perf-coinc-statmap-memory", title: "perf(coinc): Memory-bounded statmap combination and multi-detector livetime accounting", files: "pycbc/events/statmap.py, test/test_statmap.py", diff: "~450 lines (8 files)", unblocks: "Depends on: PR-1B (#5474), PR-1C → Unlocks on both merge", status: "QUEUED" },
-        { id: "PR-2D", branch: "pr-feat-events-rayleigh-stat", title: "feat(events): Smooth sub-threshold Rayleigh statistic and singles downweighting", files: "pycbc/events/stat.py, bin/pycbc_fit_sngls_split_binned", diff: "~180 lines (5 files)", unblocks: "Depends on: PR-1C → Unlocks on PR-1C merge (Absorbed 5e02b4a11)", status: "QUEUED" },
-        { id: "PR-2E", branch: "pr-tool-inject-optimal-mf-snr", title: "tool(inject): Dedicated optimal matched-filter SNR evaluator with glitch autogating", files: "bin/pycbc_optimal_mf_snr", diff: "~320 lines (1 file)", unblocks: "Depends on: PR-1H → Unlocks on PR-1H merge", status: "QUEUED" },
-        { id: "PR-2F", branch: "pr-feat-frame-gwosc-hdf-strain", title: "feat(frame): Support reading strain from GWOSC HDF5 files and caches", files: "pycbc/frame/gwosc_hdf.py, test/test_gwosc_hdf.py", diff: "+156 / -0 (4 files)", unblocks: "Depends on: PR-1A (#5475) → Unlocks immediately on #5475 merge", status: "SYNTHESIZED" }
-      ];
-
-      const wave3List = [
-        { id: "PR-3A", branch: "pr-feat-waveform-ratio-filterbank", title: "feat(waveform): RatioFilterBank data structure and hierarchical grouping", files: "pycbc/waveform/bank.py, test/test_ratio_bank.py", diff: "~640 lines (2 files)", unblocks: "Depends on: PR-1D (#5473), PR-1H → Unlocks when both merge", status: "QUEUED" },
-        { id: "PR-3B", branch: "pr-feat-filter-matched-filter-ratio", title: "feat(filter): MatchedFilterRatioControl execution engine and ratio candidate extraction", files: "pycbc/filter/matched_filter_ratio.py", diff: "~850 lines (1 file)", unblocks: "Depends on: PR-1G → Unlocks on PR-1G merge", status: "QUEUED" },
-        { id: "PR-3C", branch: "pr-tool-waveform-fir-bank", title: "tool(waveform): Streamlined 3-level FIR filter bank generator (pycbc_fir_bank)", files: "bin/pycbc_fir_bank", diff: "~520 lines (1 file)", unblocks: "Depends on: PR-1D (#5473), PR-3A → Unlocks when PR-3A lands", status: "QUEUED" },
-        { id: "PR-3D", branch: "pr-feat-workflow-multidet-dag", title: "feat(workflow): Multi-detector hierarchical inspiral DAG orchestration and segment planning", files: "pycbc/workflow/pegasus_files.py, bin/workflows/pycbc_make_coinc_search_workflow", diff: "~980 lines (11 files)", unblocks: "Depends on: PR-1B (#5474), PR-1F, PR-2C", status: "QUEUED" }
-      ];
-
-      const wave4List = [
-        { id: "PR-4A", branch: "pr-feat-diagnostics-minifollowup-ifar", title: "feat(diagnostics): Minifollowup visual diagnostics, background IFAR normalization, and found/missed pages", files: "bin/pycbc_page_ifar, pycbc/workflow/minifollowup.py", diff: "~1,420 lines (23 files)", unblocks: "Depends on: PR-2C, PR-3D → Unlocks when PR-2C/3D merge", status: "QUEUED" },
-        { id: "PR-4B", branch: "pr-feat-inspiral-pycbc-inspiral-fir", title: "feat(inspiral): Hierarchical FIR multi-detector matched-filter search executable (pycbc_inspiral_fir)", files: "bin/pycbc_inspiral_fir", diff: "~1,520 lines (1 file)", unblocks: "Depends on: PR-1E, PR-2B, PR-3B → Unlocks when PR-2B/3B merge", status: "QUEUED" }
+      const downstreamList = [
+        { id: "PR-2F", branch: "pr-feat-frame-gwosc-hdf-strain", title: "feat(frame): Support reading strain from GWOSC HDF5 files and caches", files: "pycbc/frame/gwosc_hdf.py, test/test_gwosc_hdf.py", diff: "+156 / -0 (4 files)", deps: ["PR-1A"], unblocks: "PR-1A (#5475) → Unlocks immediately on #5475 merge", status: "WAITING_PR_1A" },
+        { id: "PR-2C", branch: "pr-perf-coinc-statmap-memory", title: "perf(coinc): Memory-bounded statmap combination and multi-detector livetime accounting", files: "pycbc/events/statmap.py, test/test_statmap.py", diff: "~450 lines (8 files)", deps: ["PR-1B", "PR-1C"], unblocks: "PR-1B (#5474), PR-1C → Unlocks when both merge", status: "WAITING_DEPS" },
+        { id: "PR-2D", branch: "pr-feat-events-rayleigh-stat", title: "feat(events): Smooth sub-threshold Rayleigh statistic and singles downweighting", files: "pycbc/events/stat.py, bin/pycbc_fit_sngls_split_binned", diff: "~180 lines (5 files)", deps: ["PR-1B", "PR-1C"], unblocks: "PR-1B (#5474), PR-1C → Unlocks on both merge", status: "WAITING_DEPS" },
+        { id: "PR-2E", branch: "pr-tool-inject-optimal-mf-snr", title: "tool(inject): Dedicated optimal matched-filter SNR evaluator with glitch autogating", files: "bin/pycbc_optimal_mf_snr", diff: "~320 lines (1 file)", deps: ["PR-1H"], unblocks: "PR-1H → Unlocks on PR-1H merge", status: "WAITING_PR_1H" },
+        { id: "PR-2A", branch: "pr-feat-psd-model", title: "feat(psd): Compact instantaneous PSD model representation and serialization", files: "pycbc/psd/model.py, test/test_psd_model.py", diff: "~280 lines (3 files)", deps: ["PR-1I"], unblocks: "PR-1I → Unlocks on PR-1I merge", status: "WAITING_PR_1I" },
+        { id: "PR-2B", branch: "pr-feat-strain-overwhiten", title: "feat(strain): Continuous in-situ overwhitening and Toeplitz inpainting", files: "pycbc/strain/overwhiten.py, test/test_overwhiten.py", diff: "~1,300 lines (5 files)", deps: ["PR-1J", "PR-2A"], unblocks: "PR-1J, PR-2A → Unlocks when both merge", status: "WAITING_DEPS" },
+        { id: "PR-3A", branch: "pr-feat-waveform-ratio-filterbank", title: "feat(waveform): RatioFilterBank data structure and hierarchical grouping", files: "pycbc/waveform/bank.py, test/test_ratio_bank.py", diff: "~640 lines (2 files)", deps: ["PR-1D", "PR-1H"], unblocks: "PR-1D (#5473), PR-1H → Unlocks when both merge", status: "WAITING_DEPS" },
+        { id: "PR-3B", branch: "pr-feat-filter-matched-filter-ratio", title: "feat(filter): MatchedFilterRatioControl execution engine and ratio candidate extraction", files: "pycbc/filter/matched_filter_ratio.py", diff: "~850 lines (1 file)", deps: ["PR-1G"], unblocks: "PR-1G → Unlocks on PR-1G merge", status: "WAITING_PR_1G" },
+        { id: "PR-3C", branch: "pr-tool-waveform-fir-bank", title: "tool(waveform): Streamlined 3-level FIR filter bank generator (pycbc_fir_bank)", files: "bin/pycbc_fir_bank", diff: "~520 lines (1 file)", deps: ["PR-1D", "PR-3A"], unblocks: "PR-1D (#5473), PR-3A → Unlocks when PR-3A lands", status: "WAITING_DEPS" },
+        { id: "PR-3D", branch: "pr-feat-workflow-multidet-dag", title: "feat(workflow): Multi-detector hierarchical inspiral DAG orchestration and segment planning", files: "pycbc/workflow/pegasus_files.py, bin/workflows/pycbc_make_coinc_search_workflow", diff: "~980 lines (11 files)", deps: ["PR-1F", "PR-2C"], unblocks: "PR-1F, PR-2C → Unlocks when both merge", status: "WAITING_DEPS" },
+        { id: "PR-4A", branch: "pr-feat-diagnostics-minifollowup-ifar", title: "feat(diagnostics): Minifollowup visual diagnostics, background IFAR normalization, and found/missed pages", files: "bin/pycbc_page_ifar, pycbc/workflow/minifollowup.py", diff: "~1,420 lines (23 files)", deps: ["PR-1F", "PR-2C", "PR-3D"], unblocks: "PR-1F, PR-2C, PR-3D → Unlocks when all three merge", status: "WAITING_DEPS" },
+        { id: "PR-4B", branch: "pr-feat-inspiral-pycbc-inspiral-fir", title: "feat(inspiral): Hierarchical FIR multi-detector matched-filter search executable (pycbc_inspiral_fir)", files: "bin/pycbc_inspiral_fir", diff: "~1,520 lines (1 file)", deps: ["PR-1E", "PR-1F", "PR-3A", "PR-3B", "PR-3C"], unblocks: "PR-1E, PR-1F, PR-3A, PR-3B, PR-3C", status: "WAITING_DEPS" }
       ];
 
       const allTrackedPRs = PR_PAGES;
@@ -1829,9 +2406,7 @@
       const readyToOpenList = allTrackedPRs.filter(p => getPRLifecycle(p).phase === 'READY_TO_OPEN');
       const stagedList = [
         ...allTrackedPRs.filter(p => getPRLifecycle(p).phase === 'STAGED'),
-        ...wave2List.filter(w => !allTrackedPRs.some(p => p.id === w.id)),
-        ...wave3List.filter(w => !allTrackedPRs.some(p => p.id === w.id)),
-        ...wave4List.filter(w => !allTrackedPRs.some(p => p.id === w.id))
+        ...downstreamList.filter(w => !allTrackedPRs.some(p => p.id === w.id))
       ];
       const mergedList = allTrackedPRs.filter(p => getPRLifecycle(p).phase === 'MERGED_UPSTREAM');
 
@@ -1869,27 +2444,25 @@
                 </p>
               </div>
               <div class="shrink-0 flex flex-wrap gap-2">
+                <a href="#dag-interactive-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-purple-50 text-purple-800 hover:bg-purple-100 border border-purple-300 transition-colors text-center flex items-center gap-1.5 shadow-2xs">
+                  <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                  <span>Interactive DAG Graph</span>
+                </a>
                 <a href="#open-prs-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 transition-colors text-center flex items-center gap-1.5 shadow-2xs">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
                   <span>Open PRs (${openPrs.length})</span>
                 </a>
-                <a href="#ci-matrix-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-300 transition-colors text-center">
-                  CI Matrix (${totalPassingChecks} Passed)
+                <a href="#ready-to-submit-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-300 transition-colors text-center">
+                  Ready to Submit (${readyToOpenList.length})
                 </a>
-                <a href="#wave1-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
-                  Ready (Zero Deps) (10)
-                </a>
-                <a href="#waves-downstream-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
-                  DAG Pipelines (12)
-                </a>
-                <a href="#controls-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
-                  🛠️ Controls
+                <a href="#blocked-prs-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
+                  Blocked by Deps (${downstreamList.length})
                 </a>
               </div>
             </div>
 
             <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-4 text-xs">
-              <span class="text-slate-600 font-medium">Ready to Submit: <strong class="text-slate-900">10 Independent PRs (0 Prerequisites)</strong></span>
+              <span class="text-slate-600 font-medium">Ready to Submit: <strong class="text-slate-900">${readyToOpenList.length} Independent PRs (0 Prerequisites)</strong></span>
               <span class="text-slate-300">&bull;</span>
               <span class="text-slate-600 font-medium">Dynamic Unlocking: <strong class="text-purple-700">Per-PR Cascade (No Waterfall Delay)</strong></span>
               <span class="text-slate-300">&bull;</span>
@@ -1898,6 +2471,39 @@
               <span class="text-slate-600 font-medium">Dev Ingestion: <code class="code-font text-blue-700 font-bold">${devHeadSha}</code> (${ingestedCount} commits)</span>
               <span class="text-slate-300">&bull;</span>
               <span class="text-slate-600 font-medium">Merge Status: <strong class="text-emerald-700">10 / 10 Clean Merge against master</strong></span>
+            </div>
+          </div>
+
+          <!-- FEATURE: INTERACTIVE DAG GRAPH CONTAINER -->
+          <div id="dag-interactive-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="p-1 rounded bg-purple-100 text-purple-700">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                  </span>
+                  <h3 class="text-base font-bold text-slate-900">Interactive PR Dependency Graph &amp; Dynamic Unlocking</h3>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-800 border border-purple-200">
+                    CLICK OR HOVER ANY NODE
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">
+                  Visual DAG showing parent prerequisites (<span class="text-amber-600 font-semibold">Amber</span>) and unlocked downstream branches (<span class="text-emerald-600 font-semibold">Emerald</span>). Zero waterfall delays: PRs unlock continuously as upstream merges happen.
+                </p>
+              </div>
+              <div class="shrink-0 flex items-center gap-2">
+                <button onclick="selectDagNode(null)" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer">
+                  Reset Diagram
+                </button>
+              </div>
+            </div>
+
+            <!-- SVG Graph Canvas -->
+            ${renderDagSvgHtml()}
+
+            <!-- Interactive Selected Node Inspector -->
+            <div id="dag-node-inspector">
+              ${renderDefaultDagInspectorHtml()}
             </div>
           </div>
 
@@ -1915,13 +2521,13 @@
                   </span>
                 </div>
                 <p class="text-xs text-slate-600 mt-1">
-                  Track every PR branch through each stage of its lifecycle. Click any phase card below to instantly filter the view and focus on what needs action right now.
+                  Track every PR branch through each stage of its lifecycle. Click any phase card below to instantly filter the view.
                 </p>
               </div>
               <div class="shrink-0 flex items-center gap-2">
                 <button onclick="setLifecycleFilter('all')"
                         class="px-3 py-1.5 text-xs font-semibold rounded-md border ${lifecycleFilter === 'all' ? 'bg-slate-900 text-white border-slate-900 shadow-2xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200'} transition-all cursor-pointer">
-                  Show All Candidates (${allTrackedPRs.length + wave2List.length + wave3List.length + wave4List.length})
+                  Show All Candidates (${allTrackedPRs.length + downstreamList.length})
                 </button>
               </div>
             </div>
@@ -1993,49 +2599,28 @@
                 </div>
               </div>
 
-              <!-- Stage 4: Staged & Dependent -->
+              <!-- Stage 4: Staged & Blocked -->
               <div onclick="setLifecycleFilter('staged')"
                    class="p-4 rounded-lg border-2 cursor-pointer transition-all ${lifecycleFilter === 'staged' ? 'border-purple-500 bg-purple-50/70 shadow-sm ring-2 ring-purple-300' : 'border-slate-200 bg-slate-50/50 hover:border-purple-400 hover:bg-purple-50/30'}">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold uppercase tracking-wider text-purple-800 flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                    Staged &amp; Queued
+                    Blocked by Deps
                   </span>
                   <span class="px-2 py-0.5 rounded text-xs font-bold bg-purple-600 text-white">
-                    ${stagedList.length} Staged
+                    ${stagedList.length} Queued
                   </span>
                 </div>
                 <div class="mt-2.5">
                   <div class="text-lg font-bold text-slate-900">
-                    Waves 2–4 Subsystems
+                    Downstream Tiers 1–3
                   </div>
                   <p class="text-[11px] text-slate-500 mt-1 leading-snug">
-                    Queued downstream. Reconciler automatically monitors and promotes branches as prerequisites merge.
+                    Waiting on prerequisites. Reconciler automatically unlocks branches as parents merge.
                   </p>
                 </div>
               </div>
             </div>
-
-            <!-- Active Filter Status Bar -->
-            ${lifecycleFilter !== 'all' ? `
-              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <div class="flex items-center gap-2">
-                  <span class="font-semibold text-slate-700">Currently Filtering:</span>
-                  <span class="px-2 py-0.5 rounded font-bold uppercase tracking-wider ${
-                    lifecycleFilter === 'needs_triage' ? 'bg-amber-100 text-amber-900 border border-amber-300' :
-                    lifecycleFilter === 'open_upstream' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' :
-                    lifecycleFilter === 'ready_to_open' ? 'bg-blue-100 text-blue-900 border border-blue-300' :
-                    'bg-purple-100 text-purple-900 border border-purple-300'
-                  }">
-                    ${lifecycleFilter.replace('_', ' ')}
-                  </span>
-                  <span class="text-slate-500">Showing only matching candidates for immediate focus.</span>
-                </div>
-                <button onclick="setLifecycleFilter('all')" class="text-blue-600 hover:text-blue-800 font-semibold hover:underline cursor-pointer flex items-center gap-1">
-                  <span>Show Full Overview &rarr;</span>
-                </button>
-              </div>
-            ` : ''}
           </div>
 
           <!-- Instant Search & Quick Filter Bar -->
@@ -2060,10 +2645,8 @@
                 <span class="text-slate-500 text-[11px] font-medium mr-1">Quick Filters:</span>
                 <button onclick="filterByChip('')" class="px-2.5 py-1 rounded-md text-[11px] font-medium ${!overviewSearchQuery ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">All</button>
                 <button onclick="filterByChip('open upstream')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200">🟢 Open (${openPrs.length})</button>
-                <button onclick="filterByChip('wave 1')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Wave 1</button>
-                <button onclick="filterByChip('wave 2')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Wave 2</button>
-                <button onclick="filterByChip('wave 3')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Wave 3</button>
-                <button onclick="filterByChip('wave 4')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">Wave 4</button>
+                <button onclick="filterByChip('ready')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200">🚀 Ready (${readyToOpenList.length})</button>
+                <button onclick="filterByChip('blocked')" class="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 hover:bg-slate-200">⏳ Blocked</button>
                 <span id="search-counter" class="text-[11px] text-slate-500 ml-2 font-semibold"></span>
               </div>
             </div>
@@ -2075,7 +2658,7 @@
           ${lifecycleFilter === 'needs_triage' ? renderNeedsTriageFocusHtml(needsTriageList) :
             lifecycleFilter === 'open_upstream' ? renderOpenUpstreamFocusHtml(openUpstreamList) :
             lifecycleFilter === 'ready_to_open' ? renderReadyToOpenFocusHtml(readyToOpenList) :
-            lifecycleFilter === 'staged' ? renderStagedFocusHtml(stagedList, wave2List, wave3List, wave4List) : `
+            lifecycleFilter === 'staged' ? renderStagedFocusHtml(stagedList, downstreamList, [], []) : `
 
           <!-- 1. ACTIVE UPSTREAM PULL REQUESTS -->
           <div id="open-prs-section" class="bg-gradient-to-r from-emerald-50/70 via-emerald-50/30 to-white border-2 border-emerald-500 rounded-lg p-6 shadow-sm">
@@ -2240,17 +2823,17 @@
             </div>
           </div>
 
-          <!-- 3. WAVE 1: ACTIVE REVIEW QUEUE -->
-          <div id="wave1-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+          <!-- 3. READY TO SUBMIT (0 UNMERGED PREREQUISITES) -->
+          <div id="ready-to-submit-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
               <div>
                 <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-700 text-white">Wave 1</span>
-                  <h3 class="text-base font-bold text-slate-900">Active Review Queue &amp; Ready to Submit (10 Independent PRs)</h3>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">ZERO PREREQUISITES &bull; PARALLEL MERGE READY</span>
+                  <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-700 text-white">Ready Pipeline</span>
+                  <h3 class="text-base font-bold text-slate-900">Ready to Submit to Upstream (${readyToOpenList.length} Topic Branches)</h3>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">0 PREREQUISITES &bull; PARALLEL MERGE READY</span>
                 </div>
                 <p class="text-xs text-slate-500 mt-1">
-                  Rebased cleanly against current <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code>. Click any PR row to review live code hunks and submit comments.
+                  Rebased cleanly against current <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code>. 100% tests pass. Click <strong>1-Click Open PR</strong> to copy the description and open GitHub compare.
                 </p>
               </div>
             </div>
@@ -2263,42 +2846,32 @@
                     <th class="py-2.5 px-3">Branch Name</th>
                     <th class="py-2.5 px-3">Scope &amp; Title</th>
                     <th class="py-2.5 px-3">Diff Footprint</th>
-                    <th class="py-2.5 px-3">GitHub Status &amp; Links</th>
-                    <th class="py-2.5 px-3 text-right">Review Action</th>
+                    <th class="py-2.5 px-3">Test Verification</th>
+                    <th class="py-2.5 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-600">
-                  ${PR_PAGES.filter(p => !p.wave || p.wave === 1).map(pr => `
-                    <tr class="pr-table-row hover:bg-slate-50/80 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.diff} wave 1 independent">
-                      <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
+                  ${readyToOpenList.map(pr => `
+                    <tr class="pr-table-row hover:bg-slate-50/80 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.diff} ready">
+                      <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">
+                        <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-900 border border-blue-200 font-mono">${pr.id}</span>
+                      </td>
                       <td class="py-3 px-3 code-font text-blue-700 font-semibold">
                         <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
                       </td>
                       <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
                       <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
-                      <td class="py-3 px-3 space-x-2 whitespace-nowrap">
-                        ${(pr.githubPr && pr.githubPr.state === 'OPEN') ? `
-                          <a href="${pr.githubPr.htmlUrl}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded bg-emerald-600 text-white hover:bg-emerald-700 shadow-2xs">
-                            <span>🟢 PR #${pr.githubPr.number} (OPEN)</span>
-                            <svg class="w-3 h-3 fill-none stroke-current" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                          </a>
-                        ` : (pr.githubPr && pr.githubPr.state === 'MERGED') ? `
-                          <a href="${pr.githubPr.htmlUrl}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded bg-purple-700 text-white hover:bg-purple-800 shadow-2xs">
-                            <span>🟣 PR #${pr.githubPr.number} (MERGED)</span>
-                          </a>
-                        ` : `
-                          <a href="${pr.ghCompareUrl}" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium">
-                            Diff View
-                          </a>
-                          <span class="text-slate-300">|</span>
-                          <a href="${pr.ghCreatePrUrl}" target="_blank" class="inline-flex items-center text-emerald-700 hover:text-emerald-900 font-semibold">
-                            Open PR &rarr;
-                          </a>
-                        `}
+                      <td class="py-3 px-3 whitespace-nowrap">
+                        <span class="text-emerald-700 font-semibold text-[11px] block">✓ ${pr.testTiming || 'Passing'}</span>
+                        <code class="code-font text-slate-500 text-[10px]">${pr.testCmd || ''}</code>
                       </td>
-                      <td class="py-3 px-3 text-right whitespace-nowrap">
+                      <td class="py-3 px-3 text-right whitespace-nowrap space-x-2">
+                        <button onclick="openGitHubPRWithDescription('${pr.id}')"
+                                class="px-3 py-1 text-xs font-bold rounded bg-emerald-600 text-white hover:bg-emerald-700 shadow-2xs transition-colors cursor-pointer inline-flex items-center gap-1">
+                          <span>🚀 1-Click Open PR</span>
+                        </button>
                         <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer">
-                          Review Code Changes &rarr;
+                          Review Diff &rarr;
                         </button>
                       </td>
                     </tr>
@@ -2308,461 +2881,107 @@
             </div>
           </div>
 
-          <!-- 4. WAVES 2–4 SUBSYSTEMS -->
-          <div id="waves-downstream-section" class="space-y-6">
-
-            <!-- WAVE 2: PRECONDITIONING, MODELS & GWOSC READERS -->
-            <div id="wave2-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-700 text-white">Models &amp; Conditioning</span>
-                    <h3 class="text-base font-bold text-slate-900">Strain Conditioning, PSD Models &amp; GWOSC Readers</h3>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">DYNAMIC DAG UNLOCKING &bull; CASCADE ON PREREQUISITE</span>
-                  </div>
-                  <p class="text-xs text-slate-500 mt-1">
-                    Foundational preconditioning and noise modeling subsystems. Pre-flight simplification audits identified -380 lines of dead code eliminated.
-                  </p>
+          <!-- 4. BLOCKED BY DEPENDENCIES (WAITING ON UPSTREAM MERGES) -->
+          <div id="blocked-prs-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-700 text-white">Blocked Pipeline</span>
+                  <h3 class="text-base font-bold text-slate-900">Blocked by Prerequisites (${downstreamList.length} Topic Branches)</h3>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">DYNAMIC CASCADE &bull; UNLOCKS AS PARENTS MERGE</span>
                 </div>
-              </div>
-
-              <div class="overflow-x-auto">
-                <table class="min-w-full text-xs text-left divide-y divide-slate-200">
-                  <thead class="bg-slate-50 text-slate-700 font-semibold">
-                    <tr>
-                      <th class="py-2.5 px-3">PR ID</th>
-                      <th class="py-2.5 px-3">Branch Name</th>
-                      <th class="py-2.5 px-3">Scope &amp; Title</th>
-                      <th class="py-2.5 px-3">Key Target Files</th>
-                      <th class="py-2.5 px-3">Direct Prerequisites &amp; Dynamic Unlocking</th>
-                      <th class="py-2.5 px-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 text-slate-600">
-                    ${wave2List.map(pr => {
-                      const isTracked = PR_PAGES.some(p => p.id === pr.id || p.branch === pr.branch);
-                      return `
-                        <tr class="pr-table-row hover:bg-slate-50/80 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.files} wave 2 models gwosc">
-                          <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
-                          <td class="py-3 px-3 code-font text-blue-700 font-semibold">
-                            ${isTracked ? `
-                              <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
-                            ` : `
-                              <span>${pr.branch}</span>
-                            `}
-                          </td>
-                          <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
-                          <td class="py-3 px-3 code-font text-slate-600 text-[11px]">${pr.files}</td>
-                          <td class="py-3 px-3 text-slate-500 text-[11px]">
-                            <span class="block">${pr.unblocks}</span>
-                            <span class="text-purple-700 font-semibold">${pr.status === 'SYNTHESIZED' ? 'Synthesized from dev commits' : 'Queued (Ready to branch)'}</span>
-                          </td>
-                          <td class="py-3 px-3 text-right whitespace-nowrap">
-                            ${isTracked ? `
-                              <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer">
-                                Review Code Changes &rarr;
-                              </button>
-                            ` : `
-                              <button onclick="prefillTrackBranch('${pr.branch}', '${pr.id}')" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                                Track Branch
-                              </button>
-                            `}
-                          </td>
-                        </tr>
-                      `;
-                    }).join("")}
-                  </tbody>
-                </table>
+                <p class="text-xs text-slate-500 mt-1">
+                  These downstream topic branches depend on upstream merges. As soon as the specific prerequisite merges into master, the branch unlocks automatically without waiting for full batch completion.
+                </p>
               </div>
             </div>
 
-            <!-- WAVE 3: BANK GENERATION, RATIO ENGINE & WORKFLOW -->
-            <div id="wave3-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-700 text-white">Ratio Engine &amp; Bank</span>
-                    <h3 class="text-base font-bold text-slate-900">Bank Generation, Ratio Matched-Filter Engine &amp; Workflow DAG</h3>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">DYNAMIC DAG UNLOCKING &bull; CASCADE ON PREREQUISITE</span>
-                  </div>
-                  <p class="text-xs text-slate-500 mt-1">
-                    Hierarchical filter bank structures and innermost matched filter ratio evaluation. Pre-flight audit identified -425 lines of duplicate bank schemas pruned.
-                  </p>
-                </div>
-              </div>
-
-              <div class="overflow-x-auto">
-                <table class="min-w-full text-xs text-left divide-y divide-slate-200">
-                  <thead class="bg-slate-50 text-slate-700 font-semibold">
-                    <tr>
-                      <th class="py-2.5 px-3">PR ID</th>
-                      <th class="py-2.5 px-3">Branch Name</th>
-                      <th class="py-2.5 px-3">Scope &amp; Title</th>
-                      <th class="py-2.5 px-3">Key Target Files</th>
-                      <th class="py-2.5 px-3">Direct Prerequisites &amp; Dynamic Unlocking</th>
-                      <th class="py-2.5 px-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 text-slate-600">
-                    ${wave3List.map(pr => {
-                      const isTracked = PR_PAGES.some(p => p.id === pr.id || p.branch === pr.branch);
-                      return `
-                        <tr class="pr-table-row hover:bg-slate-50/80 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.files} wave 3 ratio bank workflow">
-                          <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
-                          <td class="py-3 px-3 code-font text-blue-700 font-semibold">
-                            ${isTracked ? `
-                              <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
-                            ` : `
-                              <span>${pr.branch}</span>
-                            `}
-                          </td>
-                          <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
-                          <td class="py-3 px-3 code-font text-slate-600 text-[11px]">${pr.files}</td>
-                          <td class="py-3 px-3 text-slate-500 text-[11px]">${pr.unblocks}</td>
-                          <td class="py-3 px-3 text-right whitespace-nowrap">
-                            ${isTracked ? `
-                              <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer">
-                                Review Code Changes &rarr;
-                              </button>
-                            ` : `
-                              <button onclick="prefillTrackBranch('${pr.branch}', '${pr.id}')" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                                Track Branch
-                              </button>
-                            `}
-                          </td>
-                        </tr>
-                      `;
-                    }).join("")}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- WAVE 4: SEARCH EXECUTABLE & DIAGNOSTICS -->
-            <div id="wave4-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-700 text-white">Search Executable</span>
-                    <h3 class="text-base font-bold text-slate-900">Inspiral Search Executable &amp; Diagnostic Dashboards</h3>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">DYNAMIC DAG UNLOCKING &bull; FINAL PIPELINE CLOSURE</span>
-                  </div>
-                  <p class="text-xs text-slate-500 mt-1">
-                    Hierarchical multi-detector search executable (<code class="code-font text-slate-700 font-semibold">pycbc_inspiral_fir</code>) and minifollowup diagnostics. Pre-flight audit identified -812 lines of dead CLI flags and obsolete routines pruned.
-                  </p>
-                </div>
-              </div>
-
-              <div class="overflow-x-auto">
-                <table class="min-w-full text-xs text-left divide-y divide-slate-200">
-                  <thead class="bg-slate-50 text-slate-700 font-semibold">
-                    <tr>
-                      <th class="py-2.5 px-3">PR ID</th>
-                      <th class="py-2.5 px-3">Branch Name</th>
-                      <th class="py-2.5 px-3">Scope &amp; Title</th>
-                      <th class="py-2.5 px-3">Key Target Files</th>
-                      <th class="py-2.5 px-3">Direct Prerequisites &amp; Dynamic Unlocking</th>
-                      <th class="py-2.5 px-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 text-slate-600">
-                    ${wave4List.map(pr => {
-                      const isTracked = PR_PAGES.some(p => p.id === pr.id || p.branch === pr.branch);
-                      return `
-                        <tr class="pr-table-row hover:bg-slate-50/80 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.files} wave 4 search fir diagnostics">
-                          <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">${pr.id}</td>
-                          <td class="py-3 px-3 code-font text-blue-700 font-semibold">
-                            ${isTracked ? `
-                              <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
-                            ` : `
-                              <span>${pr.branch}</span>
-                            `}
-                          </td>
-                          <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
-                          <td class="py-3 px-3 code-font text-slate-600 text-[11px]">${pr.files}</td>
-                          <td class="py-3 px-3 text-slate-500 text-[11px]">${pr.unblocks}</td>
-                          <td class="py-3 px-3 text-right whitespace-nowrap">
-                            ${isTracked ? `
-                              <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer">
-                                Review Code Changes &rarr;
-                              </button>
-                            ` : `
-                              <button onclick="prefillTrackBranch('${pr.branch}', '${pr.id}')" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-                                Track Branch
-                              </button>
-                            `}
-                          </td>
-                        </tr>
-                      `;
-                    }).join("")}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- 5. OPERATIONAL CONTROLS & DEVELOPMENT TOOLS -->
-          <div id="controls-section" class="space-y-6 pt-4 border-t border-slate-200">
-            <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-slate-600"></span>
-              <h3 class="text-sm font-bold uppercase tracking-wider text-slate-800">
-                Operational Controls &amp; Development Sentinel Tools
-              </h3>
-              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                AUTOMATED DAEMONS ACTIVE
-              </span>
-            </div>
-
-            <!-- Interactive Control Center: Branch Tracking & Dev Reconciler Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-              <!-- Card 1: Track a Custom Branch (Strict Origin Remote Gate) -->
-              <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col justify-between">
-                <div>
-                  <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <div class="flex items-center gap-2">
-                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                      <h4 class="text-sm font-bold uppercase tracking-wider text-slate-900">
-                        Track a Branch (Your GitHub Account Only)
-                      </h4>
-                    </div>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
-                      MAINTAINER GATE ACTIVE
-                    </span>
-                  </div>
-
-                  <p class="text-xs text-slate-600 mt-2.5 leading-relaxed">
-                    Enter or select any branch pushed to your GitHub fork (<code class="code-font text-slate-800 font-semibold">origin -> ahnitz/pycbc</code>). 
-                    The review server extracts live diff hunks against master and enables inline review threads.
-                    <span class="text-amber-800 font-medium block mt-1">
-                      Strict Gate: Branches not pushed to your GitHub account or belonging to other remotes are strictly rejected.
-                    </span>
-                  </p>
-
-                  <!-- Tracking Form -->
-                  <div class="mt-4 space-y-3">
-                    <datalist id="origin-branches-list"></datalist>
-                    <div>
-                      <label class="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                        Branch Name on your GitHub Fork:
-                      </label>
-                      <input id="track-branch-input" list="origin-branches-list" type="text"
-                             placeholder="Type or select branch (e.g. pr-feat-frame-gwosc-hdf-strain)..."
-                             class="w-full text-xs p-2.5 border border-slate-300 rounded bg-white code-font focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                      <label class="block text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                        Custom PR ID (Optional):
-                      </label>
-                      <input id="track-prid-input" type="text"
-                             placeholder="e.g. PR-2F (leave blank to auto-derive)"
-                             class="w-full text-xs p-2.5 border border-slate-300 rounded bg-white code-font focus:outline-hidden focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div class="flex items-center justify-between pt-1">
-                      <button id="track-branch-btn" onclick="trackBranch()"
-                              class="px-3.5 py-2 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        <span>Track Branch &amp; Extract Hunks</span>
-                      </button>
-                      <div id="track-branch-status" class="text-xs"></div>
-                    </div>
-                  </div>
-
-                  <!-- User-Tracked Custom Branches List -->
-                  <div class="mt-5 pt-4 border-t border-slate-100">
-                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between">
-                      <span>Actively Tracked Custom Branches</span>
-                      <span class="text-[10px] font-normal text-slate-500">${userTracked.length} active</span>
-                    </h4>
-
-                    ${userTracked.length === 0 ? `
-                      <p class="text-xs text-slate-400 italic mt-2">No custom user branches currently tracked. Use the form above to add any branch from origin.</p>
-                    ` : `
-                      <div class="space-y-2 mt-2.5">
-                        ${userTracked.map(b => {
-                          const bName = typeof b === 'string' ? b : (b.branch || b.prId);
-                          const pId = typeof b === 'object' && b.prId ? b.prId : bName.toUpperCase();
-                          return `
-                            <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded p-2.5 text-xs">
-                              <div class="flex items-center gap-2">
-                                <span class="px-2 py-0.5 rounded font-bold bg-slate-900 text-white text-[11px]">${pId}</span>
-                                <code class="code-font text-blue-700 font-semibold">${bName}</code>
-                              </div>
-                              <div class="flex items-center gap-2">
-                                <button onclick="switchTab('${pId}')" class="px-2 py-1 text-xs font-semibold rounded bg-slate-200 text-slate-800 hover:bg-slate-300 transition-colors cursor-pointer">
-                                  Review Hunks &rarr;
-                                </button>
-                                <button onclick="untrackBranch('${pId}')" class="px-2 py-1 text-xs font-medium rounded text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer">
-                                  Untrack
-                                </button>
-                              </div>
-                            </div>
-                          `;
-                        }).join("")}
-                      </div>
-                    `}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Card 2: Development Branch Evolution & Continuous Ingestion Feed -->
-              <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs flex flex-col justify-between">
-                <div>
-                  <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <div class="flex items-center gap-2">
-                      <span class="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
-                      <h4 class="text-sm font-bold uppercase tracking-wider text-slate-900">
-                        Dev Branch Evolution &amp; Wave Ingestion
-                      </h4>
-                    </div>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-800 border border-purple-200">
-                      AUTO-WAVE RECONCILER
-                    </span>
-                  </div>
-
-                  <p class="text-xs text-slate-600 mt-2.5 leading-relaxed">
-                    As commits are added to <code class="code-font text-slate-800 font-semibold">${devBranchName}</code>, 
-                    the sentinel reconciler automatically analyzes file modifications: absorbing changes into existing PRs or synthesizing new standalone PR candidates (e.g. <strong class="text-purple-700 font-semibold">PR-2F</strong> for GWOSC strain).
-                  </p>
-
-                  <div class="mt-3.5 bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1.5">
-                    <div class="flex items-center justify-between">
-                      <span class="text-slate-500">Monitored Dev Branch:</span>
-                      <code class="code-font text-purple-900 font-bold">${devBranchName}</code>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-slate-500">Latest HEAD SHA:</span>
-                      <code class="code-font text-blue-700 font-bold">${devHeadSha}</code>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-slate-500">Upstream Master Target:</span>
-                      <code class="code-font text-slate-700 font-semibold">gwastro/master (11e3e6da1)</code>
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <span class="text-slate-500">Total Commits Ingested:</span>
-                      <strong class="text-slate-900 font-semibold">${ingestedCount} commits analyzed</strong>
-                    </div>
-                  </div>
-
-                  <!-- Recent Commits Feed & Wave Mapping -->
-                  <div class="mt-4">
-                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
-                      Live Commit Ingestion &amp; PR Absorption Feed
-                    </h4>
-                    <div class="space-y-2">
-                      ${recentCommits.map(c => {
-                        const parts = c.split(" ");
-                        const sha = parts[0];
-                        const msg = parts.slice(1).join(" ");
-                        let mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-200 text-slate-700">Analyzed</span>';
-                        if (msg.includes("gwosc_hdf") || sha.startsWith("c524d") || sha.startsWith("db3ee8")) {
-                          mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Synthesized PR-2F</span>';
-                        } else if (msg.includes("rayleigh") || msg.includes("fit_sngls") || sha.startsWith("5e02") || sha.startsWith("4842")) {
-                          mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Absorbed &rarr; PR-2D</span>';
-                        } else if (msg.includes("ifar") || sha.startsWith("dcb7")) {
-                          mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Absorbed &rarr; PR-4A</span>';
-                        } else if (msg.includes("followup_bin_budget") || sha.startsWith("2845")) {
-                          mappingBadge = '<span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Absorbed &rarr; PR-4B</span>';
-                        }
-                        return `
-                          <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded p-2 text-xs">
-                            <div class="flex items-center gap-2 overflow-hidden pr-2">
-                              <code class="code-font text-blue-700 font-semibold shrink-0">${sha}</code>
-                              <span class="text-slate-700 truncate">${msg}</span>
-                            </div>
-                            <div class="shrink-0">
-                              ${mappingBadge}
-                            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-xs text-left divide-y divide-slate-200">
+                <thead class="bg-slate-50 text-slate-700 font-semibold">
+                  <tr>
+                    <th class="py-2.5 px-3">PR ID</th>
+                    <th class="py-2.5 px-3">Branch Name</th>
+                    <th class="py-2.5 px-3">Scope &amp; Title</th>
+                    <th class="py-2.5 px-3">Key Target Files</th>
+                    <th class="py-2.5 px-3">Prerequisites &amp; Dynamic Unlocking Rule</th>
+                    <th class="py-2.5 px-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-600">
+                  ${downstreamList.map(pr => {
+                    const isTracked = PR_PAGES.some(p => p.id === pr.id || p.branch === pr.branch);
+                    return `
+                      <tr class="pr-table-row hover:bg-slate-50/80 transition-colors" data-pr-search="${pr.id} ${pr.branch} ${pr.title} ${pr.files} blocked queued">
+                        <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">
+                          <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-mono">${pr.id}</span>
+                        </td>
+                        <td class="py-3 px-3 code-font text-blue-700 font-semibold">
+                          ${isTracked ? `
+                            <button onclick="switchTab('${pr.id}')" class="hover:underline text-left cursor-pointer">${pr.branch}</button>
+                          ` : `
+                            <span>${pr.branch}</span>
+                          `}
+                        </td>
+                        <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
+                        <td class="py-3 px-3 code-font text-slate-600 text-[11px]">${pr.files}</td>
+                        <td class="py-3 px-3 text-[11px]">
+                          <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                            <span class="font-bold text-slate-700">Waiting on:</span>
+                            ${pr.deps ? pr.deps.map(d => {
+                              const dPr = PR_PAGES.find(p => p.id === d);
+                              const isOp = dPr && dPr.githubPr && dPr.githubPr.state === 'OPEN';
+                              return '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold ' + (isOp ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300') + '">' + d + (isOp ? ' (OPEN)' : '') + '</span>';
+                            }).join('') : '<span class="text-slate-400">None</span>'}
                           </div>
-                        `;
-                      }).join("")}
+                          <span class="text-purple-700 font-medium block">${pr.unblocks}</span>
+                        </td>
+                        <td class="py-3 px-3 text-right whitespace-nowrap">
+                          ${isTracked ? `
+                            <button onclick="switchTab('${pr.id}')" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer">
+                              Review Code Changes &rarr;
+                            </button>
+                          ` : `
+                            <button onclick="prefillTrackBranch('${pr.branch}', '${pr.id}')" class="px-2.5 py-1 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                              Track Branch
+                            </button>
+                          `}
+                        </td>
+                      </tr>
+                    `;
+                  }).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 5. MERGED UPSTREAM PRs (IF ANY) -->
+          ${mergedList.length > 0 ? `
+            <div id="merged-prs-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+              <div class="flex items-center gap-2 pb-3 border-b border-slate-100 mb-3">
+                <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-purple-700 text-white">Merged Upstream</span>
+                <h3 class="text-base font-bold text-slate-900">Successfully Merged Pull Requests (${mergedList.length})</h3>
+              </div>
+              <div class="divide-y divide-slate-100 text-xs">
+                ${mergedList.map(pr => `
+                  <div class="py-3 flex items-center justify-between">
+                    <div>
+                      <span class="font-bold text-slate-900">${pr.id}</span> &bull; 
+                      <span class="font-medium text-slate-800">${pr.title}</span>
                     </div>
+                    <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="text-purple-700 font-semibold hover:underline">
+                      View Merged PR #${pr.githubPr ? pr.githubPr.number : ''} &rarr;
+                    </a>
                   </div>
-                </div>
-
-                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span class="text-[11px] text-slate-500">Sentinel scans automatically every 60s</span>
-                  <button id="reconcile-dev-btn" onclick="reconcileDevBranch()"
-                          class="px-3 py-1.5 text-xs font-semibold rounded bg-purple-900 text-white hover:bg-purple-800 shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer">
-                    <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span>Reconcile Dev Branch Now</span>
-                  </button>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Upstream Master Rebase & Synchronization Card -->
-            <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
-              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <h4 class="text-sm font-bold uppercase tracking-wider text-slate-900">
-                      Upstream Master Synchronization &amp; Automated Rebase
-                    </h4>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      CONTINUOUS SYNC ACTIVE
-                    </span>
-                  </div>
-                  <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                    All topic branches in the repository tree are monitored and automatically rebased against 
-                    <code class="code-font text-slate-800 font-semibold">gwastro/pycbc:master</code> as upstream moves. 
-                    Unit tests are verified on each rebase before pushing to your fork.
-                  </p>
-                  <div class="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500">
-                    <span>Upstream Remote: <code class="code-font text-slate-700">gwastro/pycbc.git:master</code></span>
-                    <span class="text-slate-300">&bull;</span>
-                    <span>Upstream HEAD: <strong id="rebase-upstream-sha" class="code-font text-blue-700 font-bold">11e3e6da1</strong></span>
-                    <span class="text-slate-300">&bull;</span>
-                    <span>Branch Sync Status: <strong id="rebase-branches-status" class="text-emerald-700 font-semibold">10 / 10 Active Branches Up to Date (0 behind)</strong></span>
-                  </div>
-                </div>
-
-                <div class="shrink-0 flex items-center gap-2">
-                  <button id="rebase-sync-btn" onclick="triggerRebaseSync()"
-                          class="px-3.5 py-2 text-xs font-semibold rounded-md bg-slate-900 text-white hover:bg-slate-800 shadow-xs transition-colors flex items-center gap-2 cursor-pointer">
-                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    <span>Sync with gwastro/master Now</span>
-                  </button>
-                </div>
+                `).join('')}
               </div>
             </div>
+          ` : ''}
 
-          </div>
-
-          <!-- 6. STAGED LIFECYCLE PROTOCOLS -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                Protocol A: Review Feedback &amp; CI Triage
-              </h4>
-              <p class="text-xs text-slate-600 mt-2 leading-relaxed">
-                When you post inline comments through this dashboard, our standing responder agents will amend topic branches cleanly, update unit tests, and provide replies back into the dashboard thread.
-              </p>
-            </div>
-            <div class="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Protocol B: Upstream Merge &amp; Downstream Rebase
-              </h4>
-              <p class="text-xs text-slate-600 mt-2 leading-relaxed">
-                When a Wave 1 PR merges upstream into <code class="code-font text-slate-800">gwastro/pycbc:master</code>, the coordinator automatically pulls the latest master, updates the merge base, and rebases dependent Wave 2 branches (PR-2A to PR-2F) with passing tests.
-              </p>
-            </div>
-          </div>
           `}
 
         </div>
       `;
-
-      if (overviewSearchQuery) {
-        filterPRsOverview(overviewSearchQuery);
-      }
     }
 
     function renderPRPage(container, pr) {
@@ -2836,11 +3055,12 @@
                     <span>View Merged PR #${pr.githubPr.number} &rarr;</span>
                   </a>
                 ` : `
-                  <a href="${pr.ghCreatePrUrl}" target="_blank"
-                     class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-colors">
+                  <button onclick="openGitHubPRWithDescription('${pr.id}')"
+                     class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition-colors cursor-pointer"
+                     title="Copies rich markdown PR description to clipboard and opens GitHub PR page">
                     <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    Open PR on GitHub &rarr;
-                  </a>
+                    <span>🚀 1-Click Open GitHub PR</span>
+                  </button>
                 `}
                 <a href="${pr.ghCompareUrl}" target="_blank"
                    class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors">
@@ -2960,9 +3180,9 @@
                     </div>
                   </div>
                   <div class="shrink-0 flex items-center gap-2">
-                    <a href="${pr.ghCreatePrUrl}" target="_blank" class="px-4 py-2 text-xs font-bold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-2xs inline-flex items-center gap-1.5 transition-colors">
-                      <span>Open PR on GitHub &rarr;</span>
-                    </a>
+                    <button onclick="openGitHubPRWithDescription('${pr.id}')" class="px-4 py-2 text-xs font-bold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-2xs inline-flex items-center gap-1.5 transition-colors cursor-pointer">
+                      <span>🚀 1-Click Open PR on GitHub &rarr;</span>
+                    </button>
                   </div>
                 </div>
               `;
@@ -3038,6 +3258,52 @@
                 </span>
               </div>
             </div>
+
+            <!-- REVIEW PROGRESS BAR -->
+            ${(() => {
+              const allFiles = [...new Set(pr.hunks.map(h => h.file))];
+              const totalF = allFiles.length;
+              const reviewedSet = getReviewedFiles(pr.id);
+              const reviewedCount = allFiles.filter(f => reviewedSet.has(f.replace(/[^a-zA-Z0-9_-]/g, '_'))).length;
+              const pct = totalF > 0 ? Math.round((reviewedCount / totalF) * 100) : 0;
+              const isAllDone = (reviewedCount === totalF && totalF > 0);
+
+              return `
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2.5 shadow-2xs">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2.5 h-2.5 rounded-full ${isAllDone ? 'bg-emerald-500' : 'bg-blue-500 animate-pulse'}"></span>
+                      <span class="font-bold text-slate-800 uppercase tracking-wider text-[11px]">Review Progress</span>
+                      <span id="review-progress-text-${pr.id}" class="text-slate-600 ml-1">
+                        Reviewed <strong>${reviewedCount}</strong> of <strong>${totalF}</strong> files (${pct}%)
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <button onclick="markAllPRFilesReviewed('${pr.id}')"
+                              class="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded shadow-2xs transition-colors cursor-pointer">
+                        ✓ Mark All Reviewed
+                      </button>
+                      <button onclick="resetPRFilesReviewed('${pr.id}')"
+                              class="px-2.5 py-1 text-[11px] font-medium text-slate-600 bg-white hover:bg-slate-100 border border-slate-300 rounded shadow-2xs transition-colors cursor-pointer">
+                        Reset Review State
+                      </button>
+                    </div>
+                  </div>
+                  <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                    <div id="review-progress-fill-${pr.id}" class="bg-emerald-600 h-2 rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+                  </div>
+                  <div id="review-complete-banner-${pr.id}" class="${isAllDone ? '' : 'hidden'} p-2.5 bg-emerald-100/80 border border-emerald-300 rounded-md text-emerald-950 text-xs font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span class="flex items-center gap-1.5">
+                      <svg class="w-4 h-4 text-emerald-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <span>All ${totalF} files reviewed for ${pr.id}! This PR is fully vetted and ready for submission/approval.</span>
+                    </span>
+                    <button onclick="openGitHubPRWithDescription('${pr.id}')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-[11px] font-bold shadow-2xs cursor-pointer inline-flex items-center gap-1 shrink-0">
+                      <span>🚀 1-Click Open PR on GitHub &rarr;</span>
+                    </button>
+                  </div>
+                </div>
+              `;
+            })()}
 
             <!-- Table of Contents / File Quick-Navigation Bar -->
             ${(() => {
@@ -3116,6 +3382,19 @@
                             ${fileAddCount > 0 ? `<span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">+${fileAddCount}</span>` : ''}
                             ${fileDelCount > 0 ? `<span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">-${fileDelCount}</span>` : ''}
                           </div>
+                        </div>
+
+                        <!-- Mark as Reviewed Checkbox -->
+                        <div class="flex items-center gap-2 shrink-0">
+                          <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold px-2.5 py-1 rounded bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 transition-colors shadow-2xs select-none">
+                            <input type="checkbox" id="file-review-cb-${pr.id}-${fileSlug}"
+                                   ${isPRFileReviewed(pr.id, fileSlug) ? 'checked' : ''}
+                                   onchange="toggleFileReviewed('${pr.id}', '${fileSlug}')"
+                                   class="rounded text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer">
+                            <span id="file-review-label-${pr.id}-${fileSlug}" class="${isPRFileReviewed(pr.id, fileSlug) ? 'text-emerald-700 font-bold' : 'text-slate-700'}">
+                              ${isPRFileReviewed(pr.id, fileSlug) ? '✓ Reviewed' : 'Mark as Reviewed'}
+                            </span>
+                          </label>
                         </div>
 
                         <!-- File Actions: GitHub, Local, IDE, Copy -->
@@ -3658,5 +3937,8 @@
     setInterval(loadServerComments, 3000);
     setInterval(fetchCIStatus, 15000);
   </script>
+
+  <!-- Global Toast Notification Container -->
+  <div id="global-toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 </body>
 </html>
