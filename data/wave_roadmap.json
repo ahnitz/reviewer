@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-09T17:14:44.358549",
+  "last_updated": "2026-10-09T21:00:22.404818",
   "dev_branch": "firinspiral3-multidet-asym",
   "upstream_base": "f6eaed241fd115a0b79b459bca83787b19135875",
-  "last_ingested_commit": "48b447d767d827011f82e664bdee8a7376d3320e",
-  "ingested_commits_count": 234,
+  "last_ingested_commit": "36292b96ab2c8278ff207517fda3dd75c409bfbb",
+  "ingested_commits_count": 236,
   "prs": {
     "PR-1A": {
       "wave": 1,
@@ -4953,6 +4953,86 @@
       "wave": 2,
       "note": "New standalone capability in test/test_range_and_psd_cutoff.py synthesized into PR-FIX-TEST-984 (test: add unit test coverage for test_range_and_psd_cutoff.py)",
       "timestamp": "2026-10-09T15:59:44.796053"
+    },
+    {
+      "commit_sha": "bf915b32491e58a14606f0eee4883efdb8243a6b",
+      "commit_msg": "filter/overwhiten: optimize continuous overwhitening with compact grid IST and overlap-save streaming",
+      "file": "pycbc/filter/overwhiten.py",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-2B",
+      "wave": 2,
+      "note": "Commit bf915b324 absorbed into future Wave 2 PR PR-2B ('pycbc/filter/overwhiten.py').",
+      "timestamp": "2026-10-09T17:49:45.152738"
+    },
+    {
+      "commit_sha": "36292b96ab2c8278ff207517fda3dd75c409bfbb",
+      "commit_msg": "filter/overwhiten: remove unsupported high_frequency_cutoff arg to inverse_spectrum_truncation",
+      "file": "bin/all_sky_search/pycbc_add_statmap",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-2C",
+      "wave": 2,
+      "note": "Commit 36292b96a absorbed into future Wave 2 PR PR-2C ('bin/all_sky_search/pycbc_add_statmap').",
+      "timestamp": "2026-10-09T18:02:45.855893"
+    },
+    {
+      "commit_sha": "36292b96ab2c8278ff207517fda3dd75c409bfbb",
+      "commit_msg": "filter/overwhiten: remove unsupported high_frequency_cutoff arg to inverse_spectrum_truncation",
+      "file": "bin/all_sky_search/pycbc_coinc_statmap",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-2C",
+      "wave": 2,
+      "note": "Commit 36292b96a absorbed into future Wave 2 PR PR-2C ('bin/all_sky_search/pycbc_coinc_statmap').",
+      "timestamp": "2026-10-09T18:02:45.855921"
+    },
+    {
+      "commit_sha": "36292b96ab2c8278ff207517fda3dd75c409bfbb",
+      "commit_msg": "filter/overwhiten: remove unsupported high_frequency_cutoff arg to inverse_spectrum_truncation",
+      "file": "bin/pycbc_inspiral_fir",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-4B",
+      "wave": 4,
+      "note": "Commit 36292b96a absorbed into future Wave 4 PR PR-4B ('bin/pycbc_inspiral_fir').",
+      "timestamp": "2026-10-09T18:02:45.855934"
+    },
+    {
+      "commit_sha": "36292b96ab2c8278ff207517fda3dd75c409bfbb",
+      "commit_msg": "filter/overwhiten: remove unsupported high_frequency_cutoff arg to inverse_spectrum_truncation",
+      "file": "pycbc/filter/overwhiten.py",
+      "action": "FUTURE_WAVE_UPDATE",
+      "pr_id": "PR-2B",
+      "wave": 2,
+      "note": "Commit 36292b96a absorbed into future Wave 2 PR PR-2B ('pycbc/filter/overwhiten.py').",
+      "timestamp": "2026-10-09T18:02:45.855938"
+    },
+    {
+      "commit_sha": "36292b96ab2c8278ff207517fda3dd75c409bfbb",
+      "commit_msg": "filter/overwhiten: remove unsupported high_frequency_cutoff arg to inverse_spectrum_truncation",
+      "file": "pycbc/psd/__init__.py",
+      "action": "ACTIVE_PR_UPDATE",
+      "pr_id": "PR-1I",
+      "wave": 1,
+      "note": "Commit 36292b96a touches active PR PR-1I file 'pycbc/psd/__init__.py'. Evaluate for staging/cherry-pick.",
+      "timestamp": "2026-10-09T18:02:45.855989"
+    },
+    {
+      "commit_sha": "36292b96ab2c8278ff207517fda3dd75c409bfbb",
+      "commit_msg": "filter/overwhiten: remove unsupported high_frequency_cutoff arg to inverse_spectrum_truncation",
+      "file": "pycbc/psd/estimate.py",
+      "action": "ACTIVE_PR_UPDATE",
+      "pr_id": "PR-1I",
+      "wave": 1,
+      "note": "Commit 36292b96a touches active PR PR-1I file 'pycbc/psd/estimate.py'. Evaluate for staging/cherry-pick.",
+      "timestamp": "2026-10-09T18:02:45.855993"
+    },
+    {
+      "commit_sha": "36292b96ab2c8278ff207517fda3dd75c409bfbb",
+      "commit_msg": "filter/overwhiten: remove unsupported high_frequency_cutoff arg to inverse_spectrum_truncation",
+      "file": "pycbc/strain/strain.py",
+      "action": "ACTIVE_PR_UPDATE",
+      "pr_id": "PR-1J",
+      "wave": 1,
+      "note": "Commit 36292b96a touches active PR PR-1J file 'pycbc/strain/strain.py'. Evaluate for staging/cherry-pick.",
+      "timestamp": "2026-10-09T18:02:45.855996"
     }
   ]
 }

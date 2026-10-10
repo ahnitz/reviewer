@@ -21,12 +21,13 @@ import argparse
 import subprocess
 from datetime import datetime
 
-DEFAULT_CONFIG_FILE = os.path.join(os.path.dirname(__file__), "..", "config.json")
-DEFAULT_STATUS_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "rebase_status.json")
+DEFAULT_STATUS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "rebase_status.json"))
+NOTES_STATUS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "search_dev_notes", "data", "rebase_status.json"))
+ROOT_STATUS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data", "rebase_status.json"))
 
 # Branch-specific verification test suites
 DEFAULT_BRANCH_TEST_MAP = {
-    "pr-fix-core-numpy2-optparse": ["pytest", "test/test_resample.py", "test/test_optparse.py"],
+    "pr-fix-core-numpy2-optparse": ["pytest", "test/test_optparse.py"],
     "pr-fix-io-dictarray-indexing": ["pytest", "test/test_io_hdf.py"],
     "pr-fix-events-numpy2-zerolag": ["pytest", "test/test_coinc_stat.py", "test/test_significance_module.py"],
     "pr-perf-waveform-compress": ["pytest", "test/test_waveform_compress.py"],
@@ -37,7 +38,22 @@ DEFAULT_BRANCH_TEST_MAP = {
     "pr-feat-psd-robust-estimators": ["pytest", "test/test_psd.py"],
     "pr-feat-strain-regularized-inpainting": ["pytest", "test/test_gate_and_paint.py"],
     "pr-feat-frame-gwosc-hdf": ["pytest", "test/test_gwosc_hdf.py"],
+    "pr-fix-filter-resample-copy": ["pytest", "test/test_resample.py"],
 }
+
+# Branch dependency DAG for Protocol B cascade rebases
+BRANCH_DEPENDENCIES = {
+    "pr-fix-events-numpy2-zerolag": "pr-fix-core-numpy2-optparse",
+    "pr-feat-psd-robust-estimators": "pr-feat-filter-dynamic-snr-renorm",
+}
+
+# Branches already merged into upstream gwastro/pycbc:master
+MERGED_BRANCHES = {
+    "pr-fix-filter-qtransform": {"pr": 5476, "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83"},
+    "pr-fix-live-hwinj-support": {"pr": 5476, "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83"},
+}
+
+DEFAULT_CONFIG_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "config.json"))
 
 def load_config(config_file=DEFAULT_CONFIG_FILE):
     if os.path.exists(config_file):
@@ -113,11 +129,14 @@ class UpstreamRebaseMonitor:
         return {"last_check": None, "upstream_head": None, "branches": {}}
 
     def save_status(self, status):
-        try:
-            with open(self.status_file, "w", encoding="utf-8") as f:
-                json.dump(status, f, indent=2)
-        except Exception as e:
-            print(f"[WARN] Failed saving status file: {e}", flush=True)
+        destinations = {self.status_file, DEFAULT_STATUS_FILE, NOTES_STATUS_FILE, ROOT_STATUS_FILE}
+        for dest in destinations:
+            try:
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                with open(dest, "w", encoding="utf-8") as f:
+                    json.dump(status, f, indent=2)
+            except Exception as e:
+                print(f"[WARN] Failed saving status file {dest}: {e}", flush=True)
 
     def get_worktree_map(self):
         res = self.run_cmd(["git", "worktree", "list", "--porcelain"])
@@ -134,18 +153,8 @@ class UpstreamRebaseMonitor:
         return wt_map
 
     def get_tracked_branches(self):
-        # Return all predefined branches plus any active pr-* branches in local git
-        branches = []
-        for b in DEFAULT_BRANCH_TEST_MAP.keys():
-            if b not in branches:
-                branches.append(b)
-        res = self.run_cmd(["git", "branch", "--list", "pr-*"])
-        if res.returncode == 0:
-            for line in res.stdout.splitlines():
-                b = line.strip().lstrip("*+ ").strip()
-                if b and b not in branches:
-                    branches.append(b)
-        return branches
+        # Return strictly the managed branches defined in DEFAULT_BRANCH_TEST_MAP
+        return list(DEFAULT_BRANCH_TEST_MAP.keys())
 
     def run_tests_for_branch(self, branch, work_dir=None):
         test_args = DEFAULT_BRANCH_TEST_MAP.get(branch)
@@ -154,6 +163,17 @@ class UpstreamRebaseMonitor:
             return True, "No specific unit tests registered"
 
         target_dir = work_dir or self.repo_dir
+        # Ensure target_dir has pycbc/version.py to prevent import errors in isolated worktrees
+        vpy = os.path.join(target_dir, "pycbc", "version.py")
+        if not os.path.exists(vpy):
+            apogee_vpy = os.path.join(self.repo_dir, "pycbc", "version.py")
+            if os.path.exists(apogee_vpy):
+                try:
+                    import shutil
+                    shutil.copy2(apogee_vpy, vpy)
+                except Exception:
+                    pass
+
         # Use igwn-py311 pytest which has full LALSuite and PyCBC dependencies
         igwn_pytest = "/home/ahnitz/miniconda3/envs/igwn-py311/bin/pytest"
         venv_python = os.path.join(self.repo_dir, "..", "venv-apogee", "bin", "python")
@@ -177,7 +197,16 @@ class UpstreamRebaseMonitor:
         return passed, msg
 
     def rebase_branch(self, branch, upstream_sha, work_dir=None):
-        target_dir = work_dir or self.repo_dir
+        if not work_dir or not os.path.exists(work_dir):
+            print(f"   ⚠️ Cannot rebase detached branch {branch}: no dedicated worktree found. Skipping to protect main dev checkout.", flush=True)
+            return {
+                "status": "SKIPPED_NO_WORKTREE",
+                "branch": branch,
+                "error": "No dedicated worktree found; skipping to protect main dev checkout",
+                "timestamp": datetime.now().isoformat()
+            }
+
+        target_dir = work_dir
         print(f"\n⚡ Rebasing {branch} in {target_dir} onto {self.upstream_remote}/{self.upstream_branch} ({upstream_sha[:9]})...", flush=True)
 
         # Check commits behind upstream
@@ -199,23 +228,9 @@ class UpstreamRebaseMonitor:
                 "rebased_at": datetime.now().isoformat()
             }
 
-        # Perform rebase
+        # Perform rebase inside dedicated worktree
         rebase_target = f"{self.upstream_remote}/{self.upstream_branch}"
-        if work_dir and os.path.exists(work_dir):
-            # When inside worktree where branch is checked out, rebase current HEAD
-            res_rebase = subprocess.run(["git", "rebase", rebase_target], cwd=work_dir, capture_output=True, text=True)
-        else:
-            # Check if repo_dir has unstaged changes
-            p_dirty = subprocess.run(["git", "status", "--porcelain"], cwd=self.repo_dir, capture_output=True, text=True)
-            if p_dirty.returncode == 0 and p_dirty.stdout.strip():
-                print(f"   ⚠️ Cannot rebase detached branch {branch} in main repo: working tree has local changes.", flush=True)
-                return {
-                    "status": "SKIPPED_DIRTY_TREE",
-                    "branch": branch,
-                    "error": "Main working directory has unstaged modifications; skipping rebase",
-                    "timestamp": datetime.now().isoformat()
-                }
-            res_rebase = subprocess.run(["git", "rebase", rebase_target, branch], cwd=self.repo_dir, capture_output=True, text=True)
+        res_rebase = subprocess.run(["git", "rebase", rebase_target], cwd=work_dir, capture_output=True, text=True)
 
         if res_rebase.returncode != 0:
             print(f"   ❌ Conflict during rebase of {branch}! Aborting...", flush=True)
@@ -295,26 +310,102 @@ class UpstreamRebaseMonitor:
         wt_map = self.get_worktree_map()
         rebased_any = False
 
+        # Clean up stale / unmanaged branch keys from status file
+        valid_keys = set(branches) | set(MERGED_BRANCHES.keys())
+        status["branches"] = {k: v for k, v in status.get("branches", {}).items() if k in valid_keys}
+
+        # Record merged branches
+        for m_branch, m_info in MERGED_BRANCHES.items():
+            status["branches"][m_branch] = {
+                "status": "MERGED",
+                "branch": m_branch,
+                "pr_number": m_info.get("pr"),
+                "merged_commit": m_info.get("merged_commit"),
+                "last_verified": datetime.now().isoformat()
+            }
+
         try:
             for branch in branches:
+                if branch in MERGED_BRANCHES:
+                    continue
+
+                # Check Protocol B dependencies
+                if branch in BRANCH_DEPENDENCIES:
+                    dep = BRANCH_DEPENDENCIES[branch]
+                    dep_merged = False
+                    if dep in MERGED_BRANCHES:
+                        dep_merged = True
+                    else:
+                        res_dep = subprocess.run(["git", "rev-parse", dep], cwd=self.repo_dir, capture_output=True, text=True)
+                        if res_dep.returncode == 0:
+                            dep_sha = res_dep.stdout.strip()
+                            res_anc = subprocess.run(["git", "merge-base", "--is-ancestor", dep_sha, upstream_sha], cwd=self.repo_dir)
+                            dep_merged = (res_anc.returncode == 0)
+
+                    if not dep_merged:
+                        sha = subprocess.run(["git", "rev-parse", branch], cwd=self.repo_dir, capture_output=True, text=True).stdout.strip()
+                        status["branches"][branch] = {
+                            "status": "WAITING_DEPENDENCY",
+                            "branch": branch,
+                            "commit_sha": sha,
+                            "dependency": dep,
+                            "note": f"Awaiting upstream merge of parent branch {dep} before cascade rebase",
+                            "last_verified": datetime.now().isoformat()
+                        }
+                        continue
+
                 work_dir = wt_map.get(branch)
-                target_dir = work_dir or self.repo_dir
+                if not work_dir or not os.path.exists(work_dir):
+                    print(f"   ⚠️ Branch {branch} has no active worktree. Skipping rebase to protect main dev checkout.", flush=True)
+                    sha = subprocess.run(["git", "rev-parse", branch], cwd=self.repo_dir, capture_output=True, text=True).stdout.strip()
+                    status["branches"][branch] = {
+                        "status": "SKIPPED_NO_WORKTREE",
+                        "branch": branch,
+                        "commit_sha": sha,
+                        "error": "No dedicated worktree found; skipping to protect main dev checkout",
+                        "last_verified": datetime.now().isoformat()
+                    }
+                    continue
+
+                target_dir = work_dir
+                # Ensure target_dir has pycbc/version.py to prevent import errors in isolated worktrees
+                vpy = os.path.join(target_dir, "pycbc", "version.py")
+                if not os.path.exists(vpy):
+                    apogee_vpy = os.path.join(self.repo_dir, "pycbc", "version.py")
+                    if os.path.exists(apogee_vpy):
+                        try:
+                            import shutil
+                            shutil.copy2(apogee_vpy, vpy)
+                        except Exception:
+                            pass
+
                 res_behind = subprocess.run(["git", "rev-list", "--count", f"{branch}..{upstream_sha}"], cwd=target_dir, capture_output=True, text=True)
                 behind = int(res_behind.stdout.strip()) if res_behind.returncode == 0 and res_behind.stdout.strip().isdigit() else 0
-                
-                if behind > 0 or force:
+
+                # Check 3-way mergeability against upstream master
+                res_merge = subprocess.run(["git", "merge-tree", "--write-tree", branch, upstream_sha], cwd=target_dir, capture_output=True, text=True)
+                mergeable_clean = (res_merge.returncode == 0)
+
+                sha = subprocess.run(["git", "rev-parse", branch], cwd=target_dir, capture_output=True, text=True).stdout.strip()
+                ahead_str = subprocess.run(["git", "rev-list", "--count", f"{upstream_sha}..{branch}"], cwd=target_dir, capture_output=True, text=True).stdout.strip()
+                ahead = int(ahead_str) if ahead_str.isdigit() else 0
+
+                # If behind > 0 and not already clean merge on an active open PR:
+                # Active open PRs that merge cleanly with 0 conflicts are kept stable to preserve passing CI
+                open_prs = {"pr-fix-core-numpy2-optparse": 5475, "pr-fix-io-dictarray-indexing": 5474, "pr-perf-waveform-compress": 5473}
+                should_rebase = (behind > 0 or force) and not (branch in open_prs and mergeable_clean)
+
+                if should_rebase:
                     branch_status = self.rebase_branch(branch, upstream_sha, work_dir=work_dir)
                     status["branches"][branch] = branch_status
                     rebased_any = True
                 else:
-                    sha = subprocess.run(["git", "rev-parse", branch], cwd=target_dir, capture_output=True, text=True).stdout.strip()
-                    ahead_str = subprocess.run(["git", "rev-list", "--count", f"{upstream_sha}..{branch}"], cwd=target_dir, capture_output=True, text=True).stdout.strip()
-                    ahead = int(ahead_str) if ahead_str.isdigit() else 0
                     status["branches"][branch] = {
                         "status": "UP_TO_DATE",
                         "commit_sha": sha,
                         "ahead": ahead,
-                        "behind": 0,
+                        "behind": behind,
+                        "merge_clean": mergeable_clean,
                         "last_verified": datetime.now().isoformat()
                     }
         finally:
