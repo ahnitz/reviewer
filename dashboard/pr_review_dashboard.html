@@ -1692,7 +1692,7 @@
                     <th class="py-2.5 px-3">PR ID</th>
                     <th class="py-2.5 px-3">Branch Name</th>
                     <th class="py-2.5 px-3">Scope &amp; Title</th>
-                    <th class="py-2.5 px-3">Dependencies</th>
+                    <th class="py-2.5 px-3">Direct Prerequisites &amp; Dynamic Unlocking</th>
                     <th class="py-2.5 px-3 text-right">Status</th>
                   </tr>
                 </thead>
@@ -1728,7 +1728,7 @@
                     <th class="py-2.5 px-3">PR ID</th>
                     <th class="py-2.5 px-3">Branch Name</th>
                     <th class="py-2.5 px-3">Scope &amp; Title</th>
-                    <th class="py-2.5 px-3">Dependencies</th>
+                    <th class="py-2.5 px-3">Direct Prerequisites &amp; Dynamic Unlocking</th>
                     <th class="py-2.5 px-3 text-right">Status</th>
                   </tr>
                 </thead>
@@ -1764,7 +1764,7 @@
                     <th class="py-2.5 px-3">PR ID</th>
                     <th class="py-2.5 px-3">Branch Name</th>
                     <th class="py-2.5 px-3">Scope &amp; Title</th>
-                    <th class="py-2.5 px-3">Dependencies</th>
+                    <th class="py-2.5 px-3">Direct Prerequisites &amp; Dynamic Unlocking</th>
                     <th class="py-2.5 px-3 text-right">Status</th>
                   </tr>
                 </thead>
@@ -1803,24 +1803,24 @@
       ];
 
       const wave2List = [
-        { id: "PR-2A", branch: "pr-feat-psd-model", title: "feat(psd): Compact instantaneous PSD model representation and serialization", files: "pycbc/psd/model.py, test/test_psd_model.py", diff: "~280 lines (3 files)", unblocks: "PR-1A, PR-1I", status: "QUEUED" },
-        { id: "PR-2B", branch: "pr-feat-strain-overwhiten", title: "feat(strain): Continuous in-situ overwhitening and Toeplitz inpainting", files: "pycbc/strain/overwhiten.py, test/test_overwhiten.py", diff: "~1,300 lines (5 files)", unblocks: "PR-1J", status: "QUEUED" },
-        { id: "PR-2C", branch: "pr-perf-coinc-statmap-memory", title: "perf(coinc): Memory-bounded statmap combination and multi-detector livetime accounting", files: "pycbc/events/statmap.py, test/test_statmap.py", diff: "~450 lines (8 files)", unblocks: "PR-1B, PR-1C, PR-1F", status: "QUEUED" },
-        { id: "PR-2D", branch: "pr-feat-events-rayleigh-stat", title: "feat(events): Smooth sub-threshold Rayleigh statistic and singles downweighting", files: "pycbc/events/stat.py, bin/pycbc_fit_sngls_split_binned", diff: "~180 lines (5 files)", unblocks: "PR-1C (Absorbed 5e02b4a11, 4842b1e18)", status: "QUEUED" },
-        { id: "PR-2E", branch: "pr-tool-inject-optimal-mf-snr", title: "tool(inject): Dedicated optimal matched-filter SNR evaluator with glitch autogating", files: "bin/pycbc_optimal_mf_snr", diff: "~320 lines (1 file)", unblocks: "PR-1H", status: "QUEUED" },
-        { id: "PR-2F", branch: "pr-feat-frame-gwosc-hdf-strain", title: "feat(frame): Support reading strain from GWOSC HDF5 files and caches", files: "pycbc/frame/gwosc_hdf.py, test/test_gwosc_hdf.py", diff: "+156 / -0 (4 files)", unblocks: "PR-1A (Synthesized from c524d71c3)", status: "SYNTHESIZED" }
+        { id: "PR-2A", branch: "pr-feat-psd-model", title: "feat(psd): Compact instantaneous PSD model representation and serialization", files: "pycbc/psd/model.py, test/test_psd_model.py", diff: "~280 lines (3 files)", unblocks: "Depends on: PR-1I → Unlocks on PR-1I merge", status: "QUEUED" },
+        { id: "PR-2B", branch: "pr-feat-strain-overwhiten", title: "feat(strain): Continuous in-situ overwhitening and Toeplitz inpainting", files: "pycbc/strain/overwhiten.py, test/test_overwhiten.py", diff: "~1,300 lines (5 files)", unblocks: "Depends on: PR-1J → Unlocks on PR-1J merge", status: "QUEUED" },
+        { id: "PR-2C", branch: "pr-perf-coinc-statmap-memory", title: "perf(coinc): Memory-bounded statmap combination and multi-detector livetime accounting", files: "pycbc/events/statmap.py, test/test_statmap.py", diff: "~450 lines (8 files)", unblocks: "Depends on: PR-1B (#5474), PR-1C → Unlocks on both merge", status: "QUEUED" },
+        { id: "PR-2D", branch: "pr-feat-events-rayleigh-stat", title: "feat(events): Smooth sub-threshold Rayleigh statistic and singles downweighting", files: "pycbc/events/stat.py, bin/pycbc_fit_sngls_split_binned", diff: "~180 lines (5 files)", unblocks: "Depends on: PR-1C → Unlocks on PR-1C merge (Absorbed 5e02b4a11)", status: "QUEUED" },
+        { id: "PR-2E", branch: "pr-tool-inject-optimal-mf-snr", title: "tool(inject): Dedicated optimal matched-filter SNR evaluator with glitch autogating", files: "bin/pycbc_optimal_mf_snr", diff: "~320 lines (1 file)", unblocks: "Depends on: PR-1H → Unlocks on PR-1H merge", status: "QUEUED" },
+        { id: "PR-2F", branch: "pr-feat-frame-gwosc-hdf-strain", title: "feat(frame): Support reading strain from GWOSC HDF5 files and caches", files: "pycbc/frame/gwosc_hdf.py, test/test_gwosc_hdf.py", diff: "+156 / -0 (4 files)", unblocks: "Depends on: PR-1A (#5475) → Unlocks immediately on #5475 merge", status: "SYNTHESIZED" }
       ];
 
       const wave3List = [
-        { id: "PR-3A", branch: "pr-feat-waveform-ratio-filterbank", title: "feat(waveform): RatioFilterBank data structure and hierarchical grouping", files: "pycbc/waveform/bank.py, test/test_ratio_bank.py", diff: "~640 lines (2 files)", unblocks: "PR-1D, PR-1H", status: "QUEUED" },
-        { id: "PR-3B", branch: "pr-feat-filter-matched-filter-ratio", title: "feat(filter): MatchedFilterRatioControl execution engine and ratio candidate extraction", files: "pycbc/filter/matched_filter_ratio.py", diff: "~850 lines (1 file)", unblocks: "PR-1G", status: "QUEUED" },
-        { id: "PR-3C", branch: "pr-tool-waveform-fir-bank", title: "tool(waveform): Streamlined 3-level FIR filter bank generator (pycbc_fir_bank)", files: "bin/pycbc_fir_bank", diff: "~520 lines (1 file)", unblocks: "PR-3A", status: "QUEUED" },
-        { id: "PR-3D", branch: "pr-feat-workflow-multidet-dag", title: "feat(workflow): Multi-detector hierarchical inspiral DAG orchestration and segment planning", files: "pycbc/workflow/pegasus_files.py, bin/workflows/pycbc_make_coinc_search_workflow", diff: "~980 lines (11 files)", unblocks: "PR-1B, PR-1F, PR-2C", status: "QUEUED" }
+        { id: "PR-3A", branch: "pr-feat-waveform-ratio-filterbank", title: "feat(waveform): RatioFilterBank data structure and hierarchical grouping", files: "pycbc/waveform/bank.py, test/test_ratio_bank.py", diff: "~640 lines (2 files)", unblocks: "Depends on: PR-1D (#5473), PR-1H → Unlocks when both merge", status: "QUEUED" },
+        { id: "PR-3B", branch: "pr-feat-filter-matched-filter-ratio", title: "feat(filter): MatchedFilterRatioControl execution engine and ratio candidate extraction", files: "pycbc/filter/matched_filter_ratio.py", diff: "~850 lines (1 file)", unblocks: "Depends on: PR-1G → Unlocks on PR-1G merge", status: "QUEUED" },
+        { id: "PR-3C", branch: "pr-tool-waveform-fir-bank", title: "tool(waveform): Streamlined 3-level FIR filter bank generator (pycbc_fir_bank)", files: "bin/pycbc_fir_bank", diff: "~520 lines (1 file)", unblocks: "Depends on: PR-1D (#5473), PR-3A → Unlocks when PR-3A lands", status: "QUEUED" },
+        { id: "PR-3D", branch: "pr-feat-workflow-multidet-dag", title: "feat(workflow): Multi-detector hierarchical inspiral DAG orchestration and segment planning", files: "pycbc/workflow/pegasus_files.py, bin/workflows/pycbc_make_coinc_search_workflow", diff: "~980 lines (11 files)", unblocks: "Depends on: PR-1B (#5474), PR-1F, PR-2C", status: "QUEUED" }
       ];
 
       const wave4List = [
-        { id: "PR-4A", branch: "pr-feat-diagnostics-minifollowup-ifar", title: "feat(diagnostics): Minifollowup visual diagnostics, background IFAR normalization, and found/missed pages", files: "bin/pycbc_page_ifar, pycbc/workflow/minifollowup.py", diff: "~1,420 lines (23 files)", unblocks: "PR-2C, PR-3D (Absorbed dcb77125a)", status: "QUEUED" },
-        { id: "PR-4B", branch: "pr-feat-inspiral-pycbc-inspiral-fir", title: "feat(inspiral): Hierarchical FIR multi-detector matched-filter search executable (pycbc_inspiral_fir)", files: "bin/pycbc_inspiral_fir", diff: "~1,520 lines (1 file)", unblocks: "PR-1E, PR-2B, PR-3B (Absorbed 2845412dd, 4b9942b09, b8e71d422)", status: "QUEUED" }
+        { id: "PR-4A", branch: "pr-feat-diagnostics-minifollowup-ifar", title: "feat(diagnostics): Minifollowup visual diagnostics, background IFAR normalization, and found/missed pages", files: "bin/pycbc_page_ifar, pycbc/workflow/minifollowup.py", diff: "~1,420 lines (23 files)", unblocks: "Depends on: PR-2C, PR-3D → Unlocks when PR-2C/3D merge", status: "QUEUED" },
+        { id: "PR-4B", branch: "pr-feat-inspiral-pycbc-inspiral-fir", title: "feat(inspiral): Hierarchical FIR multi-detector matched-filter search executable (pycbc_inspiral_fir)", files: "bin/pycbc_inspiral_fir", diff: "~1,520 lines (1 file)", unblocks: "Depends on: PR-1E, PR-2B, PR-3B → Unlocks when PR-2B/3B merge", status: "QUEUED" }
       ];
 
       const allTrackedPRs = PR_PAGES;
@@ -1857,16 +1857,15 @@
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-slate-900 text-white">Full PR Roadmap</span>
-                  <span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">WAVES 1 TO 4</span>
-                  <span class="text-xs text-slate-500 font-medium">Decomposition &amp; Sentinel Architecture</span>
+                  <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-slate-900 text-white">PR Dependency DAG</span>
+                  <span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">DYNAMIC PR UNLOCKING &bull; ZERO WATERFALL DELAYS</span>
+                  <span class="text-xs text-slate-500 font-medium">Continuous Cascading Rebases</span>
                 </div>
-                <h2 class="text-lg font-bold text-slate-900 mt-2">Multi-Wave Pull Request Decomposition &amp; Tracking Roadmap</h2>
+                <h2 class="text-lg font-bold text-slate-900 mt-2">Continuous PR Decomposition DAG &amp; Tracking Roadmap</h2>
                 <p class="text-sm text-slate-600 mt-1 max-w-4xl leading-relaxed">
-                  The ~12,000-line diff from <code class="code-font text-slate-800 font-semibold">${devBranchName}</code> has been partitioned into 
-                  <strong>${totalCandidatesCount} atomic PR candidate blueprints</strong> across 4 waves. 
-                  All 10 Wave 1 branches have been verified with passing tests and pushed to your fork at 
-                  <code class="code-font text-slate-800 font-semibold">git@github.com:ahnitz/pycbc.git</code>.
+                  The ~12,000-line diff from <code class="code-font text-slate-800 font-semibold">${devBranchName}</code> is structured as a 
+                  <strong>directed acyclic graph (DAG) of ${totalCandidatesCount} atomic PR candidate blueprints</strong>. 
+                  PRs are unlocked <em>dynamically</em> the moment their specific upstream prerequisites merge — independent PRs move ahead in parallel with zero batch or wave delays.
                 </p>
               </div>
               <div class="shrink-0 flex flex-wrap gap-2">
@@ -1878,10 +1877,10 @@
                   CI Matrix (${totalPassingChecks} Passed)
                 </a>
                 <a href="#wave1-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
-                  Wave 1 Queue (10)
+                  Ready (Zero Deps) (10)
                 </a>
                 <a href="#waves-downstream-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
-                  Waves 2–4 (12)
+                  DAG Pipelines (12)
                 </a>
                 <a href="#controls-section" class="px-3 py-1.5 text-xs font-semibold rounded bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors text-center">
                   🛠️ Controls
@@ -1890,9 +1889,9 @@
             </div>
 
             <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-4 text-xs">
-              <span class="text-slate-600 font-medium">Active Queue: <strong class="text-slate-900">Wave 1 (10 Independent PRs)</strong></span>
+              <span class="text-slate-600 font-medium">Ready to Submit: <strong class="text-slate-900">10 Independent PRs (0 Prerequisites)</strong></span>
               <span class="text-slate-300">&bull;</span>
-              <span class="text-slate-600 font-medium">Total Tracked: <strong class="text-purple-700">${totalCandidatesCount} PR Candidates (Waves 1–4)</strong></span>
+              <span class="text-slate-600 font-medium">Dynamic Unlocking: <strong class="text-purple-700">Per-PR Cascade (No Waterfall Delay)</strong></span>
               <span class="text-slate-300">&bull;</span>
               <span class="text-slate-600 font-medium">Remote Gate: <strong class="text-emerald-700">Strict Maintainer Mode (origin -> ahnitz/pycbc)</strong></span>
               <span class="text-slate-300">&bull;</span>
@@ -2247,8 +2246,8 @@
               <div>
                 <div class="flex items-center gap-2">
                   <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-700 text-white">Wave 1</span>
-                  <h3 class="text-base font-bold text-slate-900">Active Review Queue (10 Independent PRs)</h3>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">100% PASSING TESTS &bull; READY TO MERGE</span>
+                  <h3 class="text-base font-bold text-slate-900">Active Review Queue &amp; Ready to Submit (10 Independent PRs)</h3>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">ZERO PREREQUISITES &bull; PARALLEL MERGE READY</span>
                 </div>
                 <p class="text-xs text-slate-500 mt-1">
                   Rebased cleanly against current <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code>. Click any PR row to review live code hunks and submit comments.
@@ -2317,9 +2316,9 @@
               <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-700 text-white">Wave 2</span>
+                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-700 text-white">Models &amp; Conditioning</span>
                     <h3 class="text-base font-bold text-slate-900">Strain Conditioning, PSD Models &amp; GWOSC Readers</h3>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">UNBLOCKED BY WAVE 1 MERGES</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">DYNAMIC DAG UNLOCKING &bull; CASCADE ON PREREQUISITE</span>
                   </div>
                   <p class="text-xs text-slate-500 mt-1">
                     Foundational preconditioning and noise modeling subsystems. Pre-flight simplification audits identified -380 lines of dead code eliminated.
@@ -2335,7 +2334,7 @@
                       <th class="py-2.5 px-3">Branch Name</th>
                       <th class="py-2.5 px-3">Scope &amp; Title</th>
                       <th class="py-2.5 px-3">Key Target Files</th>
-                      <th class="py-2.5 px-3">Dependencies &amp; Ingestion</th>
+                      <th class="py-2.5 px-3">Direct Prerequisites &amp; Dynamic Unlocking</th>
                       <th class="py-2.5 px-3 text-right">Action</th>
                     </tr>
                   </thead>
@@ -2382,9 +2381,9 @@
               <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-700 text-white">Wave 3</span>
+                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-700 text-white">Ratio Engine &amp; Bank</span>
                     <h3 class="text-base font-bold text-slate-900">Bank Generation, Ratio Matched-Filter Engine &amp; Workflow DAG</h3>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">CORE SEARCH ALGORITHMS</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">DYNAMIC DAG UNLOCKING &bull; CASCADE ON PREREQUISITE</span>
                   </div>
                   <p class="text-xs text-slate-500 mt-1">
                     Hierarchical filter bank structures and innermost matched filter ratio evaluation. Pre-flight audit identified -425 lines of duplicate bank schemas pruned.
@@ -2400,7 +2399,7 @@
                       <th class="py-2.5 px-3">Branch Name</th>
                       <th class="py-2.5 px-3">Scope &amp; Title</th>
                       <th class="py-2.5 px-3">Key Target Files</th>
-                      <th class="py-2.5 px-3">Dependencies</th>
+                      <th class="py-2.5 px-3">Direct Prerequisites &amp; Dynamic Unlocking</th>
                       <th class="py-2.5 px-3 text-right">Action</th>
                     </tr>
                   </thead>
@@ -2444,9 +2443,9 @@
               <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-700 text-white">Wave 4</span>
+                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-700 text-white">Search Executable</span>
                     <h3 class="text-base font-bold text-slate-900">Inspiral Search Executable &amp; Diagnostic Dashboards</h3>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">PIPELINE CLOSURE</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">DYNAMIC DAG UNLOCKING &bull; FINAL PIPELINE CLOSURE</span>
                   </div>
                   <p class="text-xs text-slate-500 mt-1">
                     Hierarchical multi-detector search executable (<code class="code-font text-slate-700 font-semibold">pycbc_inspiral_fir</code>) and minifollowup diagnostics. Pre-flight audit identified -812 lines of dead CLI flags and obsolete routines pruned.
@@ -2462,7 +2461,7 @@
                       <th class="py-2.5 px-3">Branch Name</th>
                       <th class="py-2.5 px-3">Scope &amp; Title</th>
                       <th class="py-2.5 px-3">Key Target Files</th>
-                      <th class="py-2.5 px-3">Dependencies &amp; Absorptions</th>
+                      <th class="py-2.5 px-3">Direct Prerequisites &amp; Dynamic Unlocking</th>
                       <th class="py-2.5 px-3 text-right">Action</th>
                     </tr>
                   </thead>

@@ -155,3 +155,21 @@ PyCBC supports both modern NumPy 2.0+ and legacy NumPy 1.x environments. Follow 
      2. The solution and implementation rationale
      3. Alternative approaches considered and why they were rejected
      4. Runnable test commands and timing results
+
+
+---
+
+## 9. Dependency DAG & Continuous PR Unlocking vs Waterfall Waves
+
+When refactoring or introducing large feature sets (such as multi-detector search or strain conditioning), PR decomposition must **never** be treated as a series of rigid waterfall batches ("waves"). Instead:
+
+1. **Model as a Directed Acyclic Graph (DAG)**:
+   - PR candidates are nodes in a dependency DAG.
+   - Root nodes with zero dependencies (e.g. bugfixes, independent signal-processing helpers, standalone data structures) can and should be opened and reviewed concurrently in parallel.
+2. **Dynamic Per-PR Unlocking**:
+   - A downstream PR is blocked **only** by its specific parent PRs, not by an entire "wave" or batch of unrelated PRs.
+   - *Concrete Example*: If PR B (`pr-feat-frame-gwosc-hdf-strain`) depends solely on PR A (`pr-fix-core-numpy2-optparse`, #5475), PR B is unlocked and ready for submission the exact moment PR A merges into `gwastro/pycbc:master`. It never waits for unrelated PRs (like PR-1J inpainting or PR-1G SNR renormalization) to merge.
+   - PRs move forward as a continuous pipeline: each merge unblocks its direct descendants immediately.
+3. **Automated Cascading Rebases**:
+   - Maintainer bots and sentinel monitors continuously track the upstream merge base (`git merge-base upstream/master <branch>`).
+   - When any parent branch merges into `upstream/master`, the sentinel immediately rebases the child branch onto the new master HEAD, validates tests in isolation, and promotes the child to `READY_TO_OPEN`.
