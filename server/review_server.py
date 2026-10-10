@@ -15,6 +15,13 @@ import subprocess
 import re
 import urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+try:
+    from http.server import ThreadingHTTPServer
+except ImportError:
+    from socketserver import ThreadingMixIn
+    class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+        daemon_threads = True
+
 
 SERVER_DIR = os.path.dirname(os.path.abspath(__file__))
 if SERVER_DIR not in sys.path:
@@ -213,6 +220,19 @@ def find_roadmap_file():
         if os.path.exists(c):
             return os.path.abspath(c)
     return os.path.abspath(os.path.join(SERVER_DIR, "..", "data", "wave_roadmap.json"))
+
+def find_ci_status_file():
+    candidates = [
+        os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "ci_status.json"),
+        os.path.join(SERVER_DIR, "..", "search_dev_notes", "data", "ci_status.json"),
+        os.path.join(SERVER_DIR, "..", "data", "ci_status.json"),
+        os.path.join(ROOT_DIR, "agent-dual-review", "data", "ci_status.json"),
+        os.path.join(ROOT_DIR, "data", "ci_status.json"),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return os.path.abspath(c)
+    return os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "ci_status.json"))
 
 def find_rebase_script():
     candidates = [
@@ -476,6 +496,13 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=ROOT_DIR, **kwargs)
 
+    def setup(self):
+        super().setup()
+        try:
+            self.request.settimeout(15.0)
+        except Exception:
+            pass
+
     def _send_json(self, data, status=200):
         body = json.dumps(data).encode("utf-8")
         self.send_response(status)
@@ -583,12 +610,29 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                 except Exception:
                     pass
 
+            # Load CI status data
+            ci_data = {}
+            ci_file = find_ci_status_file()
+            if os.path.exists(ci_file):
+                try:
+                    with open(ci_file, "r", encoding="utf-8") as f:
+                        ci_data = json.load(f).get("prs", {})
+                except Exception:
+                    pass
+
             for pid, branch in tracked.items():
                 pr_info = get_live_pr_hunks(branch)
                 pr_info["lifecycle"] = compute_pr_lifecycle(pid, branch, gh_all, roadmap_prs, unaddressed_by_pr)
+                # Match CI status
+                pr_ci = None
+                for pr_num, ci_val in ci_data.items():
+                    if ci_val.get("branch") == branch:
+                        pr_ci = ci_val
+                        break
+                pr_info["ci"] = pr_ci
                 results[pid] = pr_info
 
-            self._send_json({"status": "ok", "prs": results, "githubPrs": gh_all})
+            self._send_json({"status": "ok", "prs": results, "githubPrs": gh_all, "ci": ci_data})
             return
 
         if self.path == "/api/github/prs" or self.path.startswith("/api/github/prs?"):
@@ -652,6 +696,20 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                     self._send_json({"status": "error", "message": str(e)}, status=500)
                     return
             self._send_json({"status": "ok", "rebase": {"status": "NOT_INITIALIZED"}})
+            return
+
+        if self.path == "/api/ci/status" or self.path.startswith("/api/ci/status?"):
+            ci_file = find_ci_status_file()
+            if os.path.exists(ci_file):
+                try:
+                    with open(ci_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    self._send_json({"status": "ok", "ci": data})
+                    return
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, status=500)
+                    return
+            self._send_json({"status": "ok", "ci": {"status": "NOT_INITIALIZED"}})
             return
 
         if self.path.startswith("/api/pr/") and self.path.endswith("/hunks"):
@@ -868,7 +926,8 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
         self._send_json({"status": "error", "message": f"Endpoint not found: {self.path}"}, status=404)
 
 def run(host=HOST, port=PORT):
-    server = HTTPServer((host, port), ReviewRequestHandler)
+    server = ThreadingHTTPServer((host, port), ReviewRequestHandler)
+    server.daemon_threads = True
     print(f"===========================================================", flush=True)
     print(f"  Reviewer Server Running on http://{host}:{port}", flush=True)
     print(f"  Static Root: {ROOT_DIR}", flush=True)
