@@ -125,13 +125,35 @@ class AutoResponder:
         try:
             while True:
                 comments = self.fetch_comments()
-                pending = [c for c in comments if c.get("status") == "PENDING_AGENT_ACTION"]
+                pending = [c for c in comments if c.get("status") in ("PENDING_AGENT_ACTION", "NEEDS_AGENT_ACTION")]
                 
                 for c in pending:
                     cid = c.get("id")
                     if cid not in self.processing_ids:
                         self.processing_ids.add(cid)
                         self.handle_pending_comment(c)
+
+                # Also check unified comments for GitHub threads where user just added a note (status == NEEDS_AGENT_ACTION)
+                try:
+                    u_url = self.api_url.replace("/api/comments", "/api/comments/unified")
+                    req = urllib.request.Request(u_url, headers={"User-Agent": "AutoResponder/1.0"})
+                    with urllib.request.urlopen(req, timeout=3) as resp:
+                        u_data = json.loads(resp.read().decode("utf-8"))
+                        for uc in u_data.get("comments", []):
+                            if uc.get("status") == "NEEDS_AGENT_ACTION":
+                                ucid = uc.get("id")
+                                replies = uc.get("replies", [])
+                                last_author = replies[-1].get("author", "") if replies else ""
+                                key = f"{ucid}_{len(replies)}"
+                                if key not in self.processing_ids and "AI" not in last_author:
+                                    self.processing_ids.add(key)
+                                    self.set_status(
+                                        ucid,
+                                        "ACKNOWLEDGED",
+                                        reply_text=f"⚡ Queued instruction on {uc.get('prId')} ({uc.get('file') or 'PR'}). Agent waking up to respond..."
+                                    )
+                except Exception:
+                    pass
 
                 time.sleep(self.interval)
         except KeyboardInterrupt:
