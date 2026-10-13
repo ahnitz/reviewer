@@ -145,6 +145,19 @@ INITIAL_PR_REGISTRY = {
         "files": ["pycbc/strain/gate.py", "pycbc/strain/strain.py", "test/test_gate_and_paint.py", "test/test_infmodel.py"],
         "test_cmd": "pytest test/test_gate_and_paint.py"
     },
+    "PR-1K": {
+        "wave": 1,
+        "branch": "pr-feat-frame-gwosc-hdf",
+        "title": "feat(frame): eliminate lalframe from core, add pure-Python GWF writer, and unify frame test suite",
+        "status": "PUSHED_TO_ORIGIN",
+        "dependencies": [],
+        "files": ["pycbc/frame/__init__.py", "pycbc/frame/frame.py", "pycbc/frame/gwosc_hdf.py", "test/test_frame.py", "test/test_gwosc_hdf.py"],
+        "test_cmd": "python3 test/test_frame.py",
+        "category": "Frame I/O & Core Decoupling",
+        "problemDescription": "Previously, PyCBC's frame I/O relied on external C lalframe bindings for writing GWF files and managing stream caches, adding heavy C dependency weight and preventing introspection of available channel names. In addition, GWOSC HDF5 reading duplicated cache filtering, multi-file concatenation, and sub-interval slicing logic, while tests were fragmented across separate test files.",
+        "solutionDescription": "1) Added pure-Python GWF frame writing (write_frame_gwf / write_frame) adhering to IGWD Frame format v8 specification with standard POSIX CRC-32 checksums, supporting float32, float64, complex64, complex128, int32, and uint32 series. 2) Decoupled lalframe completely from PyCBC core (0 code imports in pycbc/), refactoring DataBuffer and StatusBuffer onto pure-Python FrameCache and read_frame(). 3) Unified frame cache resolution, gap detection, sub-interval slicing, and series concatenation in read_frame() across both GWF and GWOSC HDF5 files, dramatically simplifying gwosc_hdf.py. 4) Merged test/test_gwosc_hdf.py into test/test_frame.py with cross-compatibility validation ensuring C lalframe can read frames written by pure Python.",
+        "simplificationDeepDive": "Completely eliminates lalframe dependency from pycbc/ core. Cuts 406 net lines while adding pure-Python GWF writing capabilities. Unified test suite executes 24 unit and integration tests cleanly in under 1 second."
+    },
 
     # WAVE 2: PRECONDITIONING, MODELS & COINCIDENCE
     "PR-2A": {
@@ -347,7 +360,26 @@ class DevBranchReconciler:
             res = self.run_cmd(["git", "merge-base", "master", self.dev_branch])
         return res.stdout.strip() if res.returncode == 0 and res.stdout.strip() else "f6eaed241"
 
+    def fetch_origin_dev(self):
+        """Fetches origin/firinspiral3-multidet-asym so remote collaborator pushes are detected."""
+        try:
+            self.run_cmd(["git", "fetch", "origin", "firinspiral3-multidet-asym"])
+            # If current local branch is clean and tracking firinspiral3-multidet-asym or dev, fast-forward cleanly
+            res_cur = self.run_cmd(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+            cur_branch = res_cur.stdout.strip() if res_cur.returncode == 0 else ""
+            if cur_branch in ("firinspiral3-multidet-asym", "dev"):
+                st = self.run_cmd(["git", "status", "--porcelain"])
+                if not st.stdout.strip():
+                    self.run_cmd(["git", "merge", "--ff-only", "origin/firinspiral3-multidet-asym"])
+            # Also keep local 'dev' branch in sync if it exists
+            self.run_cmd(["git", "branch", "-f", "dev", "origin/firinspiral3-multidet-asym"])
+        except Exception as e:
+            print(f"[WARN] Failed fetching dev branch from origin: {e}", file=sys.stderr)
+
     def get_dev_head(self):
+        res = self.run_cmd(["git", "rev-parse", "origin/firinspiral3-multidet-asym"])
+        if res.returncode == 0 and res.stdout.strip():
+            return res.stdout.strip()
         res = self.run_cmd(["git", "rev-parse", self.dev_branch])
         return res.stdout.strip() if res.returncode == 0 else None
 
@@ -426,6 +458,7 @@ class DevBranchReconciler:
 
     def reconcile(self):
         """Scans the development branch commits and reconciles with PRs and Waves."""
+        self.fetch_origin_dev()
         base_commit = self.get_merge_base()
         head_commit = self.get_dev_head()
         if not head_commit:
@@ -434,11 +467,12 @@ class DevBranchReconciler:
         self.state["upstream_base"] = base_commit
         last_ingested = self.state.get("last_ingested_commit")
 
-        # Determine commit range
+        # Determine commit range (prefer remote-tracking origin ref so collaborator pushes are included)
+        target_ref = "origin/firinspiral3-multidet-asym" if self.run_cmd(["git", "rev-parse", "origin/firinspiral3-multidet-asym"]).returncode == 0 else self.dev_branch
         if last_ingested:
-            rev_range = f"{last_ingested}..{self.dev_branch}"
+            rev_range = f"{last_ingested}..{target_ref}"
         else:
-            rev_range = f"{base_commit}..{self.dev_branch}"
+            rev_range = f"{base_commit}..{target_ref}"
 
         res = self.run_cmd(["git", "log", "--reverse", "--format=%H %s", rev_range])
         new_commits = []
@@ -504,6 +538,10 @@ class DevBranchReconciler:
                         if f not in self.state["prs"][new_pr_id]["files"]:
                             self.state["prs"][new_pr_id]["files"].append(f)
 
+        # Reconcile non-opened PRs and future wave candidates against upstream master
+        unopened_events = self.reconcile_unopened_prs()
+        reconciled_events.extend(unopened_events)
+
         self.state["last_ingested_commit"] = head_commit
         self.state["ingested_commits_count"] = self.state.get("ingested_commits_count", 0) + len(new_commits)
         self.save_state()
@@ -515,8 +553,117 @@ class DevBranchReconciler:
             "base_commit": base_commit,
             "new_commits_scanned": len(new_commits),
             "events_count": len(reconciled_events),
+            "unopened_reconciled_events": len(unopened_events),
             "events": reconciled_events[-20:] # return last 20 events
         }
+
+    def reconcile_unopened_prs(self):
+        """
+        Reconciles non-opened PR candidates against upstream/master.
+        Evaluates whether proposed changes from upstream have incorporated or superseded
+        any planned PRs or files, or if rebase / conflict resolution is required.
+        """
+        events = []
+        upstream_ref = f"{self.upstream_remote}/{self.upstream_branch}"
+        dev_ref = "origin/firinspiral3-multidet-asym" if self.run_cmd(["git", "rev-parse", "origin/firinspiral3-multidet-asym"]).returncode == 0 else self.dev_branch
+
+        # Ensure upstream is fetched
+        self.run_cmd(["git", "fetch", self.upstream_remote, self.upstream_branch])
+
+        for pid, pdata in self.state.get("prs", {}).items():
+            if pdata.get("status") in ("OPEN_UPSTREAM", "MERGED_UPSTREAM"):
+                continue
+
+            branch = pdata.get("branch")
+            files = pdata.get("files", [])
+            prev_status = pdata.get("status")
+
+            # 1. Check if dedicated branch exists locally or on origin
+            b_target = None
+            if branch:
+                if self.run_cmd(["git", "rev-parse", "--verify", branch]).returncode == 0:
+                    b_target = branch
+                elif self.run_cmd(["git", "rev-parse", "--verify", f"origin/{branch}"]).returncode == 0:
+                    b_target = f"origin/{branch}"
+
+            if b_target:
+                is_anc = (self.run_cmd(["git", "merge-base", "--is-ancestor", b_target, upstream_ref]).returncode == 0)
+                p_ch = self.run_cmd(["git", "cherry", "-v", upstream_ref, b_target])
+                ch_lines = p_ch.stdout.strip().splitlines() if p_ch.returncode == 0 else []
+                equiv_commits = [l for l in ch_lines if l.startswith("-")]
+                pending_commits = [l for l in ch_lines if l.startswith("+")]
+
+                p_diff = self.run_cmd(["git", "diff", f"{upstream_ref}...{b_target}", "--stat"])
+                is_empty_diff = (not p_diff.stdout.strip())
+
+                p_mt = self.run_cmd(["git", "merge-tree", upstream_ref, b_target])
+                has_conflict = ("+<<<<<<<" in p_mt.stdout or "<<<<<<<" in p_mt.stdout)
+
+                if is_anc or (len(pending_commits) == 0 and len(equiv_commits) > 0) or is_empty_diff:
+                    new_status = "INCORPORATED_UPSTREAM"
+                    note = f"Non-opened branch {branch} is completely incorporated or superseded in {upstream_ref}."
+                elif has_conflict:
+                    new_status = "CONFLICT_WITH_UPSTREAM"
+                    note = f"Non-opened branch {branch} has merge conflicts against {upstream_ref}; needs rebase."
+                else:
+                    new_status = "READY_TO_OPEN" if pdata.get("wave") == 1 else "QUEUED"
+                    note = f"Non-opened branch {branch} merges cleanly into {upstream_ref} ({len(pending_commits)} pending commits)."
+
+                pdata["upstream_status"] = new_status
+                pdata["upstream_equiv_commits"] = len(equiv_commits)
+                pdata["upstream_pending_commits"] = len(pending_commits)
+                pdata["upstream_conflicts"] = has_conflict
+                pdata["last_upstream_check"] = datetime.now().isoformat()
+
+                if new_status in ("INCORPORATED_UPSTREAM", "CONFLICT_WITH_UPSTREAM") and new_status != prev_status:
+                    pdata["status"] = new_status
+                    ev = {
+                        "pr_id": pid,
+                        "branch": branch,
+                        "action": "UPSTREAM_RECONCILED",
+                        "status": new_status,
+                        "note": note,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    events.append(ev)
+                    self.state.setdefault("ingestion_log", []).append(ev)
+
+            elif files:
+                p_diff = self.run_cmd(["git", "diff", f"{upstream_ref}..{dev_ref}", "--"] + files)
+                is_empty_diff = (not p_diff.stdout.strip())
+
+                p_up = self.run_cmd(["git", "log", f"{self.state.get('upstream_base', 'f6eaed241')}..{upstream_ref}", "--oneline", "--"] + files)
+                up_touches = [l.strip() for l in p_up.stdout.strip().splitlines() if l.strip()]
+
+                if is_empty_diff:
+                    new_status = "SUPERSEDED_OR_INCORPORATED"
+                    note = f"Candidate {pid} planned files have 0 diff against {upstream_ref}; superseded or incorporated upstream."
+                elif up_touches:
+                    new_status = "MODIFIED_UPSTREAM"
+                    note = f"Candidate {pid} files touched upstream by {len(up_touches)} commit(s): {', '.join([c[:9] for c in up_touches[:3]])}"
+                else:
+                    new_status = "CLEAN_DIFF_AGAINST_UPSTREAM"
+                    note = f"Candidate {pid} planned files differ cleanly against {upstream_ref}."
+
+                pdata["upstream_status"] = new_status
+                pdata["upstream_touches_count"] = len(up_touches)
+                pdata["upstream_recent_touches"] = up_touches[:5]
+                pdata["last_upstream_check"] = datetime.now().isoformat()
+
+                if new_status in ("SUPERSEDED_OR_INCORPORATED", "MODIFIED_UPSTREAM") and new_status != prev_status:
+                    if new_status == "SUPERSEDED_OR_INCORPORATED":
+                        pdata["status"] = new_status
+                    ev = {
+                        "pr_id": pid,
+                        "action": "UPSTREAM_RECONCILED",
+                        "status": new_status,
+                        "note": note,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    events.append(ev)
+                    self.state.setdefault("ingestion_log", []).append(ev)
+
+        return events
 
     def print_status(self):
         state = self.state

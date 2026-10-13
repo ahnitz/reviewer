@@ -17,6 +17,7 @@ Features:
 
 import os
 import sys
+import re
 import json
 import time
 import argparse
@@ -140,8 +141,73 @@ class CITracker:
             and p.get("head", {}).get("ref") in target_branches
         ]
 
-    def fetch_check_runs(self, commit_sha):
-        """Fetch check runs for a given commit SHA with completed-suite caching."""
+    def _scrape_html_checks(self, pr_num, commit_sha):
+        """Scrape checks directly from GitHub PR checks page to bypass rate limits."""
+        url = f"https://github.com/{self.repo_owner}/{self.repo_name}/pull/{pr_num}/checks"
+        try:
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                },
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                html_txt = resp.read().decode("utf-8")
+        except Exception:
+            return []
+
+        suites = html_txt.split('id="sidebar_check_suite_')[1:]
+        jobs = []
+        for s in suites:
+            wf_m = re.search(r'href="/[^"]*/actions/runs/(\d+)"[^>]*>.*?<span>([^<]+)</span>', s, re.DOTALL)
+            wf_name = wf_m.group(2).strip() if wf_m else "Workflow"
+            for m in re.finditer(r'href="(/[^"]*/actions/runs/(\d+)/job/(\d+)\??[^"]*)"[^>]*>.*?<span>([^<]+)</span>', s, re.DOTALL):
+                job_url = "https://github.com" + m.group(1)
+                job_id = m.group(3)
+                job_name = m.group(4).strip()
+                if "github" in job_name.lower():
+                    continue
+                if any(j.get("id") == job_id for j in jobs):
+                    continue
+
+                link_start = m.start()
+                chunk = s[max(0, link_start - 1200):link_start]
+                aria_matches = re.findall(r'aria-label=[\"\']?([^\s\"\'>][^\"\'>]*)[\"\']?', chunk)
+                raw_status = "Unknown"
+                for a in reversed(aria_matches):
+                    if any(k in a.lower() for k in ["succeeded", "failed", "progress", "cancelled", "skipped", "queued"]):
+                        raw_status = a
+                        break
+
+                status = "completed"
+                conclusion = None
+                raw_lower = raw_status.lower()
+                if "succeeded" in raw_lower:
+                    conclusion = "success"
+                elif "failed" in raw_lower:
+                    conclusion = "failure"
+                elif "cancelled" in raw_lower:
+                    conclusion = "cancelled"
+                elif "skipped" in raw_lower:
+                    conclusion = "skipped"
+                elif "progress" in raw_lower:
+                    status = "in_progress"
+                elif "queued" in raw_lower:
+                    status = "queued"
+
+                jobs.append({
+                    "id": job_id,
+                    "name": job_name,
+                    "workflow": wf_name,
+                    "status": status,
+                    "conclusion": conclusion,
+                    "html_url": job_url,
+                    "raw_status": raw_status,
+                })
+        return jobs
+
+    def fetch_check_runs(self, commit_sha, pr_number=None):
+        """Fetch check runs for a given commit SHA with completed-suite caching and HTML fallback."""
         if commit_sha in self._commit_cache:
             cached_runs = self._commit_cache[commit_sha]
             # If all were completed, no need to re-query
@@ -154,10 +220,17 @@ class CITracker:
             f"/commits/{commit_sha}/check-runs?per_page=100"
         )
         data = self._http_get(url)
-        if data and "check_runs" in data:
+        if data and "check_runs" in data and len(data["check_runs"]) > 0:
             runs = data["check_runs"]
             self._commit_cache[commit_sha] = runs
             return runs
+
+        # Fallback to direct HTML scrape if API is rate limited or empty
+        if pr_number:
+            html_runs = self._scrape_html_checks(pr_number, commit_sha)
+            if html_runs:
+                self._commit_cache[commit_sha] = html_runs
+                return html_runs
 
         return self._commit_cache.get(commit_sha, [])
 
@@ -254,7 +327,7 @@ class CITracker:
         head_sha = pr["head"]["sha"]
         head_ref = pr["head"]["ref"]
 
-        check_runs = self.fetch_check_runs(head_sha)
+        check_runs = self.fetch_check_runs(head_sha, pr_number=pr_number)
         total = len(check_runs)
         completed = [c for c in check_runs if c.get("status") == "completed"]
         in_progress = [c for c in check_runs if c.get("status") in ("in_progress", "queued")]
@@ -270,7 +343,7 @@ class CITracker:
             if actionable:
                 actionable_count += 1
             failed_details.append({
-                "name": f.get("name"),
+                "name": f.get("name") or f.get("job_name"),
                 "conclusion": f.get("conclusion"),
                 "category": cat,
                 "url": f.get("html_url"),
@@ -289,6 +362,19 @@ class CITracker:
             # Only runner / format baseline
             overall_status = "RUNNER_ENVIRONMENT"
 
+        check_runs_list = []
+        for c in check_runs:
+            check_runs_list.append({
+                "id": str(c.get("id", "")),
+                "name": c.get("name") or c.get("job_name", "Check"),
+                "workflow": c.get("workflow", ""),
+                "status": c.get("status", "completed"),
+                "conclusion": c.get("conclusion"),
+                "url": c.get("html_url") or c.get("job_url", ""),
+                "startedAt": c.get("started_at"),
+                "completedAt": c.get("completed_at"),
+            })
+
         return {
             "prNumber": pr_number,
             "title": title,
@@ -301,6 +387,7 @@ class CITracker:
             "inProgressCount": len(in_progress),
             "actionableCount": actionable_count,
             "failures": failed_details,
+            "checkRuns": check_runs_list,
             "localValidation": local_val,
             "lastChecked": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }

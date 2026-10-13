@@ -14,6 +14,7 @@ import argparse
 import subprocess
 import re
 import urllib.request
+import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 try:
     from http.server import ThreadingHTTPServer
@@ -161,15 +162,12 @@ DEFAULT_PR_BRANCH_MAP = {
     "PR-1B": "pr-fix-io-dictarray-indexing",
     "PR-1C": "pr-fix-events-numpy2-zerolag",
     "PR-1D": "pr-perf-waveform-compress",
-    "PR-1E": "pr-feat-vetoes-chisq-slicing",
     "PR-1F": "pr-feat-events-eventmgr-multi",
     "PR-1G": "pr-feat-filter-dynamic-snr-renorm",
     "PR-1H": "pr-feat-inject-injfilter-optimal-snr",
     "PR-1I": "pr-feat-psd-robust-estimators",
     "PR-1J": "pr-feat-strain-regularized-inpainting",
     "PR-1K": "pr-feat-frame-gwosc-hdf",
-    "PR-1L": "pr-fix-filter-qtransform",
-    "PR-1M": "pr-fix-filter-resample-copy",
 }
 
 PR_BRANCH_MAP = dict(CFG.get("project", {}).get("branch_map", DEFAULT_PR_BRANCH_MAP))
@@ -234,6 +232,30 @@ def find_ci_status_file():
             return os.path.abspath(c)
     return os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "ci_status.json"))
 
+def find_github_comments_file():
+    candidates = [
+        os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "github_comments.json"),
+        os.path.join(SERVER_DIR, "..", "search_dev_notes", "data", "github_comments.json"),
+        os.path.join(SERVER_DIR, "..", "data", "github_comments.json"),
+        os.path.join(ROOT_DIR, "agent-dual-review", "data", "github_comments.json"),
+        os.path.join(ROOT_DIR, "data", "github_comments.json"),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return os.path.abspath(c)
+    return os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "github_comments.json"))
+
+def find_action_queue_file():
+    candidates = [
+        os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "action_queue.json"),
+        os.path.join(SERVER_DIR, "..", "data", "action_queue.json"),
+        os.path.join(ROOT_DIR, "agent-dual-review", "data", "action_queue.json"),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return os.path.abspath(c)
+    return os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "action_queue.json"))
+
 def find_rebase_script():
     candidates = [
         os.path.join(SERVER_DIR, "..", "sentinel", "rebase_monitor.py"),
@@ -244,6 +266,237 @@ def find_rebase_script():
         if os.path.exists(c):
             return os.path.abspath(c)
     return None
+
+def find_candidates_file():
+    candidates = [
+        os.path.join(SERVER_DIR, "..", "data", "candidate_prs.json"),
+        os.path.join(ROOT_DIR, "agent-dual-review", "data", "candidate_prs.json"),
+        os.path.join(ROOT_DIR, "data", "candidate_prs.json"),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return os.path.abspath(c)
+    return os.path.abspath(os.path.join(SERVER_DIR, "..", "data", "candidate_prs.json"))
+
+def scan_dev_branch_candidates():
+    """Scans the remaining diff on the dev branch vs upstream/master and groups it into atomic PR proposals."""
+    dev_branch = CFG.get("project", {}).get("dev_branch", "firinspiral3-multidet-asym")
+    p = subprocess.run(["git", "diff", "--name-only", f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}...{dev_branch}"],
+                       cwd=REPO_DIR, capture_output=True, text=True)
+    if p.returncode != 0:
+        return {"status": "error", "message": "Failed to run git diff against dev branch"}
+    all_files = set(p.stdout.splitlines())
+
+    # Exclude files in currently active PR branches
+    active_files = set()
+    for b in PR_BRANCH_MAP.values():
+        p_b = subprocess.run(["git", "diff", "--name-only", f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}...{b}"],
+                             cwd=REPO_DIR, capture_output=True, text=True)
+        if p_b.returncode == 0:
+            active_files.update(p_b.stdout.splitlines())
+
+    unpeeled = sorted(list(all_files - active_files))
+
+    candidate_defs = [
+        {
+            "id": "CAND-PSD-MODEL",
+            "title": "feat(psd): Instantaneous PSD model representation, serialization, and robust estimators",
+            "subsystem": "PSD & Noise Estimation",
+            "suggested_branch": "feat/psd-instantaneous-model",
+            "matcher": lambda f: f.startswith("pycbc/psd/") or f.startswith("test/test_psd") or ("psd" in f.lower() and f.startswith("bin/")),
+            "rationale": "Self-contained compact model representation of time-varying PSDs with spline and line estimators. Decoupled from core search executable."
+        },
+        {
+            "id": "CAND-STRAIN-OVERWHITEN",
+            "title": "feat(strain): Continuous in-situ overwhitening and Toeplitz strain inpainting",
+            "subsystem": "Strain Conditioning",
+            "suggested_branch": "feat/strain-continuous-overwhitening",
+            "matcher": lambda f: "overwhiten" in f or "gate_and_paint" in f or "gate.py" in f or "test_gate" in f,
+            "rationale": "Clean strain conditioning algorithms for suppressing spectral non-stationarities. Replaces legacy gating routines."
+        },
+        {
+            "id": "CAND-COINC-STATMAP",
+            "title": "perf(coinc): Memory-bounded statmap combination and multi-detector livetime accounting",
+            "subsystem": "Coincidence & Post-processing",
+            "suggested_branch": "perf/coinc-statmap-bounded-memory",
+            "matcher": lambda f: "statmap" in f or "pycbc/events/stat.py" in f or "pycbc/events/ranking.py" in f or "test_ranking.py" in f,
+            "rationale": "Reduces memory footprint during background coincidence clustering with 10M+ events using in-place DictArray operations."
+        },
+        {
+            "id": "CAND-FILTER-RATIO",
+            "title": "feat(filter): Ratio matched filter engine with dynamic SNR renormalization",
+            "subsystem": "Matched Filtering Engine",
+            "suggested_branch": "feat/filter-matched-filter-ratio",
+            "matcher": lambda f: "matched_filter_ratio" in f or "dynamic_snr" in f or "matchedfilter_cpu.pyx" in f,
+            "rationale": "Hierarchical ratio matched filtering engine with hollow-notch variance tracking."
+        },
+        {
+            "id": "CAND-WAVEFORM-BANK",
+            "title": "feat(waveform): RatioFilterBank data structures and hierarchical template grouping",
+            "subsystem": "Waveform Banks",
+            "suggested_branch": "feat/waveform-ratio-filterbank",
+            "matcher": lambda f: "waveform/bank.py" in f or "fir_bank" in f or "ratio_bank" in f,
+            "rationale": "Sub-bank decomposition data structures for multi-rate ratio filtering."
+        },
+        {
+            "id": "CAND-WORKFLOW-SEARCH",
+            "title": "feat(workflow): Multi-detector hierarchical inspiral search workflow generation",
+            "subsystem": "Workflow Planning",
+            "suggested_branch": "feat/workflow-multidet-inspiral",
+            "matcher": lambda f: f.startswith("pycbc/workflow/") or f.startswith("bin/workflows/"),
+            "rationale": "Pegasus workflow generators for distributed multi-detector searches."
+        }
+    ]
+
+    matched_all = set()
+    proposals = []
+    for cdef in candidate_defs:
+        m_files = [f for f in unpeeled if cdef["matcher"](f)]
+        if m_files:
+            matched_all.update(m_files)
+            p_stat = subprocess.run(["git", "diff", f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}...{dev_branch}", "--shortstat", "--"] + m_files,
+                                    cwd=REPO_DIR, capture_output=True, text=True)
+            stat = p_stat.stdout.strip() if p_stat.returncode == 0 else ""
+            proposals.append({
+                "id": cdef["id"],
+                "title": cdef["title"],
+                "subsystem": cdef["subsystem"],
+                "suggested_branch": cdef["suggested_branch"],
+                "rationale": cdef["rationale"],
+                "file_count": len(m_files),
+                "files": m_files,
+                "diff_stat": stat
+            })
+
+    leftover = [f for f in unpeeled if f not in matched_all]
+    data = {
+        "status": "ok",
+        "last_scanned": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "dev_branch": dev_branch,
+        "upstream": f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}",
+        "total_unpeeled_files": len(unpeeled),
+        "candidates": proposals,
+        "leftover_files_count": len(leftover),
+        "leftover_sample": leftover[:30]
+    }
+    cand_file = find_candidates_file()
+    os.makedirs(os.path.dirname(cand_file), exist_ok=True)
+    with open(cand_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    return data
+
+def test_dev_rebase():
+    """Simulates rebasing the dev branch onto upstream/master and reports results."""
+    dev_branch = CFG.get("project", {}).get("dev_branch", "firinspiral3-multidet-asym")
+    # Fetch upstream master
+    subprocess.run(["git", "fetch", UPSTREAM_REMOTE, UPSTREAM_BRANCH], cwd=REPO_DIR, capture_output=True, text=True)
+    # Check merge base
+    p_mb = subprocess.run(["git", "merge-base", f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}", dev_branch],
+                          cwd=REPO_DIR, capture_output=True, text=True)
+    mb = p_mb.stdout.strip()
+    p_tree = subprocess.run(["git", "merge-tree", mb, f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}", dev_branch],
+                            cwd=REPO_DIR, capture_output=True, text=True)
+    conflicts = [l for l in p_tree.stdout.splitlines() if "<<<<<<<" in l or "changed in both" in l]
+    return {
+        "status": "ok",
+        "merge_base": mb,
+        "upstream_target": f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}",
+        "dev_branch": dev_branch,
+        "conflicts_detected": len(conflicts),
+        "is_clean": len(conflicts) == 0,
+        "conflict_summary": conflicts[:10]
+    }
+
+def get_unified_comments(pr_id=None):
+    """Merges internal feedback and GitHub reviewer comments into a unified feed."""
+    fb = load_feedback()
+    gh_data = {}
+    gh_file = find_github_comments_file()
+    if os.path.exists(gh_file):
+        try:
+            with open(gh_file, "r", encoding="utf-8") as f:
+                gh_data = json.load(f)
+        except Exception:
+            pass
+
+    pr_id_map = {
+        "5475": "PR-1A", "5474": "PR-1B", "5473": "PR-1D",
+        "5480": "PR-1E", "5481": "PR-1F", "5479": "PR-1H",
+        "5482": "PR-1K", "5478": "PR-1M"
+    }
+    # Normalize pr_id if branch name or PR number was passed
+    target_pid = None
+    if pr_id:
+        pr_str = str(pr_id).strip()
+        if pr_str in pr_id_map:
+            target_pid = pr_id_map[pr_str]
+        else:
+            # Check branch map
+            for k, b in PR_BRANCH_MAP.items():
+                if pr_str.upper() == k.upper() or pr_str == b:
+                    target_pid = k
+                    break
+            if not target_pid:
+                target_pid = pr_str.upper()
+
+    items = []
+    # 1. Internal review items
+    for c in fb:
+        c_pid = c.get("prId", "").upper()
+        if target_pid and c_pid != target_pid.upper():
+            continue
+        items.append({
+            "id": c.get("id"),
+            "prId": c_pid,
+            "hunkIndex": c.get("hunkIndex"),
+            "source": "INTERNAL_NOTE",
+            "sourceLabel": "Author / Team Note",
+            "author": c.get("author", "Maintainer"),
+            "file": c.get("file", ""),
+            "lines": c.get("lines", ""),
+            "body": c.get("commentText", ""),
+            "commentText": c.get("commentText", ""),
+            "status": c.get("status", "PENDING_AGENT_ACTION"),
+            "createdAt": c.get("createdAt", ""),
+            "replies": c.get("replies", []),
+            "resolution": c.get("resolution")
+        })
+
+    # 2. GitHub reviewer comments
+    for p_num, p_data in gh_data.get("prs", {}).items():
+        mapped_pid = pr_id_map.get(str(p_num), f"PR-{p_num}")
+        if target_pid and mapped_pid.upper() != target_pid.upper():
+            continue
+        for gc in p_data.get("comments", []):
+            items.append({
+                "id": gc.get("id"),
+                "prId": mapped_pid,
+                "prNumber": p_num,
+                "source": "GITHUB_REVIEWER",
+                "sourceLabel": "GitHub Reviewer",
+                "isBot": gc.get("isBot", False),
+                "type": gc.get("type", "inline_review"),
+                "author": gc.get("author", "Reviewer"),
+                "authorAvatar": gc.get("authorAvatar", ""),
+                "file": gc.get("path", ""),
+                "path": gc.get("path", ""),
+                "lines": gc.get("lines", ""),
+                "diffSnippet": gc.get("diffSnippet", ""),
+                "body": gc.get("body", ""),
+                "commentText": gc.get("body", ""),
+                "htmlUrl": gc.get("htmlUrl", ""),
+                "status": gc.get("status", "NEEDS_TRIAGE"),
+                "createdAt": gc.get("createdAt", ""),
+                "aiAssessment": gc.get("aiAssessment", {}),
+                "actionStatus": gc.get("actionStatus", "NONE"),
+                "actionId": gc.get("actionId", ""),
+                "userStatus": gc.get("userStatus", "PENDING_TRIAGE"),
+                "userNote": gc.get("userNote", ""),
+                "replies": gc.get("replies", [])
+            })
+
+    items.sort(key=lambda x: x.get("createdAt", ""))
+    return items
 
 GITHUB_PR_CACHE = {"data": None, "time": 0}
 
@@ -321,6 +574,30 @@ def compute_pr_lifecycle(pr_id, branch, gh_prs, roadmap_prs, unaddressed_comment
         }
 
     pdata = roadmap_prs.get(pr_id, {})
+    up_status = pdata.get("upstream_status")
+    if up_status in ("INCORPORATED_UPSTREAM", "SUPERSEDED_OR_INCORPORATED") or pdata.get("status") in ("INCORPORATED_UPSTREAM", "SUPERSEDED_OR_INCORPORATED"):
+        return {
+            "phase": "INCORPORATED_UPSTREAM",
+            "label": "Incorporated / Superseded Upstream",
+            "badge": "🟣 INCORPORATED UPSTREAM",
+            "action": "Changes already merged or superseded in upstream master; no further action needed.",
+            "actionUrl": None,
+            "actionText": "Merged Upstream",
+            "isActionNeeded": False,
+            "order": 5
+        }
+    if up_status == "CONFLICT_WITH_UPSTREAM":
+        return {
+            "phase": "CONFLICT",
+            "label": "Upstream Merge Conflict",
+            "badge": "⚠️ REBASE NEEDED",
+            "action": "Upstream master modifications conflict with branch; rebase required before opening.",
+            "actionUrl": None,
+            "actionText": "Rebase Required",
+            "isActionNeeded": True,
+            "order": 0
+        }
+
     deps = pdata.get("dependencies", [])
     merged_branches = {b for b, p in gh_prs.items() if p.get("state") == "MERGED"}
     unmerged_deps = [d for d in deps if roadmap_prs.get(d, {}).get("branch") not in merged_branches]
@@ -520,7 +797,8 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_HEAD(self):
-        if self.path in ("/", "", "/index.html", "/pr_review_dashboard.html"):
+        req_path = urllib.parse.urlparse(self.path).path
+        if req_path in ("/", "", "/index.html", "/pr_review_dashboard.html"):
             dashboard_candidates = [
                 os.path.join(ROOT_DIR, "dashboard", "pr_review_dashboard.html"),
                 os.path.join(ROOT_DIR, "pr_review_dashboard.html"),
@@ -538,11 +816,23 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                     self.send_header("Expires", "0")
                     self.end_headers()
                     return
+        if req_path == "/favicon.ico":
+            self.send_response(204)
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.end_headers()
+            return
+        if req_path.startswith("/api/"):
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            return
         super().do_HEAD()
 
     def do_GET(self):
+        req_path = urllib.parse.urlparse(self.path).path
+
         # Direct serve dashboard on root or index.html with no-cache headers
-        if self.path in ("/", "", "/index.html", "/pr_review_dashboard.html"):
+        if req_path in ("/", "", "/index.html", "/pr_review_dashboard.html"):
             dashboard_candidates = [
                 os.path.join(ROOT_DIR, "dashboard", "pr_review_dashboard.html"),
                 os.path.join(ROOT_DIR, "pr_review_dashboard.html"),
@@ -564,7 +854,13 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                     self.wfile.write(content)
                     return
 
-        if self.path == "/api/health":
+        if req_path == "/favicon.ico":
+            self.send_response(204)
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self.end_headers()
+            return
+
+        if req_path == "/api/health":
             comments = load_feedback()
             pending = sum(1 for c in comments if c.get("status") not in ("ADDRESSED", "RESOLVED"))
             self._send_json({
@@ -578,12 +874,12 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             })
             return
 
-        if self.path == "/api/comments" or self.path.startswith("/api/comments?"):
+        if req_path == "/api/comments":
             comments = load_feedback()
             self._send_json({"status": "ok", "comments": comments})
             return
 
-        if self.path == "/api/prs" or self.path.startswith("/api/prs?"):
+        if req_path == "/api/prs":
             results = {}
             tracked = dict(PR_BRANCH_MAP)
 
@@ -600,19 +896,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                 if bname and bname not in tracked.values():
                     tracked[pid] = bname
 
-            # Include any synthesized candidates from wave_roadmap.json if marked as TRACKED
-            rm_file = find_roadmap_file()
-            if os.path.exists(rm_file):
-                try:
-                    with open(rm_file, "r", encoding="utf-8") as f:
-                        rm_data = json.load(f)
-                    for pid, pdata in rm_data.get("prs", {}).items():
-                        if pdata.get("status") in ("PUSHED_TO_ORIGIN", "ACTIVE", "TRACKED") and pdata.get("branch"):
-                            bname = pdata["branch"]
-                            if bname not in tracked.values():
-                                tracked[pid] = bname
-                except Exception:
-                    pass
+            # Strictly track only configured PR_BRANCH_MAP and explicit USER_REQUESTED_BRANCHES
 
             gh_all = get_github_prs()
 
@@ -652,6 +936,12 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
 
             for pid, branch in tracked.items():
                 pr_info = get_live_pr_hunks(branch)
+                rm_info = roadmap_prs.get(pid, {})
+                for k in ["title", "category", "problemDescription", "solutionDescription",
+                          "simplificationDeepDive", "testCmd", "testTiming", "dependencies",
+                          "unblocks", "wave"]:
+                    if k in rm_info and (k not in pr_info or not pr_info[k]):
+                        pr_info[k] = rm_info[k]
                 pr_info["lifecycle"] = compute_pr_lifecycle(pid, branch, gh_all, roadmap_prs, unaddressed_by_pr)
                 # Match CI status
                 pr_ci = None
@@ -660,16 +950,18 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                         pr_ci = ci_val
                         break
                 pr_info["ci"] = pr_ci
+                if pr_info.get("githubPr") and pr_info["githubPr"].get("state") == "MERGED":
+                    continue
                 results[pid] = pr_info
 
             self._send_json({"status": "ok", "prs": results, "githubPrs": gh_all, "ci": ci_data})
             return
 
-        if self.path == "/api/github/prs" or self.path.startswith("/api/github/prs?"):
+        if req_path == "/api/github/prs":
             self._send_json({"status": "ok", "githubPrs": get_github_prs()})
             return
 
-        if self.path == "/api/roadmap" or self.path.startswith("/api/roadmap?"):
+        if req_path == "/api/roadmap":
             rm_file = find_roadmap_file()
             if os.path.exists(rm_file):
                 try:
@@ -683,7 +975,31 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"status": "error", "message": "Roadmap not found"}, status=404)
             return
 
-        if self.path == "/api/dev/status" or self.path.startswith("/api/dev/status?"):
+        if req_path == "/api/reconciliation":
+            rm_file = find_roadmap_file()
+            if os.path.exists(rm_file):
+                try:
+                    with open(rm_file, "r", encoding="utf-8") as f:
+                        rm_data = json.load(f)
+                    unopened = {
+                        pid: p for pid, p in rm_data.get("prs", {}).items()
+                        if p.get("status") not in ("OPEN", "PUSHED_TO_ORIGIN") or p.get("upstream_status")
+                    }
+                    self._send_json({
+                        "status": "ok",
+                        "last_reconciled": rm_data.get("last_updated"),
+                        "last_ingested_commit": rm_data.get("last_ingested_commit"),
+                        "unopened_prs": unopened,
+                        "ingestion_log": rm_data.get("ingestion_log", [])[-25:]
+                    })
+                    return
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, status=500)
+                    return
+            self._send_json({"status": "error", "message": "Roadmap not found"}, status=404)
+            return
+
+        if req_path == "/api/dev/status":
             dev_branch = CFG.get("project", {}).get("dev_branch", "firinspiral3-multidet-asym")
             p_head = subprocess.run(["git", "rev-parse", dev_branch], cwd=REPO_DIR, capture_output=True, text=True)
             head_sha = p_head.stdout.strip() if p_head.returncode == 0 else ""
@@ -700,7 +1016,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             })
             return
 
-        if self.path == "/api/branches" or self.path.startswith("/api/branches?"):
+        if req_path == "/api/branches":
             # Restrict to branches pushed to maintainer's own GitHub account (origin)
             p_br = subprocess.run(["git", "branch", "-r", "--list", f"{ORIGIN_REMOTE}/*", "--format=%(refname:short) %(objectname:short)"], cwd=REPO_DIR, capture_output=True, text=True)
             branches = []
@@ -714,7 +1030,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"status": "ok", "branches": branches})
             return
 
-        if self.path == "/api/rebase/status" or self.path.startswith("/api/rebase/status?"):
+        if req_path == "/api/rebase/status":
             rebase_file = find_rebase_status_file()
             if os.path.exists(rebase_file):
                 try:
@@ -728,7 +1044,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"status": "ok", "rebase": {"status": "NOT_INITIALIZED"}})
             return
 
-        if self.path == "/api/ci/status" or self.path.startswith("/api/ci/status?"):
+        if req_path == "/api/ci/status":
             ci_file = find_ci_status_file()
             if os.path.exists(ci_file):
                 try:
@@ -742,18 +1058,86 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"status": "ok", "ci": {"status": "NOT_INITIALIZED"}})
             return
 
-        if self.path.startswith("/api/pr/") and self.path.endswith("/hunks"):
-            parts = self.path.split("/")
-            pr_id = parts[3].upper()
-            data = get_live_pr_hunks(pr_id)
+        if req_path.startswith("/api/pr/") and req_path.endswith("/hunks"):
+            parts = req_path.split("/")
+            if len(parts) >= 4:
+                pr_id = parts[3].upper()
+                data = get_live_pr_hunks(pr_id)
+                self._send_json(data)
+                return
+
+        if req_path == "/api/github/comments":
+            c_file = find_github_comments_file()
+            if os.path.exists(c_file):
+                try:
+                    with open(c_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                    pr_filter = query.get("pr", [None])[0] or query.get("prId", [None])[0]
+                    if pr_filter:
+                        prs = data.get("prs", {})
+                        target = None
+                        for k, v in prs.items():
+                            if str(k) == str(pr_filter) or v.get("prId", "").upper() == str(pr_filter).upper():
+                                target = v
+                                break
+                        self._send_json({"status": "ok", "pr": target or {"comments": [], "totalCount": 0}})
+                        return
+                    self._send_json({"status": "ok", "comments": data})
+                    return
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, status=500)
+                    return
+            self._send_json({"status": "ok", "comments": {"totalComments": 0, "prs": {}}})
+            return
+
+        if req_path == "/api/actions":
+            a_file = find_action_queue_file()
+            if os.path.exists(a_file):
+                try:
+                    with open(a_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    self._send_json({"status": "ok", "actions": data})
+                    return
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, status=500)
+                    return
+            self._send_json({"status": "ok", "actions": []})
+            return
+
+        if req_path == "/api/candidates":
+            cand_file = find_candidates_file()
+            if os.path.exists(cand_file):
+                try:
+                    with open(cand_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    self._send_json(data)
+                    return
+                except Exception as e:
+                    pass
+            # Generate on-the-fly if not cached
+            data = scan_dev_branch_candidates()
             self._send_json(data)
+            return
+
+        if req_path == "/api/comments/unified":
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            pr_filter = query.get("pr", [None])[0] or query.get("prId", [None])[0]
+            unified = get_unified_comments(pr_filter)
+            self._send_json({"status": "ok", "comments": unified, "totalCount": len(unified)})
+            return
+
+        if req_path == "/api/dev/rebase/test":
+            res = test_dev_rebase()
+            self._send_json(res)
             return
 
         super().do_GET()
 
     def do_POST(self):
         global USER_REQUESTED_BRANCHES
-        if self.path == "/api/rebase/sync":
+        req_path = urllib.parse.urlparse(self.path).path
+        if req_path == "/api/rebase/sync":
             rebase_script = find_rebase_script()
             if rebase_script and os.path.exists(rebase_script):
                 try:
@@ -772,7 +1156,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"status": "error", "message": "Rebase script not found"}, status=404)
             return
 
-        if self.path == "/api/comments":
+        if req_path == "/api/comments":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
             try:
@@ -808,7 +1192,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"status": "ok", "comment": comment_record}, status=201)
             return
 
-        if self.path == "/api/comments/reply":
+        if req_path == "/api/comments/reply":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
             try:
@@ -820,29 +1204,59 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             comment_id = data.get("commentId") or data.get("id")
             reply_text = data.get("replyText", "").strip()
             new_status = data.get("status", "ADDRESSED")
+            author_name = data.get("author", "Maintainer (Alex)")
+
+            reply_obj = {
+                "id": "r_" + str(int(time.time())) + "_" + uuid.uuid4().hex[:4],
+                "author": author_name,
+                "replyText": reply_text,
+                "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            }
 
             comments = load_feedback()
             found = False
             for c in comments:
                 if c["id"] == comment_id:
-                    c.setdefault("replies", []).append({
-                        "id": "r_" + str(int(time.time())) + "_" + uuid.uuid4().hex[:4],
-                        "author": data.get("author", "AI Review Responder"),
-                        "replyText": reply_text,
-                        "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-                    })
+                    c.setdefault("replies", []).append(reply_obj)
                     c["status"] = new_status
                     found = True
                     break
 
             if found:
                 save_feedback(comments)
-                self._send_json({"status": "ok", "message": "Reply saved"})
-            else:
-                self._send_json({"status": "error", "message": "Comment ID not found"}, status=404)
+                self._send_json({"status": "ok", "message": "Reply saved", "reply": reply_obj})
+                return
+
+            # Also check github_comments.json for GitHub reviewer comment IDs
+            c_file = find_github_comments_file()
+            if os.path.exists(c_file):
+                try:
+                    with open(c_file, "r", encoding="utf-8") as f:
+                        c_data = json.load(f)
+                    gh_found = False
+                    for p_key, p_val in c_data.get("prs", {}).items():
+                        for gc in p_val.get("comments", []):
+                            if gc.get("id") == comment_id:
+                                gc.setdefault("replies", []).append(reply_obj)
+                                gc["userNote"] = reply_text
+                                gc["status"] = new_status
+                                gh_found = True
+                                break
+                        if gh_found:
+                            break
+                    if gh_found:
+                        with open(c_file, "w", encoding="utf-8") as f:
+                            json.dump(c_data, f, indent=2)
+                        self._send_json({"status": "ok", "message": "Reply attached to GitHub comment", "reply": reply_obj})
+                        return
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, status=500)
+                    return
+
+            self._send_json({"status": "error", "message": "Comment ID not found"}, status=404)
             return
 
-        if self.path == "/api/comments/resolve":
+        if req_path == "/api/comments/resolve":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
             try:
@@ -873,7 +1287,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                 self._send_json({"status": "error", "message": "Comment ID not found"}, status=404)
             return
 
-        if self.path == "/api/prs/track":
+        if req_path == "/api/prs/track":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
             try:
@@ -940,7 +1354,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             })
             return
 
-        if self.path == "/api/prs/untrack":
+        if req_path == "/api/prs/untrack":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
             try:
@@ -963,7 +1377,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"status": "ok", "message": f"Untracked '{target}'"})
             return
 
-        if self.path == "/api/dev/reconcile":
+        if req_path in ("/api/dev/reconcile", "/api/reconciliation"):
             reconciler_script = os.path.join(SERVER_DIR, "..", "sentinel", "dev_reconciler.py")
             if not os.path.exists(reconciler_script):
                 reconciler_script = os.path.join(ROOT_DIR, "agent-dual-review", "sentinel", "dev_reconciler.py")
@@ -982,6 +1396,158 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
                     self._send_json({"status": "error", "message": str(e)}, status=500)
                     return
             self._send_json({"status": "error", "message": "dev_reconciler.py not found"}, status=404)
+            return
+
+        if req_path == "/api/comments/assess":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length)
+            try:
+                data = json.loads(body.decode("utf-8"))
+            except Exception as e:
+                self._send_json({"status": "error", "message": f"Invalid JSON: {e}"}, status=400)
+                return
+
+            cid = data.get("commentId")
+            pr_num = str(data.get("prNumber", ""))
+            action = data.get("action", "accept")
+            user_note = data.get("userNote", "")
+            user_status = data.get("userStatus", "ACCEPTED")
+
+            c_file = find_github_comments_file()
+            if os.path.exists(c_file):
+                try:
+                    with open(c_file, "r", encoding="utf-8") as f:
+                        c_data = json.load(f)
+
+                    found = False
+                    for p_key, p_val in c_data.get("prs", {}).items():
+                        if pr_num and str(p_key) != str(pr_num):
+                            continue
+                        for comment in p_val.get("comments", []):
+                            if comment.get("id") == cid:
+                                comment["userStatus"] = user_status
+                                if user_note:
+                                    comment["userNote"] = user_note
+                                comment["assessedAt"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                                found = True
+                                break
+                        if found:
+                            break
+
+                    if found:
+                        with open(c_file, "w", encoding="utf-8") as f:
+                            json.dump(c_data, f, indent=2)
+                        self._send_json({"status": "ok", "message": f"Comment assessment updated ({user_status})"})
+                        return
+                    else:
+                        self._send_json({"status": "error", "message": "Comment not found"}, status=404)
+                        return
+                except Exception as e:
+                    self._send_json({"status": "error", "message": str(e)}, status=500)
+                    return
+            self._send_json({"status": "error", "message": "Comments file not found"}, status=404)
+            return
+
+        if req_path == "/api/comments/action":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length)
+            try:
+                data = json.loads(body.decode("utf-8"))
+            except Exception as e:
+                self._send_json({"status": "error", "message": f"Invalid JSON: {e}"}, status=400)
+                return
+
+            cid = data.get("commentId")
+            pr_num = str(data.get("prNumber", ""))
+            pr_id = data.get("prId", "")
+            instruction = data.get("instruction", "")
+            target_file = data.get("targetFile", "")
+            action_type = data.get("actionType", "CODE_FIX")
+
+            a_file = find_action_queue_file()
+            os.makedirs(os.path.dirname(a_file), exist_ok=True)
+            actions = []
+            if os.path.exists(a_file):
+                try:
+                    with open(a_file, "r", encoding="utf-8") as f:
+                        actions = json.load(f)
+                except Exception:
+                    actions = []
+
+            action_entry = {
+                "id": f"act_{int(time.time())}_{cid[-6:] if cid else 'gen'}",
+                "commentId": cid,
+                "prNumber": pr_num,
+                "prId": pr_id,
+                "instruction": instruction,
+                "targetFile": target_file,
+                "actionType": action_type,
+                "status": "QUEUED",
+                "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "history": [f"Action queued at {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}"]
+            }
+            actions.append(action_entry)
+
+            with open(a_file, "w", encoding="utf-8") as f:
+                json.dump(actions, f, indent=2)
+
+            # Also update comment's actionStatus in github_comments.json
+            c_file = find_github_comments_file()
+            if os.path.exists(c_file):
+                try:
+                    with open(c_file, "r", encoding="utf-8") as f:
+                        c_data = json.load(f)
+                    for p_key, p_val in c_data.get("prs", {}).items():
+                        for comment in p_val.get("comments", []):
+                            if comment.get("id") == cid:
+                                comment["actionStatus"] = "QUEUED"
+                                comment["actionId"] = action_entry["id"]
+                    with open(c_file, "w", encoding="utf-8") as f:
+                        json.dump(c_data, f, indent=2)
+                except Exception:
+                    pass
+
+            self._send_json({
+                "status": "ok",
+                "message": "Action instruction queued for AI agent execution",
+                "action": action_entry
+            })
+            return
+
+        if req_path == "/api/candidates/scan":
+            data = scan_dev_branch_candidates()
+            self._send_json(data)
+            return
+
+        if req_path == "/api/dev/rebase/execute":
+            res = test_dev_rebase()
+            if not res.get("is_clean"):
+                self._send_json({
+                    "status": "error",
+                    "message": f"Cannot safely rebase: {res.get('conflicts_detected')} merge conflicts detected against upstream/master.",
+                    "details": res
+                }, status=409)
+                return
+            dev_branch = CFG.get("project", {}).get("dev_branch", "firinspiral3-multidet-asym")
+            # Fast-forward dev branch to upstream/master
+            p_rebase = subprocess.run(["git", "rebase", f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}"],
+                                      cwd=REPO_DIR, capture_output=True, text=True)
+            if p_rebase.returncode == 0:
+                # Optionally push to origin
+                p_push = subprocess.run(["git", "push", ORIGIN_REMOTE, dev_branch],
+                                        cwd=REPO_DIR, capture_output=True, text=True)
+                self._send_json({
+                    "status": "ok",
+                    "message": f"Successfully rebased {dev_branch} onto {UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}.",
+                    "push_log": p_push.stdout.strip()
+                })
+            else:
+                subprocess.run(["git", "rebase", "--abort"], cwd=REPO_DIR, capture_output=True, text=True)
+                self._send_json({
+                    "status": "error",
+                    "message": "Rebase command failed; cleanly aborted.",
+                    "log": p_rebase.stderr.strip()
+                }, status=500)
             return
 
         self._send_json({"status": "error", "message": f"Endpoint not found: {self.path}"}, status=404)

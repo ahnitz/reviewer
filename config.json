@@ -27,28 +27,14 @@
       "PR-1B": "pr-fix-io-dictarray-indexing",
       "PR-1C": "pr-fix-events-numpy2-zerolag",
       "PR-1D": "pr-perf-waveform-compress",
-      "PR-1E": "pr-feat-vetoes-chisq-slicing",
       "PR-1F": "pr-feat-events-eventmgr-multi",
       "PR-1G": "pr-feat-filter-dynamic-snr-renorm",
       "PR-1H": "pr-feat-inject-injfilter-optimal-snr",
       "PR-1I": "pr-feat-psd-robust-estimators",
       "PR-1J": "pr-feat-strain-regularized-inpainting",
-      "PR-1K": "pr-feat-frame-gwosc-hdf",
-      "PR-1L": "pr-fix-filter-qtransform",
-      "PR-1M": "pr-fix-filter-resample-copy",
-      "PR-FIX-MISC-ROBUSTNESS": "fix/misc-robustness",
-      "PR-CI-PIXI-FIX": "ci-fix-pixi-python"
+      "PR-1K": "pr-feat-frame-gwosc-hdf"
     },
-    "user_requested_branches": [
-      {
-        "prId": "PR-FIX-MISC-ROBUSTNESS",
-        "branch": "fix/misc-robustness"
-      },
-      {
-        "prId": "PR-CI-PIXI-FIX",
-        "branch": "ci-fix-pixi-python"
-      }
-    ]
+    "user_requested_branches": []
   },
   "sentinel": {
     "poll_interval_seconds": 3,
@@ -56,7 +42,7 @@
   },
   "rebase": {
     "interval_seconds": 60,
-    "auto_push": true,
+    "auto_push": false,
     "test_command": "pytest"
   }
 }

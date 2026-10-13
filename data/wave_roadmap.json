@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2026-10-10T15:39:00.199870",
+  "last_updated": "2026-10-10T16:12:01.747813",
   "dev_branch": "firinspiral3-multidet-asym",
   "upstream_base": "f6eaed241fd115a0b79b459bca83787b19135875",
   "last_ingested_commit": "c524d71c338eecf5ac9e8b501968e8a3a746673c",
@@ -762,6 +762,28 @@
       ],
       "test_cmd": "pytest",
       "synthesized_from_commit": "4cc2529037e67583c8962fdc46cf958443fd2561"
+    },
+    "PR-1K": {
+      "wave": 1,
+      "branch": "pr-feat-frame-gwosc-hdf",
+      "title": "feat(frame): eliminate lalframe from core, add pure-Python GWF writer, and unify frame test suite",
+      "status": "OPEN",
+      "dependencies": [],
+      "files": [
+        "pycbc/frame/__init__.py",
+        "pycbc/frame/frame.py",
+        "pycbc/frame/gwosc_hdf.py",
+        "test/test_frame.py",
+        "test/test_gwosc_hdf.py"
+      ],
+      "test_cmd": "python3 test/test_frame.py",
+      "category": "Frame I/O & Core Decoupling",
+      "problemDescription": "Previously, PyCBC's frame I/O relied on external C lalframe bindings for writing GWF files and managing stream caches, adding heavy C dependency weight and preventing introspection of available channel names. In addition, GWOSC HDF5 reading duplicated cache filtering, multi-file concatenation, and sub-interval slicing logic, while tests were fragmented across separate test files.",
+      "solutionDescription": "1) Added pure-Python GWF frame writing (write_frame_gwf / write_frame) adhering to IGWD Frame format v8 specification with standard POSIX CRC-32 checksums, supporting float32, float64, complex64, complex128, int32, and uint32 series. 2) Decoupled lalframe completely from PyCBC core (0 code imports in pycbc/), refactoring DataBuffer and StatusBuffer onto pure-Python FrameCache and read_frame(). 3) Unified frame cache resolution, gap detection, sub-interval slicing, and series concatenation in read_frame() across both GWF and GWOSC HDF5 files, dramatically simplifying gwosc_hdf.py. 4) Merged test/test_gwosc_hdf.py into test/test_frame.py with cross-compatibility validation ensuring C lalframe can read frames written by pure Python.",
+      "simplificationDeepDive": "Completely eliminates lalframe dependency from pycbc/ core. Cuts 406 net lines while adding pure-Python GWF writing capabilities. Unified test suite executes 24 unit and integration tests cleanly in under 1 second.",
+      "pr": 5482,
+      "pr_number": 5482,
+      "pr_url": "https://github.com/gwastro/pycbc/pull/5482"
     }
   },
   "ingestion_log": [

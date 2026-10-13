@@ -1,22 +1,22 @@
 {
-  "last_check": "2026-10-10T15:38:44.564643",
-  "upstream_head": "11e3e6da16861da95bd83f3830cdda812d76f227",
+  "last_check": "2026-10-13T18:02:17.155515",
+  "upstream_head": "7aa5379772db60a58e037d9aa96dc987b0c06261",
   "branches": {
     "pr-fix-core-numpy2-optparse": {
       "status": "UP_TO_DATE",
-      "commit_sha": "57f250860f50c28c1f7a63acebcf191b4f9f93ce",
-      "ahead": 10,
+      "commit_sha": "a9fa3e86b4b3f218e42038ee6af8628f899e72c5",
+      "ahead": 9,
       "behind": 2,
       "merge_clean": true,
-      "last_verified": "2026-10-10T15:38:44.632354"
+      "last_verified": "2026-10-13T18:02:17.164348"
     },
     "pr-fix-io-dictarray-indexing": {
       "status": "UP_TO_DATE",
-      "commit_sha": "e49a73139a0b7a95f3b4b14aef007df5c5b07bab",
+      "commit_sha": "105dcf157f4262fb9a4b85c603de75561406b906",
       "ahead": 2,
-      "behind": 0,
+      "behind": 2,
       "merge_clean": true,
-      "last_verified": "2026-10-10T15:38:44.672836"
+      "last_verified": "2026-10-13T18:02:17.170325"
     },
     "pr-fix-events-numpy2-zerolag": {
       "status": "WAITING_DEPENDENCY",
@@ -24,47 +24,45 @@
       "commit_sha": "6996e102959b2f7fb7e605b3ac87bc8f6252fcb7",
       "dependency": "pr-fix-core-numpy2-optparse",
       "note": "Awaiting upstream merge of parent branch pr-fix-core-numpy2-optparse before cascade rebase",
-      "last_verified": "2026-10-10T15:38:44.693794"
+      "last_verified": "2026-10-13T18:02:17.173117"
     },
     "pr-perf-waveform-compress": {
       "status": "UP_TO_DATE",
-      "commit_sha": "97418897a2e796334993dc67b9088f87e0423b21",
+      "commit_sha": "abd57e5844156a21954997f7b3805d8448e0141c",
       "ahead": 10,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T15:38:44.736406"
+      "last_verified": "2026-10-13T18:02:17.178208"
     },
     "pr-feat-vetoes-chisq-slicing": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "59f7cbc19cbdb0f0e48b6963b357f70af788ae77",
-      "ahead": 6,
-      "behind": 0,
-      "merge_clean": true,
-      "last_verified": "2026-10-10T15:38:44.785627"
+      "status": "CONFLICT",
+      "branch": "pr-feat-vetoes-chisq-slicing",
+      "error": "Rebasing (1/6)\nerror: could not apply e525fe01a... feat(vetoes): Memory-efficient bin SNR slicing and numerical stability in power chisq\nhint: Resolve all conflicts manually, mark them as resolved with\nhint: \"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\nhint: You can instead skip this commit: run \"git rebase --skip\".\nhint: To abort and get back to the state before \"git rebase\", run \"git rebase --abort\".\nhint: Disable this message with \"git config set advice.mergeConflict false\"\nCould not apply e525fe01a... # feat(vetoes): Memory-efficient bin SNR slicing and numerical stability in power chisq",
+      "timestamp": "2026-10-13T18:02:17.203661"
     },
     "pr-feat-events-eventmgr-multi": {
       "status": "UP_TO_DATE",
-      "commit_sha": "a90487ff8bd74d42589be809cffd8020406e13a5",
-      "ahead": 4,
+      "commit_sha": "8fe5f270e9aae6d0c2905a9fc9bceecbf1f26f14",
+      "ahead": 5,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T15:38:44.832050"
+      "last_verified": "2026-10-13T18:02:17.208867"
     },
     "pr-feat-filter-dynamic-snr-renorm": {
       "status": "UP_TO_DATE",
-      "commit_sha": "d9ab78cb838e3b2ee70c8b9a814ec96e43b81c26",
+      "commit_sha": "bdd863f9daee4e166f602c45fe56cccf42779a19",
       "ahead": 1,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T15:38:44.872996"
+      "last_verified": "2026-10-13T18:02:17.213530"
     },
     "pr-feat-inject-injfilter-optimal-snr": {
       "status": "UP_TO_DATE",
-      "commit_sha": "c3bc0350bbc1c41a141e2cb194a048d3bce2e9a6",
+      "commit_sha": "24446f28b9a5c43bea53d2cab2e5f2792e3e5c6a",
       "ahead": 6,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T15:38:44.914123"
+      "last_verified": "2026-10-13T18:02:17.217913"
     },
     "pr-feat-psd-robust-estimators": {
       "status": "WAITING_DEPENDENCY",
@@ -72,45 +70,43 @@
       "commit_sha": "639133d2487bebc792ccafef7095596725bb0c4f",
       "dependency": "pr-feat-filter-dynamic-snr-renorm",
       "note": "Awaiting upstream merge of parent branch pr-feat-filter-dynamic-snr-renorm before cascade rebase",
-      "last_verified": "2026-10-10T15:38:44.937449"
+      "last_verified": "2026-10-13T18:02:17.220188"
     },
     "pr-feat-strain-regularized-inpainting": {
       "status": "UP_TO_DATE",
-      "commit_sha": "e0c07846a409471db04416ab639007bc12bef1c4",
+      "commit_sha": "e330b7378944a3d5090db4af8301899439924e6d",
       "ahead": 4,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T15:38:44.996008"
+      "last_verified": "2026-10-13T18:02:17.223825"
     },
     "pr-feat-frame-gwosc-hdf": {
       "status": "UP_TO_DATE",
-      "commit_sha": "a2b215181438c42390825dbad413c48a46d57c40",
-      "ahead": 6,
+      "commit_sha": "692ca6a2c6055539407ba52189590d6b525d204c",
+      "ahead": 5,
       "behind": 0,
       "merge_clean": true,
-      "last_verified": "2026-10-10T15:38:45.054221"
+      "last_verified": "2026-10-13T18:02:17.227500"
     },
     "pr-fix-filter-qtransform": {
       "status": "MERGED",
       "branch": "pr-fix-filter-qtransform",
       "pr_number": 5476,
       "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83",
-      "last_verified": "2026-10-10T15:38:44.578068"
+      "last_verified": "2026-10-13T18:02:17.157647"
     },
     "pr-fix-filter-resample-copy": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "b872512f7dbf6219fa2d8262b1587fc5c56d493c",
-      "ahead": 2,
-      "behind": 0,
-      "merge_clean": true,
-      "last_verified": "2026-10-10T15:38:45.095698"
+      "status": "CONFLICT",
+      "branch": "pr-fix-filter-resample-copy",
+      "error": "Rebasing (1/2)\nerror: could not apply e95b13b46... fix(filter): preserve caller copy semantics in resample_to_delta_t\nhint: Resolve all conflicts manually, mark them as resolved with\nhint: \"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\nhint: You can instead skip this commit: run \"git rebase --skip\".\nhint: To abort and get back to the state before \"git rebase\", run \"git rebase --abort\".\nhint: Disable this message with \"git config set advice.mergeConflict false\"\nCould not apply e95b13b46... # fix(filter): preserve caller copy semantics in resample_to_delta_t",
+      "timestamp": "2026-10-13T18:02:17.251979"
     },
     "pr-fix-live-hwinj-support": {
       "status": "MERGED",
       "branch": "pr-fix-live-hwinj-support",
       "pr_number": 5476,
       "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83",
-      "last_verified": "2026-10-10T15:38:44.578086"
+      "last_verified": "2026-10-13T18:02:17.157650"
     }
   },
   "upstream_remote": "upstream",
