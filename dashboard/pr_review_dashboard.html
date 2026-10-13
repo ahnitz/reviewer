@@ -158,6 +158,29 @@
       ) || null;
     }
 
+    function isUserEditingComment() {
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.id && (
+          ae.id.startsWith('reply-input-') ||
+          ae.id.startsWith('input-') ||
+          ae.id.startsWith('pr-input-') ||
+          ae.id === 'global-note-input'
+      )) {
+        return true;
+      }
+      // Also check if any open comment form or reply input has non-empty text
+      const replyInputs = document.querySelectorAll('input[id^="reply-input-"], textarea[id^="input-"], textarea[id^="pr-input-"]');
+      for (const el of replyInputs) {
+        if (el.value && el.value.trim().length > 0) {
+          const parentForm = el.closest('[id^="form-"], [id^="pr-form-"]');
+          if (!parentForm || !parentForm.classList.contains('hidden')) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     async function fetchGitHubComments() {
       try {
         const res = await fetch('/api/github/comments?t=' + Date.now());
@@ -168,7 +191,6 @@
             const pr = resolveTabToPR(currentTab);
             if (pr) {
               await fetchUnifiedComments(pr.id);
-              renderActiveComments();
             }
           }
         }
@@ -439,14 +461,17 @@
       }
     }
 
-    async function fetchUnifiedComments(prId) {
+    async function fetchUnifiedComments(prId, forceRender = false) {
       try {
         const res = await fetch('/api/comments/unified?pr=' + encodeURIComponent(prId) + '&t=' + Date.now());
         if (res.ok) {
           const data = await res.json();
           if (data.status === 'ok') {
-            unifiedCommentsData[prId] = data.comments || [];
-            if (currentTab === prId) {
+            const incoming = data.comments || [];
+            const prevJson = JSON.stringify(unifiedCommentsData[prId] || []);
+            const nextJson = JSON.stringify(incoming);
+            unifiedCommentsData[prId] = incoming;
+            if (currentTab === prId && (forceRender || prevJson !== nextJson)) {
               renderActiveComments();
             }
             return unifiedCommentsData[prId];
@@ -464,8 +489,9 @@
         if (res.ok) {
           const data = await res.json();
           if (data.status === 'ok') {
+            const changed = JSON.stringify(devStatus) !== JSON.stringify(data);
             devStatus = data;
-            if (currentTab === 'overview') {
+            if (changed && currentTab === 'overview' && !isUserEditingComment()) {
               const c = document.getElementById("content-container");
               if (c) renderOverviewPage(c);
             }
@@ -761,7 +787,7 @@
               }
             }
             renderNav();
-            if (updatedCurrent || currentTab === "overview") {
+            if ((updatedCurrent || currentTab === "overview") && !isUserEditingComment()) {
               renderContent();
             }
           }
@@ -860,7 +886,7 @@
                 }
                 if (data.diffStat) pr.diff = data.diffStat;
                 if (data.diffCmd) pr.diffCmd = data.diffCmd;
-                if (currentTab === prId) {
+                if (currentTab === prId && !isUserEditingComment()) {
                   renderContent();
                 }
               }
@@ -1599,6 +1625,20 @@
       const pr = PR_PAGES.find(p => p.id === currentTab);
       if (!pr) return;
 
+      // Save any in-progress user draft text, open form state, and focus before updating DOM
+      const savedInputValues = {};
+      document.querySelectorAll('input[id^="reply-input-"], textarea[id^="input-"], textarea[id^="pr-input-"]').forEach(el => {
+        if (el.value) {
+          savedInputValues[el.id] = el.value;
+        }
+      });
+      const prFormBefore = document.getElementById(`pr-form-${pr.id}`);
+      const wasPrFormOpen = prFormBefore ? !prFormBefore.classList.contains('hidden') : false;
+      const activeEl = document.activeElement;
+      const activeId = (activeEl && activeEl.id) ? activeEl.id : null;
+      const selStart = (activeEl && typeof activeEl.selectionStart === 'number') ? activeEl.selectionStart : null;
+      const selEnd = (activeEl && typeof activeEl.selectionEnd === 'number') ? activeEl.selectionEnd : null;
+
       const prComments = getMergedCommentsForPR(pr);
 
       // Map each comment with a file path to its corresponding diff hunk
@@ -1690,7 +1730,7 @@
             </div>
           </div>
 
-          <div id="pr-form-${pr.id}" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
+          <div id="pr-form-${pr.id}" class="${wasPrFormOpen ? '' : 'hidden '}p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
             <div class="flex items-center justify-between text-xs text-slate-600">
               <span class="font-semibold text-slate-800">Post General PR Note or Agent Instruction:</span>
             </div>
@@ -1757,6 +1797,21 @@
           ` : ''}
         </div>
       `;
+
+      // Restore any saved draft values and focus/cursor position
+      for (const [id, val] of Object.entries(savedInputValues)) {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      }
+      if (activeId) {
+        const restoredEl = document.getElementById(activeId);
+        if (restoredEl) {
+          restoredEl.focus({ preventScroll: true });
+          if (selStart !== null && selEnd !== null && typeof restoredEl.setSelectionRange === 'function') {
+            try { restoredEl.setSelectionRange(selStart, selEnd); } catch (e) {}
+          }
+        }
+      }
     }
 
     function getReviewedFiles(prId) {

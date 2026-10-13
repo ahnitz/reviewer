@@ -554,6 +554,8 @@ def poll_all_prs(comments_file=DEFAULT_COMMENTS_FILE):
         for c in pr_comments:
             if c["id"] in old_comments_map:
                 old = old_comments_map[c["id"]]
+                if "status" in old and old["status"] != "NEEDS_TRIAGE":
+                    c["status"] = old["status"]
                 if "userStatus" in old:
                     c["userStatus"] = old["userStatus"]
                 if "userNote" in old:
