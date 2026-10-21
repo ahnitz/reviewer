@@ -105,41 +105,94 @@ class CITracker:
             return None
 
     def fetch_open_prs(self):
-        """Fetch open pull requests targeting upstream opened by maintainer fork."""
+        """Fetch all open pull requests targeting upstream opened by maintainer fork."""
+        self.config = load_config()
         branch_map = self.config.get("project", {}).get("branch_map", {})
-        target_branches = set(branch_map.values())
         user_filter = self.config.get("project", {}).get(
             "maintainer_fork", "ahnitz/pycbc"
         ).split("/")[0]
 
-        url = (
-            f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}"
-            f"/pulls?state=open&per_page=30"
-        )
-        prs = self._http_get(url)
-        if not prs:
-            # Fall back to reading existing status if available
-            if os.path.exists(self.status_file):
-                try:
-                    with open(self.status_file, "r", encoding="utf-8") as f:
-                        prev = json.load(f)
-                        return [
-                            {
-                                "number": int(p["prNumber"]),
-                                "title": p["title"],
-                                "head": {"ref": p["branch"], "sha": p["headSha"]},
-                            }
-                            for p in prev.get("prs", {}).values()
-                        ]
-                except Exception:
-                    pass
-            return []
+        known_num_to_branch = {
+            5500: "pr-feat-multidet-workflow-jobs",
+            5496: "pr-feat-workflow-clusterlink",
+            5494: "pr-feat-multidet-trigger-files",
+            5493: "feature/veto-option-groups",
+            5490: "pr-feat-fir-bank",
+            5484: "feature/power-chisq-bin-weights",
+            5482: "pr-feat-frame-gwosc-hdf",
+            5479: "pr-feat-inject-injfilter-optimal-snr",
+            5475: "pr-fix-core-numpy2-optparse",
+            5457: "fix-gating-inpainting",
+            5446: "ci-http-cache",
+            5434: "relbin-kernel-vectorize",
+            5433: "marg-peak-search",
+            5432: "marg-distance-interp",
+            5430: "marg-inline-reconstruct",
+            5429: "marg-reconstruct-cache",
+            5410: "relbin-calibration",
+            5409: "relbin-resolution-diagnostic",
+            5405: "relbin-setup-refactor",
+            5404: "marg-accuracy-tests",
+            5371: "staging",
+            4658: "tsdoc",
+            4002: "siminj",
+        }
 
-        return [
-            p for p in prs
-            if p.get("head", {}).get("user", {}).get("login") == user_filter
-            and p.get("head", {}).get("ref") in target_branches
-        ]
+        try:
+            url = f"https://github.com/{self.repo_owner}/{self.repo_name}/pulls/{user_filter}"
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"},
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                page = resp.read().decode("utf-8")
+            m = re.search(
+                r'<script type="application/json" data-target="react-app\.embeddedData">(.*?)</script>',
+                page,
+                re.DOTALL,
+            )
+            if m:
+                embedded = json.loads(m.group(1))
+                results = (
+                    embedded.get("payload", {})
+                    .get("repoPullsDashboardContentRoute", {})
+                    .get("results", [])
+                )
+                out = []
+                for r in results:
+                    if "OPEN" not in r.get("state", ""):
+                        continue
+                    num = int(r["number"])
+                    sha = r.get("headSha", "")
+                    branch = known_num_to_branch.get(num) or branch_map.get(f"PR-{num}", f"pr-{num}")
+                    out.append(
+                        {
+                            "number": num,
+                            "title": r.get("title", "").strip(),
+                            "head": {"ref": branch, "sha": sha},
+                        }
+                    )
+                if out:
+                    return out
+        except Exception as e:
+            print(f"[CITracker WARN] HTML open PR scrape failed: {e}", file=sys.stderr)
+
+        # Fallback to existing status if available
+        if os.path.exists(self.status_file):
+            try:
+                with open(self.status_file, "r", encoding="utf-8") as f:
+                    prev = json.load(f)
+                    return [
+                        {
+                            "number": int(p["prNumber"]),
+                            "title": p["title"],
+                            "head": {"ref": p["branch"], "sha": p["headSha"]},
+                        }
+                        for p in prev.get("prs", {}).values()
+                    ]
+            except Exception:
+                pass
+        return []
 
     def _scrape_html_checks(self, pr_num, commit_sha):
         """Scrape checks directly from GitHub PR checks page to bypass rate limits."""
@@ -207,13 +260,19 @@ class CITracker:
         return jobs
 
     def fetch_check_runs(self, commit_sha, pr_number=None):
-        """Fetch check runs for a given commit SHA with completed-suite caching and HTML fallback."""
+        """Fetch check runs for a given commit SHA with completed-suite caching and HTML scrape primary."""
         if commit_sha in self._commit_cache:
             cached_runs = self._commit_cache[commit_sha]
-            # If all were completed, no need to re-query
             in_prog = any(c.get("status") in ("in_progress", "queued") for c in cached_runs)
             if not in_prog and len(cached_runs) > 0:
                 return cached_runs
+
+        # Primary: direct HTML scrape (avoids unauthenticated REST API 60 req/hr rate limit)
+        if pr_number:
+            html_runs = self._scrape_html_checks(pr_number, commit_sha)
+            if html_runs:
+                self._commit_cache[commit_sha] = html_runs
+                return html_runs
 
         url = (
             f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}"
@@ -225,13 +284,6 @@ class CITracker:
             self._commit_cache[commit_sha] = runs
             return runs
 
-        # Fallback to direct HTML scrape if API is rate limited or empty
-        if pr_number:
-            html_runs = self._scrape_html_checks(pr_number, commit_sha)
-            if html_runs:
-                self._commit_cache[commit_sha] = html_runs
-                return html_runs
-
         return self._commit_cache.get(commit_sha, [])
 
     def verify_local_worktree(self, branch_name):
@@ -242,6 +294,10 @@ class CITracker:
             "pr-perf-waveform-compress": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr1d",
             "pr-feat-events-eventmgr-multi": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr1f",
             "ci-fix-pixi-python": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pixi-fix",
+            "pr-feat-fir-bank": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr-fir-bank",
+            "pr-feat-multidet-trigger-files": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr-multidet-files",
+            "pr-feat-multidet-workflow-jobs": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr-multidet-jobs",
+            "feature/veto-option-groups": "/home/ahnitz/projects/claude/searchdev/pycbc-work/topics/veto-options",
         }
         wt_dir = wt_map.get(branch_name)
         if not wt_dir or not os.path.exists(wt_dir):

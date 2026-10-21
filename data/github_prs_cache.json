@@ -1,0 +1,841 @@
+{
+  "pr-feat-fir-bank": {
+    "number": 5490,
+    "title": "Update the pycbc_fir_bank code (and associated fixes) to new format + features",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "f4ca8d89b29b9d05289c3e9d3ac6add76fefcfb9",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5490",
+    "createdAt": "2026-10-19T17:15:19Z",
+    "updatedAt": "2026-10-21T17:44:53Z",
+    "commentCount": 15
+  },
+  "ci-wheels-macos-latest": {
+    "number": 5486,
+    "title": "Build the macOS wheels on macos-latest",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "4f7df84427e24bedab32cf28c5c81110dd1c3e52",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5486",
+    "createdAt": "2026-10-14T22:45:48Z",
+    "updatedAt": "2026-10-15T07:11:19Z",
+    "commentCount": 1
+  },
+  "revert-pytest-pythonpath": {
+    "number": 5485,
+    "title": "Remove pythonpath from pytest.ini",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "spxiwh",
+      "kkacanja"
+    ],
+    "headSha": "749f3c5db21662ec0088dee070aece3bdf6ddb2f",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5485",
+    "createdAt": "2026-10-14T22:08:17Z",
+    "updatedAt": "2026-10-15T07:09:33Z",
+    "commentCount": 0
+  },
+  "pr-feat-frame-gwosc-hdf": {
+    "number": 5482,
+    "title": "Add support for reading the GWOSC standard HDF files with read/write frame functions.",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "10b0724a72b8f13adf2ab753a0427f56176b0838",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5482",
+    "createdAt": "2026-10-11T20:48:28Z",
+    "updatedAt": "2026-10-21T15:52:56Z",
+    "commentCount": 12
+  },
+  "pr-feat-events-eventmgr-multi": {
+    "number": 5481,
+    "title": "Allow side by side multiple detector output in the pycbc inspiral style output files.",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "633748969cbecfa4a8d155a9474aeb7a5946b5ea",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5481",
+    "createdAt": "2026-10-10T18:12:51Z",
+    "updatedAt": "2026-10-13T22:54:54Z",
+    "commentCount": 8
+  },
+  "pr-feat-vetoes-chisq-slicing": {
+    "number": 5480,
+    "title": "Pr feat vetoes chisq slicing",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "4a5e0f11c9530e66dfd2fe87db0d6792cfabae7b",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5480",
+    "createdAt": "2026-10-10T18:06:17Z",
+    "updatedAt": "2026-10-13T14:46:16Z",
+    "commentCount": 1
+  },
+  "pr-feat-inject-injfilter-optimal-snr": {
+    "number": 5479,
+    "title": "Pre-filtering of sub-threshold injections via optimal SNR cut *within* inj filter rejector",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "spxiwh"
+    ],
+    "headSha": "30362635be8a2a425d37ca4e7b8a5121b8ff585c",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5479",
+    "createdAt": "2026-10-10T18:00:42Z",
+    "updatedAt": "2026-10-19T01:52:16Z",
+    "commentCount": 8
+  },
+  "pr-fix-filter-resample-copy": {
+    "number": 5478,
+    "title": "Branch: pr-fix-filter-resample-copy",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "3a9af4c0da6d45b5a3701f0d544dda54f1c5f886",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5478",
+    "createdAt": "2026-10-10T17:51:55Z",
+    "updatedAt": "2026-10-13T15:52:45Z",
+    "commentCount": 0
+  },
+  "ci-fix-pixi-python": {
+    "number": 5477,
+    "title": "FIX THE CI:  defer pixi install until matrix Python version is set",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "spxiwh",
+      "GarethCabournDavies"
+    ],
+    "headSha": "af2fbf1ce87ae2e928b6b37b2d3f70b7c6640bec",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5477",
+    "createdAt": "2026-10-10T17:28:53Z",
+    "updatedAt": "2026-10-12T08:23:05Z",
+    "commentCount": 0
+  },
+  "pr-fix-filter-qtransform": {
+    "number": 5476,
+    "title": "Fix qtransform bounds... again",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "4d3756a7b9272266b8ad0a032b70772977801695",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5476",
+    "createdAt": "2026-10-09T15:31:43Z",
+    "updatedAt": "2026-10-09T19:39:05Z",
+    "commentCount": 4
+  },
+  "pr-fix-io-dictarray-indexing": {
+    "number": 5474,
+    "title": "data / file trigger handling fixes + extension",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "e27edd3fcc28e72e83857b43aa2960b1bf21349a",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5474",
+    "createdAt": "2026-10-09T14:50:35Z",
+    "updatedAt": "2026-10-14T17:56:02Z",
+    "commentCount": 6
+  },
+  "pr-perf-waveform-compress": {
+    "number": 5473,
+    "title": "waveform compress, more fixes",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "abd57e5844156a21954997f7b3805d8448e0141c",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5473",
+    "createdAt": "2026-10-09T14:36:21Z",
+    "updatedAt": "2026-10-14T17:07:41Z",
+    "commentCount": 8
+  },
+  "perf/statmap-single-veto-removal": {
+    "number": 5468,
+    "title": "pycbc_coinc_statmap: remove foreground-vetoed triggers in one pass",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "97a06d135284cb5c2de418651c0eda4fb6fef849",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5468",
+    "createdAt": "2026-10-06T21:03:03Z",
+    "updatedAt": "2026-10-07T08:33:56Z",
+    "commentCount": 1
+  },
+  "fix/misc-robustness": {
+    "number": 5467,
+    "title": "Fix random bugs across the search code",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "68c6e0dcf4779e10c14d889a038ffd9ae5d63484",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5467",
+    "createdAt": "2026-10-06T20:43:12Z",
+    "updatedAt": "2026-10-09T17:16:56Z",
+    "commentCount": 4
+  },
+  "python314": {
+    "number": 5445,
+    "title": "Test and build for Python 3.14",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "8886ff5baf5b0f80fe195eaaef73db96a3ae649a",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5445",
+    "createdAt": "2026-09-06T02:26:13Z",
+    "updatedAt": "2026-10-08T14:26:39Z",
+    "commentCount": 4
+  },
+  "relbin-kernel-vectorize": {
+    "number": 5434,
+    "title": "Relbin kernel refactor",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "ba4cb8eff55ebc7e8140f6bab85cb44cec763863",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5434",
+    "createdAt": "2026-08-30T01:05:32Z",
+    "updatedAt": "2026-10-21T15:58:54Z",
+    "commentCount": 0
+  },
+  "marg-peak-search": {
+    "number": 5433,
+    "title": "Allow peak lock to shift with sampling",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "3ef9288817ead707bd41f0e52266e9aee9ac8e48",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5433",
+    "createdAt": "2026-08-29T20:16:22Z",
+    "updatedAt": "2026-10-19T16:22:33Z",
+    "commentCount": 4
+  },
+  "marg-distance-interp": {
+    "number": 5432,
+    "title": "Speed up distance marginalization (when doing lots of it)",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "aleynaakyuz"
+    ],
+    "headSha": "edc05c4f436b57dcf8c3729fc42f8c52753480f8",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5432",
+    "createdAt": "2026-08-29T15:47:31Z",
+    "updatedAt": "2026-10-19T17:31:26Z",
+    "commentCount": 4
+  },
+  "detector-direction-methods": {
+    "number": 5431,
+    "title": "Detector response with unit direction vectors as an alternative to ra/dec",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "titodalcanton",
+      "GarethCabournDavies"
+    ],
+    "headSha": "1cc82f4592138c3d43dd3812f307450a240f5de4",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5431",
+    "createdAt": "2026-08-29T14:55:17Z",
+    "updatedAt": "2026-10-08T14:26:16Z",
+    "commentCount": 0
+  },
+  "distributions-vectorize": {
+    "number": 5428,
+    "title": "Vectorize pycbc distributions",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "cdcapano",
+      "acorreia61201"
+    ],
+    "headSha": "0cd637a074477443b7ed4643b9455d9ad3594fcf",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5428",
+    "createdAt": "2026-08-26T21:09:45Z",
+    "updatedAt": "2026-10-01T20:03:31Z",
+    "commentCount": 9
+  },
+  "fix-live-coinc-test-flaky": {
+    "number": 5427,
+    "title": "Make the live coincidence comparison reproducible",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "titodalcanton",
+      "GarethCabournDavies"
+    ],
+    "headSha": "c5f08be14b45237642240ed8e164a3ada7e0a409",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5427",
+    "createdAt": "2026-08-25T21:28:23Z",
+    "updatedAt": "2026-09-01T16:16:02Z",
+    "commentCount": 5
+  },
+  "add-eryn-sampler": {
+    "number": 5416,
+    "title": "Add eryn as an inference sampler (fixed-dimension)",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "cdcapano",
+      "acorreia61201"
+    ],
+    "headSha": "db2cab4d85761f64d12115d835a434b59b73dd12",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5416",
+    "createdAt": "2026-08-19T21:26:08Z",
+    "updatedAt": "2026-08-26T20:14:18Z",
+    "commentCount": 6
+  },
+  "fix-npfft-nbatch": {
+    "number": 5415,
+    "title": "Make the numpy FFT backend support batching",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "7f4416c8a839c0f09ebfee7ed95dd96a4b7920d3",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5415",
+    "createdAt": "2026-08-19T19:57:07Z",
+    "updatedAt": "2026-08-24T15:09:26Z",
+    "commentCount": 2
+  },
+  "add-nautilus-sampler": {
+    "number": 5414,
+    "title": "Add support for the nautilus sampler",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "cdcapano",
+      "acorreia61201"
+    ],
+    "headSha": "dc83751e4c8e663287a419bd2695200fcc5084b5",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5414",
+    "createdAt": "2026-08-19T19:48:24Z",
+    "updatedAt": "2026-08-21T14:40:56Z",
+    "commentCount": 12
+  },
+  "staging": {
+    "number": 5371,
+    "title": "allow staging executable output",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [],
+    "headSha": "079e5353ce39472ea9aecc2076cc1b760cf4f7c7",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5371",
+    "createdAt": "2026-06-28T21:21:51Z",
+    "updatedAt": "2026-10-21T16:16:55Z",
+    "commentCount": 19
+  },
+  "firinspiral3": {
+    "number": 5395,
+    "title": "Add ratio filtering initial version",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [],
+    "headSha": "68ba62cf35ca4778ad7132d62b540cac08eb3801",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5395",
+    "createdAt": "2026-08-05T17:03:55Z",
+    "updatedAt": "2026-10-07T20:08:43Z",
+    "commentCount": 37
+  },
+  "ibort": {
+    "number": 4024,
+    "title": "start work on skipping likelihoods known to be low",
+    "state": "CLOSED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [],
+    "headSha": "e9157a32b23c0b963f06a3f75600dc7d4c3ea476",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/4024",
+    "createdAt": "2022-05-10T10:24:39Z",
+    "updatedAt": "2026-10-06T14:10:44Z",
+    "commentCount": 3
+  },
+  "maxsl": {
+    "number": 4664,
+    "title": "add incoherent inference model that maximizes over extrinsics parameters",
+    "state": "CLOSED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "cdcapano"
+    ],
+    "headSha": "ac12999cce83af31368dfb94eb9724b7fb81d663",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/4664",
+    "createdAt": "2024-03-14T18:07:44Z",
+    "updatedAt": "2026-10-06T14:09:52Z",
+    "commentCount": 2
+  },
+  "marg-ess-monitor": {
+    "number": 5413,
+    "title": "Report the effective sample size of the vector marginalization",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "aleynaakyuz"
+    ],
+    "headSha": "c887cfb616c52be29a129f9928cb30e12e1fd12b",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5413",
+    "createdAt": "2026-08-19T19:31:05Z",
+    "updatedAt": "2026-10-05T17:11:38Z",
+    "commentCount": 1
+  },
+  "nessai-unit-hypercube": {
+    "number": 5412,
+    "title": "Nessai unit hypercube",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "mj-will"
+    ],
+    "headSha": "ef6a81632f17e80f791b064b6317f5aca9600eb4",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5412",
+    "createdAt": "2026-08-19T18:53:19Z",
+    "updatedAt": "2026-09-18T12:23:50Z",
+    "commentCount": 3
+  },
+  "marg-choice-speed": {
+    "number": 5408,
+    "title": "Draw the marginalization subset without permuting the whole set",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "aleynaakyuz"
+    ],
+    "headSha": "74f049c4518b344b3cae3c2616c98610eed3435d",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5408",
+    "createdAt": "2026-08-13T20:32:30Z",
+    "updatedAt": "2026-09-03T21:40:01Z",
+    "commentCount": 2
+  },
+  "marg-distance-bounds-warn": {
+    "number": 5407,
+    "title": "Warn when the distance interpolator range is exceeded",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "aleynaakyuz"
+    ],
+    "headSha": "3639b13889ea497f6b14b19ae21289e1d6465842",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5407",
+    "createdAt": "2026-08-13T20:20:03Z",
+    "updatedAt": "2026-08-18T19:33:12Z",
+    "commentCount": 2
+  },
+  "silence-lal-matplotlib-warnings": {
+    "number": 5402,
+    "title": "Silence  matplotlib font-manager noise on import",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [],
+    "headSha": "80b69975baa0bfc0d7b82e042fbdce2f8359cadb",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5402",
+    "createdAt": "2026-08-11T20:52:01Z",
+    "updatedAt": "2026-08-14T14:45:22Z",
+    "commentCount": 10
+  },
+  "detector-vectorize": {
+    "number": 5406,
+    "title": "Improve how detector class handles vectors",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "af57e426503d458c67c3cfe9a706698256bf65cc",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5406",
+    "createdAt": "2026-08-13T20:08:42Z",
+    "updatedAt": "2026-08-14T14:37:07Z",
+    "commentCount": 7
+  },
+  "pr-bank-relocatable": {
+    "number": 5398,
+    "title": "Allow TemplateBank/FilterBank to read/write from a named group within\u2026",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "2ef5b85f8fa1ff4b81a0a47c65ae8c75e2092cbe",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5398",
+    "createdAt": "2026-08-06T00:23:00Z",
+    "updatedAt": "2026-08-11T18:38:42Z",
+    "commentCount": 5
+  },
+  "hierarchical-empty-static-params": {
+    "number": 5400,
+    "title": "Fix HierarchicalModel failing when a submodel owns no parameters",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "WuShichao"
+    ],
+    "headSha": "b568c369d92e88646f1bf358cde9d8f4598eba32",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5400",
+    "createdAt": "2026-08-08T22:06:30Z",
+    "updatedAt": "2026-08-11T15:30:35Z",
+    "commentCount": 2
+  },
+  "pr-fft-nbatch-fix": {
+    "number": 5396,
+    "title": "Fix inverted nbatch/size check in FFT._check_fwd_args",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "spxiwh"
+    ],
+    "headSha": "c84176ad394a40fdfa9d7831433d397805a1cf3a",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5396",
+    "createdAt": "2026-08-06T00:15:59Z",
+    "updatedAt": "2026-08-11T15:29:13Z",
+    "commentCount": 2
+  },
+  "pr-compress-fixes": {
+    "number": 5397,
+    "title": "Allow mixed precision input for compression",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "9fe414502e6ed0923ee6b3494c67233d8dfdb66d",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5397",
+    "createdAt": "2026-08-06T00:21:00Z",
+    "updatedAt": "2026-08-08T19:14:03Z",
+    "commentCount": 1
+  },
+  "bexit": {
+    "number": 5361,
+    "title": "FIX: bank should return failure code if sent a term signal",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "WuShichao"
+    ],
+    "headSha": "4f0c4ccfd52f33346c1f191232a6e188e489b181",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5361",
+    "createdAt": "2026-06-18T16:38:27Z",
+    "updatedAt": "2026-08-02T22:21:08Z",
+    "commentCount": 1
+  },
+  "rbfix": {
+    "number": 5379,
+    "title": "fix use of readbytemplate class",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [],
+    "headSha": "7af83f6583370e173c9c1c8ff5be565dc671dbd1",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5379",
+    "createdAt": "2026-07-17T00:10:20Z",
+    "updatedAt": "2026-07-21T22:25:15Z",
+    "commentCount": 1
+  },
+  "compressfix": {
+    "number": 5348,
+    "title": "fix edge cases and use compression",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "a3dd45ba8bd28b3c13bb1a8e33f042fdca2174d8",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5348",
+    "createdAt": "2026-06-04T17:18:17Z",
+    "updatedAt": "2026-06-29T14:20:40Z",
+    "commentCount": 5
+  },
+  "logfix": {
+    "number": 5347,
+    "title": "fix duplicate logging",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "bab8046fc281779f84ac63c23e7c16c92417170e",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5347",
+    "createdAt": "2026-06-04T16:55:59Z",
+    "updatedAt": "2026-06-29T10:35:09Z",
+    "commentCount": 2
+  },
+  "qcache": {
+    "number": 5360,
+    "title": "cache segment queries if option enabled",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [],
+    "headSha": "48fae01508011865eb8893fb7e883ae5b331f60f",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5360",
+    "createdAt": "2026-06-18T15:52:42Z",
+    "updatedAt": "2026-06-23T16:57:56Z",
+    "commentCount": 3
+  },
+  "pshare": {
+    "number": 5359,
+    "title": "shared / local should all accept file paths",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "spxiwh"
+    ],
+    "headSha": "a5c1dc24bdd9e3cb99664d74efab1aff2fdf73ce",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5359",
+    "createdAt": "2026-06-18T15:46:43Z",
+    "updatedAt": "2026-06-23T16:09:30Z",
+    "commentCount": 5
+  },
+  "fdtd2": {
+    "number": 5302,
+    "title": "Allow td-> fd automatic conversion more often, if taper settings are chosen",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [],
+    "headSha": "dfedc72ef09f473c4092ae6a85c5cda31bda190d",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5302",
+    "createdAt": "2026-03-16T20:13:57Z",
+    "updatedAt": "2026-04-30T10:28:59Z",
+    "commentCount": 10
+  },
+  "relbin-resolution-diagnostic": {
+    "number": 5409,
+    "title": "Revert \"Relbin resolution diagnostic (#5409)\" (#5491)",
+    "state": "REVERTED",
+    "reviewDecision": "NONE",
+    "assignees": [],
+    "headSha": "07ed464522a09ef5069fedfe0202afb26d379f2c",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5409",
+    "createdAt": "",
+    "updatedAt": "",
+    "commentCount": 0
+  },
+  "pr-feat-multidet-workflow-jobs": {
+    "number": 5500,
+    "title": "Support multi-detector inspiral workflow job setup",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "c35b419dce88f2a9632ed19a62835c9c444cae06",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5500",
+    "createdAt": "2026-10-20T17:16:42Z",
+    "updatedAt": "2026-10-21T18:43:02Z",
+    "commentCount": 4
+  },
+  "pr-feat-workflow-clusterlink": {
+    "number": 5496,
+    "title": "[WIP] add a site for the clusterlink directed jobs into pegasus sites",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "ad9501031647c4b840f518ca7502ee372d1877d3",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5496",
+    "createdAt": "2026-10-19T22:15:07Z",
+    "updatedAt": "2026-10-21T16:57:37Z",
+    "commentCount": 3
+  },
+  "pr-feat-multidet-trigger-files": {
+    "number": 5494,
+    "title": "Support multi-detector trigger files in post-processing and minifollowup workflows",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "a293d5e66a7e76dbe4da90f66ef3b78ccde40379",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5494",
+    "createdAt": "2026-10-19T18:51:45Z",
+    "updatedAt": "2026-10-19T19:00:34Z",
+    "commentCount": 0
+  },
+  "feature/veto-option-groups": {
+    "number": 5493,
+    "title": "Define the power and auto chisq options in their classes",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "102e37537613dac6525d379e11fd184648599d6d",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5493",
+    "createdAt": "2026-10-19T17:38:02Z",
+    "updatedAt": "2026-10-19T17:38:02Z",
+    "commentCount": 0
+  },
+  "feature/power-chisq-bin-weights": {
+    "number": 5484,
+    "title": "Bruce chisq bins aren't always equally power, so weight them  [WIP]",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "spxiwh"
+    ],
+    "headSha": "d280250fc791a901b8f3415897350bffd605ff20",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5484",
+    "createdAt": "2026-10-14T20:34:33Z",
+    "updatedAt": "2026-10-19T17:23:56Z",
+    "commentCount": 2
+  },
+  "pr-fix-core-numpy2-optparse": {
+    "number": 5475,
+    "title": "Make optparse more flexible about int formats",
+    "state": "OPEN",
+    "reviewDecision": "CHANGES_REQUESTED",
+    "assignees": [
+      "spxiwh"
+    ],
+    "headSha": "fbf351a8e0de3aa57a81fa2bf54cea49aeb974d1",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5475",
+    "createdAt": "2026-10-09T15:11:21Z",
+    "updatedAt": "2026-10-18T23:07:08Z",
+    "commentCount": 8
+  },
+  "fix-gating-inpainting": {
+    "number": 5457,
+    "title": "Fix numerical instability in gating and inpainting",
+    "state": "OPEN",
+    "reviewDecision": "CHANGES_REQUESTED",
+    "assignees": [
+      "acorreia61201"
+    ],
+    "headSha": "75d2ac4424f07ecc73b18e62d5d1c7351dcebff1",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5457",
+    "createdAt": "2026-09-29T01:05:17Z",
+    "updatedAt": "2026-10-18T23:07:09Z",
+    "commentCount": 10
+  },
+  "ci-http-cache": {
+    "number": 5446,
+    "title": "Ci http cache [TESTING]",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [],
+    "headSha": "4ae1b9046b34cccfd94eaef72664bfc80a64d4ad",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5446",
+    "createdAt": "2026-09-06T17:19:11Z",
+    "updatedAt": "2026-10-18T23:07:26Z",
+    "commentCount": 3
+  },
+  "marg-inline-reconstruct": {
+    "number": 5430,
+    "title": "Reconstruct marginlized values at sampling time",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "aleynaakyuz"
+    ],
+    "headSha": "869021f4d56fc33c7250765ed2aacd3d728d0482",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5430",
+    "createdAt": "2026-08-29T14:00:54Z",
+    "updatedAt": "2026-10-18T23:07:08Z",
+    "commentCount": 1
+  },
+  "marg-reconstruct-cache": {
+    "number": 5429,
+    "title": "Get inference model stat values to be saved not just in emcee",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "cdcapano"
+    ],
+    "headSha": "eaefff4f550f94b985ac21724748aa893f76fdee",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5429",
+    "createdAt": "2026-08-28T03:27:50Z",
+    "updatedAt": "2026-10-18T23:07:09Z",
+    "commentCount": 8
+  },
+  "relbin-calibration": {
+    "number": 5410,
+    "title": "Support calibration errors in the relative binning model",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "sum33it"
+    ],
+    "headSha": "1a2ef24586a377fb59ba202345fd136867516343",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5410",
+    "createdAt": "2026-08-18T23:42:36Z",
+    "updatedAt": "2026-10-19T16:17:33Z",
+    "commentCount": 1
+  },
+  "relbin-setup-refactor": {
+    "number": 5405,
+    "title": "Separate generating the fiducial waveform from laying out the bins",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "cdcapano"
+    ],
+    "headSha": "19faa377d1f8ccf99ceb1bca1255ba02d4158138",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5405",
+    "createdAt": "2026-08-13T19:03:57Z",
+    "updatedAt": "2026-10-19T16:18:22Z",
+    "commentCount": 1
+  },
+  "marg-accuracy-tests": {
+    "number": 5404,
+    "title": "Tests of the relative model marginalization and timing",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "cdcapano"
+    ],
+    "headSha": "992fbddc99fe9d1d86865a5b92abd5b1d83e5340",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5404",
+    "createdAt": "2026-08-13T18:20:19Z",
+    "updatedAt": "2026-10-18T23:07:08Z",
+    "commentCount": 1
+  },
+  "tsdoc": {
+    "number": 4658,
+    "title": "update time_slice documentation, add additional option for the exact \u2026",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [],
+    "headSha": "5652aeed2a53de51e77dddefc8e194c8edcc7c0c",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/4658",
+    "createdAt": "2024-02-28T19:47:14Z",
+    "updatedAt": "2026-10-18T23:07:08Z",
+    "commentCount": 4
+  },
+  "siminj": {
+    "number": 4002,
+    "title": "simplify injection module [WIP]",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [],
+    "headSha": "83324c7d530355b28d0144f1921bcfa725d2c4fd",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/4002",
+    "createdAt": "2022-04-20T23:01:18Z",
+    "updatedAt": "2026-10-18T23:07:08Z",
+    "commentCount": 3
+  }
+}

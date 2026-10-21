@@ -94,8 +94,11 @@ flowchart TD
    - Watches the raw feature branch (`firinspiral3-multidet-asym`).
    - As new commits are added, maps changed files to existing wave PRs or synthesizes new wave PR candidates (e.g. `PR-2F`).
    - Persists state in `data/wave_roadmap.json`.
-6. **Feedback Watchdog (Cron / Timer)**:
-   - Periodic watchdog (every 15 minutes) checking `data/reviewer_feedback.json` for any comments stuck in `PENDING_AGENT_ACTION` or `IN_PROGRESS`.
+6. **CI & Comment Tracker Sentinels (`sentinel/ci_tracker.py`, `sentinel/comment_tracker.py`)**:
+   - `ci_tracker.py` scrapes GitHub Actions check suites directly from PR check pages (avoiding REST API rate limits) and runs local `qlty`/`flake8` verification across worktrees, persisting `data/ci_status.json`.
+   - `comment_tracker.py` scrapes inline review threads, review summaries, and general PR comments from GitHub (`data/github_comments.json`), providing automated triage assessments and feeding `/api/comments/unified`.
+7. **Feedback Watchdog (Cron / Timer)**:
+   - Periodic watchdog (every 30 minutes via `schedule` cron) checking `GET /api/comments/unified` and `data/action_queue.json` for any comments or instructions in `PENDING_AGENT_ACTION`, `NEEDS_AGENT_ACTION`, `ACKNOWLEDGED`, or `QUEUED`.
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "system": {
     "name": "PyCBC Dual-Direction PR Review System",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "server": {
     "host": "0.0.0.0",
@@ -18,26 +18,71 @@
     "upstream_repo": "gwastro/pycbc",
     "upstream_remote": "upstream",
     "upstream_branch": "master",
-    "target_merge_base": "f6eaed241",
+    "target_merge_base": "50471e82d",
     "maintainer_fork": "ahnitz/pycbc",
     "working_tree_path": "/home/ahnitz/projects/claude/searchdev/pycbc-work/apogee",
     "dev_branch": "firinspiral3-multidet-asym",
     "branch_map": {
-      "PR-1A": "pr-fix-core-numpy2-optparse",
-      "PR-1B": "pr-fix-io-dictarray-indexing",
-      "PR-1C": "pr-fix-events-numpy2-zerolag",
-      "PR-1D": "pr-perf-waveform-compress",
-      "PR-1F": "pr-feat-events-eventmgr-multi",
-      "PR-1G": "pr-feat-filter-dynamic-snr-renorm",
+      "PR-1K": "pr-feat-frame-gwosc-hdf",
       "PR-1H": "pr-feat-inject-injfilter-optimal-snr",
-      "PR-1I": "pr-feat-psd-robust-estimators",
-      "PR-1J": "pr-feat-strain-regularized-inpainting",
-      "PR-1K": "pr-feat-frame-gwosc-hdf"
+      "PR-1A": "pr-fix-core-numpy2-optparse",
+      "PR-5457": "fix-gating-inpainting",
+      "PR-5446": "ci-http-cache",
+      "PR-5434": "relbin-kernel-vectorize",
+      "PR-5433": "marg-peak-search",
+      "PR-5432": "marg-distance-interp",
+      "PR-5430": "marg-inline-reconstruct",
+      "PR-5429": "marg-reconstruct-cache",
+      "PR-5410": "relbin-calibration",
+      "PR-5409": "relbin-resolution-diagnostic",
+      "PR-5405": "relbin-setup-refactor",
+      "PR-5404": "marg-accuracy-tests",
+      "PR-5371": "staging",
+      "PR-4658": "tsdoc",
+      "PR-4002": "siminj",
+      "PR-SCC": "feature/signal-consistency-chain",
+      "PR-PCBW": "feature/power-chisq-bin-weights",
+      "PR-SGCTP": "feature/sg-chisq-template-projection",
+      "PR-VOG": "feature/veto-option-groups",
+      "PR-FB": "pr-feat-fir-bank",
+      "PR-MDTF": "pr-feat-multidet-trigger-files",
+      "PR-MDWJ": "pr-feat-multidet-workflow-jobs",
+      "PR-5496": "pr-feat-workflow-clusterlink"
     },
-    "user_requested_branches": []
+    "user_requested_branches": [
+      {
+        "prId": "PR-VOG",
+        "branch": "feature/veto-option-groups",
+        "alias": "feature/veto-options-group",
+        "title": "Vetoes: Define power and auto chisq CLI option groups on their classes"
+      },
+      {
+        "prId": "PR-FB",
+        "branch": "pr-feat-fir-bank",
+        "title": "Modernize pycbc_fir_bank, RatioFilterBank, and pycbc_inspiral_fir"
+      },
+      {
+        "prId": "PR-MDTF",
+        "branch": "pr-feat-multidet-trigger-files",
+        "title": "Support multi-detector trigger files in post-processing and minifollowup workflows"
+      },
+      {
+        "prId": "PR-MDWJ",
+        "branch": "pr-feat-multidet-workflow-jobs",
+        "title": "Support multi-detector inspiral workflow job setup without losing analyzable time"
+      },
+      {
+        "prId": "PR-5496",
+        "branch": "pr-feat-workflow-clusterlink",
+        "title": "Support submitting workflows to an external cluster via clusterlink"
+      },
+      "feature/signal-consistency-chain",
+      "feature/power-chisq-bin-weights",
+      "feature/sg-chisq-template-projection"
+    ]
   },
   "sentinel": {
-    "poll_interval_seconds": 3,
+    "poll_interval_seconds": 1800,
     "notify_on_new_comment": true
   },
   "rebase": {

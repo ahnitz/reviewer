@@ -148,12 +148,22 @@
     let githubCommentsData = null;
     let prActiveSubTabs = {};
 
+    const FRONTEND_BRANCH_ALIASES = {
+      'feature/signal-consitency-chain': 'feature/signal-consistency-chain',
+      'feature-signal-consitency-chain': 'feature/signal-consistency-chain',
+      'feature-signal-consistency-chain': 'feature/signal-consistency-chain',
+      'feature-sg-chisq-template-projection': 'feature/sg-chisq-template-projection',
+      'feature-power-chisq-bin-weights': 'feature/power-chisq-bin-weights'
+    };
+
     function resolveTabToPR(tabOrSlug) {
       if (!tabOrSlug) return null;
-      const clean = String(tabOrSlug).replace(/^#/, '').trim();
+      const raw = String(tabOrSlug).replace(/^#/, '').trim();
+      const clean = FRONTEND_BRANCH_ALIASES[raw] || FRONTEND_BRANCH_ALIASES[raw.toLowerCase()] || raw;
       return PR_PAGES.find(p =>
         p.id.toUpperCase() === clean.toUpperCase() ||
         p.branch === clean ||
+        p.branch.toLowerCase() === clean.toLowerCase() ||
         (p.githubPr && String(p.githubPr.number) === clean)
       ) || null;
     }
@@ -307,8 +317,34 @@
       if (pr.lifecycle) return pr.lifecycle;
       if (pr.githubPr) {
         if (pr.githubPr.state === 'OPEN') {
+          if (pr.githubPr.reviewDecision === 'APPROVED') {
+            return {
+              phase: 'APPROVED_UPSTREAM',
+              reviewDecision: 'APPROVED',
+              label: `Approved to Merge — PR #${pr.githubPr.number}`,
+              badge: `✅ PR #${pr.githubPr.number} (APPROVED)`,
+              action: `Approved by reviewer on gwastro/pycbc (#${pr.githubPr.number}) and ready to merge!`,
+              actionUrl: pr.githubPr.htmlUrl,
+              actionText: `Merge PR #${pr.githubPr.number} on GitHub`,
+              isActionNeeded: true,
+              order: 0
+            };
+          } else if (pr.githubPr.reviewDecision === 'CHANGES_REQUESTED') {
+            return {
+              phase: 'OPEN_UPSTREAM',
+              reviewDecision: 'CHANGES_REQUESTED',
+              label: `Changes Requested — PR #${pr.githubPr.number}`,
+              badge: `🟠 PR #${pr.githubPr.number} (CHANGES REQUESTED)`,
+              action: `Reviewer requested changes on gwastro/pycbc (#${pr.githubPr.number})`,
+              actionUrl: pr.githubPr.htmlUrl,
+              actionText: `View PR #${pr.githubPr.number} on GitHub`,
+              isActionNeeded: true,
+              order: 1
+            };
+          }
           return {
             phase: 'OPEN_UPSTREAM',
+            reviewDecision: 'REVIEW_REQUIRED',
             label: `Open Upstream PR #${pr.githubPr.number}`,
             badge: `🟢 PR #${pr.githubPr.number} (OPEN)`,
             action: `Under active review upstream on gwastro/pycbc (#${pr.githubPr.number})`,
@@ -703,95 +739,90 @@
           if (data.status === 'ok' && data.prs) {
             let updatedCurrent = false;
 
-            // 1. Update githubPr states across all PR_PAGES from live githubPrs map (catches newly MERGED or CLOSED PRs!)
-            if (data.githubPrs) {
-              for (const pr of PR_PAGES) {
-                const liveGh = data.githubPrs[pr.branch];
-                if (liveGh) {
-                  const prevState = pr.githubPr ? pr.githubPr.state : null;
-                  pr.githubPr = liveGh;
-                  if (liveGh.state === 'MERGED') {
-                    pr.category = `🟣 Merged PR #${liveGh.number}`;
-                    pr.lifecycle = {
-                      phase: 'MERGED_UPSTREAM',
-                      label: `Merged Upstream PR #${liveGh.number}`,
-                      badge: `🟣 PR #${liveGh.number} (MERGED)`,
-                      order: 5
-                    };
-                    if (prevState !== 'MERGED') {
-                      updatedCurrent = true;
-                    }
-                  } else if (liveGh.state === 'OPEN') {
-                    pr.category = `🟢 Open Upstream PR #${liveGh.number}`;
-                    if (prevState !== 'OPEN') {
-                      updatedCurrent = true;
-                    }
-                  }
-                }
-              }
+            // 1. Remove any PR_PAGES entries no longer in data.prs (e.g. merged PRs or untracked branches)
+            const activeIds = new Set(Object.keys(data.prs));
+            const beforeLen = PR_PAGES.length;
+            PR_PAGES = PR_PAGES.filter(p => activeIds.has(p.id));
+            if (PR_PAGES.length !== beforeLen) {
+              updatedCurrent = true;
             }
 
-            // 2. Sync active PRs returned by /api/prs
+            // 2. Sync active PRs and staged branches returned by /api/prs
             for (const [prId, prData] of Object.entries(data.prs)) {
               let pr = PR_PAGES.find(p => p.id === prId);
-              if (!pr && prData.hunks && prData.hunks.length > 0) {
-                const branchName = prData.branch || prId;
-                const shortLabel = branchName.replace(/^pr-/, '').replace(/^feat\//, '').replace(/^fix\//, '');
-                let badge = "+0 / -0";
-                if (prData.diffStat) {
-                  const mAdd = prData.diffStat.match(/(\d+)\s+insertions?\(\+\)/);
-                  const mDel = prData.diffStat.match(/(\d+)\s+deletions?\(-\)/);
-                  const adds = mAdd ? "+" + mAdd[1] : "+0";
-                  const dels = mDel ? " / -" + mDel[1] : "";
-                  badge = adds + dels;
-                }
-                const roadmapPr = (waveRoadmap && waveRoadmap.prs) ? waveRoadmap.prs[prId] : null;
-                let prCategory = (roadmapPr && roadmapPr.wave) ? `Wave ${roadmapPr.wave} Feature` : "User Tracked";
-                if (prData.githubPr && prData.githubPr.state === 'OPEN') {
-                  prCategory = `🟢 Open Upstream PR #${prData.githubPr.number}`;
-                } else if (prData.githubPr && prData.githubPr.state === 'MERGED') {
-                  prCategory = `🟣 Merged PR #${prData.githubPr.number}`;
-                }
+              const branchName = prData.branch || prId;
+              const shortLabel = branchName.replace(/^pr-/, '').replace(/^feature\//, '').replace(/^feat\//, '').replace(/^fix\//, '');
+              let badge = "+0 / -0";
+              if (prData.diffStat) {
+                const mAdd = prData.diffStat.match(/(\d+)\s+insertions?\(\+\)/);
+                const mDel = prData.diffStat.match(/(\d+)\s+deletions?\(-\)/);
+                const adds = mAdd ? "+" + mAdd[1] : "+0";
+                const dels = mDel ? " / -" + mDel[1] : "";
+                badge = adds + dels;
+              }
+              const roadmapPr = (waveRoadmap && waveRoadmap.prs) ? waveRoadmap.prs[prId] : null;
+              let prCategory = (roadmapPr && roadmapPr.wave) ? `Wave ${roadmapPr.wave} Staged` : "Staged Queue";
+              if (prData.githubPr && prData.githubPr.state === 'OPEN') {
+                prCategory = `🟢 Open Upstream PR #${prData.githubPr.number}`;
+              } else if (prData.githubPr && prData.githubPr.state === 'MERGED') {
+                prCategory = `🟣 Merged PR #${prData.githubPr.number}`;
+              }
+              const deps = prData.dependencies || (roadmapPr && roadmapPr.dependencies) || [];
+              const unblocksStr = deps.length > 0 ? `Stacked on: ${deps.join(', ')}` : (prData.unblocks || "Ready for independent review");
+
+              if (!pr && prData.hunks) {
                 pr = {
                   id: prId,
                   shortName: shortLabel.length > 18 ? shortLabel.substring(0, 16) + '…' : shortLabel,
                   branch: branchName,
                   commitSha: prData.commitSha || "",
-                  title: (prData.githubPr && prData.githubPr.title) ? prData.githubPr.title : ((roadmapPr && roadmapPr.title) ? roadmapPr.title : `Branch: ${branchName}`),
+                  title: (prData.githubPr && prData.githubPr.title) ? prData.githubPr.title : (prData.title || (roadmapPr && roadmapPr.title) || `Branch: ${branchName}`),
                   diff: prData.diffStat || "Active topic branch",
                   diffBadge: badge,
                   category: prCategory,
-                  wave: (roadmapPr && roadmapPr.wave) ? roadmapPr.wave : 1,
-                  testCmd: (roadmapPr && roadmapPr.test_cmd) ? roadmapPr.test_cmd : "pytest",
-                  testTiming: "Verified",
-                  unblocks: (roadmapPr && roadmapPr.dependencies && roadmapPr.dependencies.length > 0) ? `Depends on: ${roadmapPr.dependencies.join(', ')}` : "Topic branch review",
-                  diffCmd: `git diff master..${branchName}`,
+                  wave: prData.wave || (roadmapPr && roadmapPr.wave) || 1,
+                  testCmd: prData.testCmd || (roadmapPr && roadmapPr.test_cmd) || "pytest",
+                  testTiming: prData.testTiming || "Verified",
+                  dependencies: deps,
+                  unblocks: unblocksStr,
+                  diffCmd: prData.diffCmd || `git diff master..${branchName}`,
                   ghCompareUrl: `https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:${branchName}`,
                   ghCreatePrUrl: `https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:${branchName}?expand=1`,
                   ghBranchUrl: `https://github.com/ahnitz/pycbc/tree/${branchName}`,
                   ghCommitUrl: `https://github.com/ahnitz/pycbc/commit/${prData.commitSha || ''}`,
                   githubPr: prData.githubPr || null,
                   lifecycle: prData.lifecycle || null,
-                  problemDescription: `Review and discussion for branch ${branchName}.`,
-                  solutionDescription: `Extracted live git diff against upstream merge base.`,
-                  simplificationDeepDive: `Automated dynamic hunk discovery from user's GitHub account.`,
+                  problemDescription: prData.problemDescription || (roadmapPr && roadmapPr.problemDescription) || `Review and discussion for branch ${branchName}.`,
+                  solutionDescription: prData.solutionDescription || (roadmapPr && roadmapPr.solutionDescription) || `Extracted live git diff against upstream merge base.`,
+                  simplificationDeepDive: prData.simplificationDeepDive || (roadmapPr && roadmapPr.simplificationDeepDive) || `Automated dynamic hunk discovery from user's GitHub account.`,
                   hunks: prData.hunks
                 };
                 PR_PAGES.push(pr);
                 updatedCurrent = true;
-              } else if (pr && prData.hunks && prData.hunks.length > 0) {
-                if (prData.lifecycle) {
-                  pr.lifecycle = prData.lifecycle;
-                }
+              } else if (pr && prData.hunks) {
+                if (prData.lifecycle) pr.lifecycle = prData.lifecycle;
+                if (prData.problemDescription) pr.problemDescription = prData.problemDescription;
+                if (prData.solutionDescription) pr.solutionDescription = prData.solutionDescription;
+                if (prData.simplificationDeepDive) pr.simplificationDeepDive = prData.simplificationDeepDive;
+                if (prData.testCmd) pr.testCmd = prData.testCmd;
+                pr.dependencies = deps;
+                pr.unblocks = unblocksStr;
                 if (prData.githubPr) {
                   pr.githubPr = prData.githubPr;
                   if (prData.githubPr.state === 'OPEN') {
                     pr.category = `🟢 Open Upstream PR #${prData.githubPr.number}`;
                   } else if (prData.githubPr.state === 'MERGED') {
                     pr.category = `🟣 Merged PR #${prData.githubPr.number}`;
+                  } else if (prData.githubPr.state === 'REVERTED') {
+                    pr.category = `🔄 Reverted PR #${prData.githubPr.number}`;
                   }
                   if (prData.githubPr.title) {
                     pr.title = prData.githubPr.title;
+                  }
+                } else {
+                  pr.githubPr = null;
+                  if (prData.title) {
+                    pr.title = prData.title;
                   }
                 }
                 const oldTotalLen = (pr.hunks || []).reduce((acc, h) => acc + (h.diffSnippet ? h.diffSnippet.length : 0), 0);
@@ -804,11 +835,7 @@
                   }
                   if (prData.diffStat) {
                     pr.diff = prData.diffStat;
-                    const mAdd = prData.diffStat.match(/(\d+)\s+insertions?\(\+\)/);
-                    const mDel = prData.diffStat.match(/(\d+)\s+deletions?\(-\)/);
-                    const adds = mAdd ? "+" + mAdd[1] : "+0";
-                    const dels = mDel ? " / -" + mDel[1] : "";
-                    pr.diffBadge = adds + dels;
+                    pr.diffBadge = badge;
                   }
                   if (currentTab === prId) {
                     updatedCurrent = true;
@@ -816,7 +843,13 @@
                 }
               }
             }
-            renderNav();
+            // Automatically switch to overview if the currently viewed PR was merged and removed
+          if (currentTab.startsWith("PR-") && !activeIds.has(currentTab)) {
+            currentTab = "overview";
+            history.replaceState(null, '', '#overview');
+            updatedCurrent = true;
+          }
+          renderNav();
             if ((updatedCurrent || forceRefresh || currentTab === "overview") && !isUserEditingComment()) {
               renderContent();
             }
@@ -995,13 +1028,17 @@
       const candidateCount = (candidatesData && candidatesData.candidates) ? candidatesData.candidates.length : 6;
       const activePRs = PR_PAGES.filter(pr => {
         const lc = getPRLifecycle(pr);
-        return lc.phase === 'OPEN_UPSTREAM' || lc.phase === 'READY_TO_OPEN';
+        return lc.phase === 'APPROVED_UPSTREAM' || lc.phase === 'OPEN_UPSTREAM' || lc.phase === 'READY_TO_OPEN';
       });
+      const approvedCount = PR_PAGES.filter(pr => {
+        const lc = getPRLifecycle(pr);
+        return lc.phase === 'APPROVED_UPSTREAM' || (pr.githubPr && pr.githubPr.state === 'OPEN' && pr.githubPr.reviewDecision === 'APPROVED');
+      }).length;
 
       const activePrObj = resolveTabToPR(currentTab);
 
       const tabs = [
-        { id: "overview", href: "#overview", label: "📊 Active PR Queue & Dev Sync", badge: `${activePRs.length} Tracked` },
+        { id: "overview", href: "#overview", label: "📊 Active PR Queue & Dev Sync", badge: approvedCount > 0 ? `${activePRs.length} Tracked • ✅ ${approvedCount} Approved` : `${activePRs.length} Tracked` },
         { id: "candidates", href: "#candidates", label: "✨ Feature Candidates (Dev Scan)", badge: `${candidateCount} Proposals`, isHighlightCandidate: true }
       ];
 
@@ -2828,11 +2865,51 @@
       const devBranchName = (devStatus && devStatus.devBranch) ? devStatus.devBranch : "firinspiral3-multidet-asym";
       const devHeadSha = (devStatus && devStatus.headSha) ? devStatus.headSha.substring(0, 9) : "c524d71c3";
 
-      // Filter to actively tracked PRs only (OPEN upstream or READY to submit)
-      const openPrs = PR_PAGES.filter(p => p.githubPr && p.githubPr.state === 'OPEN');
+      // Filter to actively tracked PRs (OPEN upstream) sorted by PR number descending
+      const openPrs = PR_PAGES
+        .filter(p => p.githubPr && p.githubPr.state === 'OPEN')
+        .sort((a, b) => (b.githubPr ? b.githubPr.number : 0) - (a.githubPr ? a.githubPr.number : 0));
+
+      const approvedPrs = openPrs.filter(p => (p.githubPr && p.githubPr.reviewDecision === 'APPROVED') || (p.lifecycle && p.lifecycle.phase === 'APPROVED_UPSTREAM'));
+      const nonApprovedOpenPrs = openPrs.filter(p => !((p.githubPr && p.githubPr.reviewDecision === 'APPROVED') || (p.lifecycle && p.lifecycle.phase === 'APPROVED_UPSTREAM')));
+
+      const getPrCiBadgeHtml = (pr) => {
+        if (!ciStatus || !ciStatus.prs) return '<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600">Checking...</span>';
+        let ci = (pr.githubPr && ciStatus.prs[String(pr.githubPr.number)]) || null;
+        if (!ci) {
+          for (const k of Object.keys(ciStatus.prs)) {
+            if (ciStatus.prs[k].branch === pr.branch) { ci = ciStatus.prs[k]; break; }
+          }
+        }
+        if (!ci) return '<span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600">Pending</span>';
+        const inProg = ci.inProgressCount || 0;
+        const actionable = ci.actionableCount || 0;
+        const succ = ci.successCount || 0;
+        const tot = ci.totalChecks || 0;
+        if (inProg > 0) {
+          return `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">🟡 ${succ}/${tot} (${inProg} running)</span>`;
+        } else if (actionable > 0) {
+          return `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-900 border border-rose-300">🔴 ${actionable} Failure(s)</span>`;
+        }
+        return `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">🟢 ${succ}/${tot} Passed</span>`;
+      };
+
+      const getReviewDecisionBadgeHtml = (pr) => {
+        const revDec = (pr.githubPr && pr.githubPr.reviewDecision) || (pr.lifecycle && pr.lifecycle.reviewDecision) || 'REVIEW_REQUIRED';
+        const assignees = (pr.githubPr && pr.githubPr.assignees && pr.githubPr.assignees.length > 0) ? ` (${pr.githubPr.assignees.map(a => '@' + a).join(', ')})` : '';
+        if (revDec === 'APPROVED') {
+          return `<span class="px-2.5 py-1 rounded text-xs font-extrabold bg-teal-600 text-white shadow-2xs inline-flex items-center gap-1">✅ APPROVED${assignees}</span>`;
+        } else if (revDec === 'CHANGES_REQUESTED') {
+          return `<span class="px-2.5 py-1 rounded text-xs font-bold bg-amber-500 text-white shadow-2xs inline-flex items-center gap-1">🟠 CHANGES REQUESTED${assignees}</span>`;
+        }
+        return `<span class="px-2.5 py-1 rounded text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">⏳ Review Pending${assignees}</span>`;
+      };
+
+      // All unopened branches in the Staging Queue (both READY_TO_OPEN and STAGED/stacked)
       const readyToOpenList = PR_PAGES.filter(p => {
+        if (p.githubPr && (p.githubPr.state === 'OPEN' || p.githubPr.state === 'MERGED')) return false;
         const lc = getPRLifecycle(p);
-        return lc.phase === 'READY_TO_OPEN';
+        return lc.phase !== 'MERGED_UPSTREAM' && lc.phase !== 'INCORPORATED_UPSTREAM';
       });
 
       const candidateCount = (candidatesData && candidatesData.candidates) ? candidatesData.candidates.length : 6;
@@ -2875,6 +2952,77 @@
             </a>
           </div>
 
+          <!-- 2B. Approved & Ready to Merge Callout Section -->
+          ${approvedPrs.length > 0 ? `
+          <div id="approved-prs-section" class="bg-gradient-to-r from-teal-50 via-emerald-50/70 to-white border-2 border-teal-600 rounded-lg p-6 shadow-md">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-teal-200 gap-2 mb-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 rounded text-xs font-extrabold bg-teal-700 text-white flex items-center gap-1.5 shadow-2xs">
+                    <span>✅ APPROVED TO MERGE</span>
+                  </span>
+                  <h3 class="text-base font-extrabold text-slate-900">Approved Pull Requests Ready to Merge (${approvedPrs.length})</h3>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-900 border border-teal-400">MAINTAINER SIGN-OFF COMPLETE</span>
+                </div>
+                <p class="text-xs text-slate-700 mt-1">
+                  These pull requests have received formal reviewer approval on <code class="code-font text-slate-800 font-semibold">gwastro/pycbc</code> and are ready to be merged into <code class="code-font text-slate-800 font-semibold">master</code>.
+                </p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="refreshActivePRQueue()" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-teal-800 text-white hover:bg-teal-900 transition-colors shadow-2xs inline-flex items-center gap-1.5 cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                  <span>Refresh Status</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-xs text-left divide-y divide-teal-200 bg-white rounded-md border border-teal-200">
+                <thead class="bg-teal-100/80 text-teal-950 font-bold">
+                  <tr>
+                    <th class="py-2.5 px-3">GitHub PR</th>
+                    <th class="py-2.5 px-3">Topic Branch</th>
+                    <th class="py-2.5 px-3">PR Title</th>
+                    <th class="py-2.5 px-3">Diff Footprint</th>
+                    <th class="py-2.5 px-3">CI Status</th>
+                    <th class="py-2.5 px-3">Review Status</th>
+                    <th class="py-2.5 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-teal-100 text-slate-800">
+                  ${approvedPrs.map(pr => `
+                    <tr class="bg-teal-50/40 hover:bg-teal-100/50 transition-colors">
+                      <td class="py-3 px-3 font-extrabold text-teal-900 whitespace-nowrap">
+                        <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="inline-flex items-center gap-1 text-teal-800 hover:text-teal-950 hover:underline font-extrabold text-sm">
+                          <span>#${pr.githubPr ? pr.githubPr.number : ''}</span>
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                      </td>
+                      <td class="py-3 px-3 code-font text-blue-700 font-bold">
+                        <a href="#${pr.branch}" onclick="switchTab('${pr.id}'); return false;" class="hover:underline text-left cursor-pointer text-blue-700 font-bold">${pr.branch}</a>
+                      </td>
+                      <td class="py-3 px-3 font-semibold text-slate-900">
+                        <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="hover:underline">${(pr.githubPr && pr.githubPr.title) ? pr.githubPr.title : pr.title}</a>
+                      </td>
+                      <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
+                      <td class="py-3 px-3 whitespace-nowrap">${getPrCiBadgeHtml(pr)}</td>
+                      <td class="py-3 px-3 whitespace-nowrap">${getReviewDecisionBadgeHtml(pr)}</td>
+                      <td class="py-3 px-3 text-right whitespace-nowrap space-x-2">
+                        <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="px-3 py-1.5 text-xs font-extrabold rounded bg-teal-700 text-white hover:bg-teal-800 transition-colors shadow-xs inline-block">
+                          Merge on GitHub &rarr;
+                        </a>
+                        <a href="#${pr.branch}" onclick="switchTab('${pr.id}'); return false;" class="px-2.5 py-1.5 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer inline-block">
+                          Inspect Diff &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          ` : ''}
+
           <!-- 3. Active Upstream PRs Table -->
           <div id="open-prs-section" class="bg-white border-2 border-emerald-500 rounded-lg p-6 shadow-xs">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-emerald-200 gap-2 mb-4">
@@ -2906,15 +3054,22 @@
                     <th class="py-2.5 px-3">Topic Branch</th>
                     <th class="py-2.5 px-3">PR Title</th>
                     <th class="py-2.5 px-3">Diff Footprint</th>
-                    <th class="py-2.5 px-3">Status</th>
+                    <th class="py-2.5 px-3">CI Status</th>
+                    <th class="py-2.5 px-3">Review Status</th>
                     <th class="py-2.5 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-emerald-100 text-slate-700">
-                  ${openPrs.map(pr => `
-                    <tr class="hover:bg-emerald-50/50 transition-colors">
+                  ${openPrs.map(pr => {
+                    const isApproved = (pr.githubPr && pr.githubPr.reviewDecision === 'APPROVED') || (pr.lifecycle && pr.lifecycle.phase === 'APPROVED_UPSTREAM');
+                    const isChangesReq = (pr.githubPr && pr.githubPr.reviewDecision === 'CHANGES_REQUESTED') || (pr.lifecycle && pr.lifecycle.reviewDecision === 'CHANGES_REQUESTED');
+                    const rowClass = isApproved
+                      ? 'bg-teal-50/70 hover:bg-teal-100/60 border-l-4 border-teal-600'
+                      : (isChangesReq ? 'bg-amber-50/40 hover:bg-amber-50/80 border-l-4 border-amber-500' : 'hover:bg-emerald-50/50');
+                    return `
+                    <tr class="${rowClass} transition-colors">
                       <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">
-                        <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900 hover:underline font-bold text-sm">
+                        <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="inline-flex items-center gap-1 ${isApproved ? 'text-teal-800 font-extrabold' : 'text-emerald-700 font-bold'} hover:text-emerald-900 hover:underline text-sm">
                           <span>#${pr.githubPr ? pr.githubPr.number : ''}</span>
                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                         </a>
@@ -2926,36 +3081,35 @@
                         <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="hover:underline">${(pr.githubPr && pr.githubPr.title) ? pr.githubPr.title : pr.title}</a>
                       </td>
                       <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
-                      <td class="py-3 px-3 whitespace-nowrap">
-                        <span class="px-2.5 py-1 rounded text-xs font-bold bg-emerald-600 text-white shadow-2xs">OPEN PR #${pr.githubPr ? pr.githubPr.number : ''}</span>
-                      </td>
+                      <td class="py-3 px-3 whitespace-nowrap">${getPrCiBadgeHtml(pr)}</td>
+                      <td class="py-3 px-3 whitespace-nowrap">${getReviewDecisionBadgeHtml(pr)}</td>
                       <td class="py-3 px-3 text-right whitespace-nowrap space-x-2">
-                        <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="px-2.5 py-1 text-xs font-semibold rounded bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-2xs inline-block">
-                          View on GitHub &rarr;
+                        <a href="${pr.githubPr ? pr.githubPr.htmlUrl : '#'}" target="_blank" class="px-2.5 py-1 text-xs font-semibold rounded ${isApproved ? 'bg-teal-700 hover:bg-teal-800' : 'bg-emerald-700 hover:bg-emerald-800'} text-white transition-colors shadow-2xs inline-block">
+                          ${isApproved ? 'Merge on GitHub &rarr;' : 'View on GitHub &rarr;'}
                         </a>
                         <a href="#${pr.branch}" onclick="switchTab('${pr.id}'); return false;" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-2xs cursor-pointer inline-block">
                           Review PR &amp; Diff &rarr;
                         </a>
                       </td>
                     </tr>
-                  `).join('')}
+                  `}).join('')}
                 </tbody>
               </table>
             </div>
           </div>
 
-          <!-- 4. Ready to Submit Pipeline -->
+          <!-- 4. Staging Queue / Ready to Submit Pipeline -->
           ${readyToOpenList.length > 0 ? `
-            <div id="ready-to-submit-section" class="bg-white border border-slate-200 rounded-lg p-6 shadow-xs">
+            <div id="ready-to-submit-section" class="bg-white border-2 border-blue-400 rounded-lg p-6 shadow-xs">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2 mb-4">
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-700 text-white">Staged Pipeline</span>
-                    <h3 class="text-base font-bold text-slate-900">Agreed Ready to Submit (${readyToOpenList.length} Topic Branches)</h3>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">100% TESTS PASS &bull; 0 PREREQUISITES</span>
+                    <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-700 text-white">STAGING QUEUE</span>
+                    <h3 class="text-base font-bold text-slate-900">Staged Topic Branches (${readyToOpenList.length})</h3>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">PRE-SUBMISSION REVIEW &amp; STAGING</span>
                   </div>
                   <p class="text-xs text-slate-500 mt-1">
-                    Rebased cleanly against current <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code>. Ready for 1-click submission.
+                    Topic branches in the staging queue being reviewed and prepared for upstream PR submission to <code class="code-font text-slate-700 font-semibold">gwastro/pycbc:master</code>.
                   </p>
                 </div>
               </div>
@@ -2964,31 +3118,42 @@
                 <table class="min-w-full text-xs text-left divide-y divide-slate-200">
                   <thead class="bg-slate-50 text-slate-700 font-semibold">
                     <tr>
-                      <th class="py-2.5 px-3">PR ID</th>
+                      <th class="py-2.5 px-3">ID</th>
                       <th class="py-2.5 px-3">Branch Name</th>
                       <th class="py-2.5 px-3">Scope &amp; Title</th>
                       <th class="py-2.5 px-3">Diff Footprint</th>
+                      <th class="py-2.5 px-3">Queue Status</th>
                       <th class="py-2.5 px-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100 text-slate-600">
-                    ${readyToOpenList.map(pr => `
+                    ${readyToOpenList.map(pr => {
+                      const lc = getPRLifecycle(pr);
+                      const isStagedDep = lc && lc.phase === 'STAGED';
+                      const badgeHtml = isStagedDep
+                        ? `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300" title="${escapeHtml(lc.action || '')}">${escapeHtml(lc.label || 'Staged')}</span>`
+                        : `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-900 border border-blue-300">🚀 READY TO SUBMIT</span>`;
+                      return `
                       <tr class="hover:bg-slate-50/80 transition-colors">
                         <td class="py-3 px-3 font-bold text-slate-900 whitespace-nowrap">
                           <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-900 border border-blue-200 font-mono">${pr.id}</span>
                         </td>
-                        <td class="py-3 px-3 code-font text-blue-700 font-semibold">
+                        <td class="py-3 px-3 code-font text-blue-700 font-semibold whitespace-nowrap">
                           <a href="#${pr.branch}" onclick="switchTab('${pr.id}'); return false;" class="hover:underline text-left cursor-pointer text-blue-700 font-semibold">${pr.branch}</a>
                         </td>
                         <td class="py-3 px-3 font-medium text-slate-800">${pr.title}</td>
                         <td class="py-3 px-3 code-font text-slate-700 font-medium whitespace-nowrap">${pr.diff}</td>
+                        <td class="py-3 px-3 whitespace-nowrap">${badgeHtml}</td>
                         <td class="py-3 px-3 text-right whitespace-nowrap space-x-2">
+                          <a href="${pr.ghCreatePrUrl || `https://github.com/gwastro/pycbc/compare/master...ahnitz:pycbc:${pr.branch}?expand=1`}" target="_blank" class="px-2.5 py-1 text-xs font-semibold rounded bg-blue-700 text-white hover:bg-blue-800 shadow-2xs transition-colors inline-block">
+                            Open PR on GitHub &rarr;
+                          </a>
                           <a href="#${pr.branch}" onclick="switchTab('${pr.id}'); return false;" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-900 text-white hover:bg-slate-800 shadow-2xs transition-colors cursor-pointer inline-block">
                             Review Code &rarr;
                           </a>
                         </td>
                       </tr>
-                    `).join('')}
+                    `}).join('')}
                   </tbody>
                 </table>
               </div>
@@ -4239,7 +4404,32 @@
           <!-- PR Lifecycle Status Banner -->
           ${(() => {
             const lc = getPRLifecycle(pr);
-            if (lc.phase === 'OPEN_UPSTREAM') {
+            if (lc.phase === 'APPROVED_UPSTREAM' || (pr.githubPr && pr.githubPr.state === 'OPEN' && pr.githubPr.reviewDecision === 'APPROVED')) {
+              return `
+                <div class="bg-gradient-to-r from-teal-50 via-emerald-50/60 to-white border-2 border-teal-600 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                  <div class="flex items-start sm:items-center gap-3.5">
+                    <div class="p-2.5 bg-teal-100 text-teal-800 rounded-full shrink-0">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded text-[11px] font-extrabold bg-teal-700 text-white uppercase tracking-wider">✅ Approved to Merge</span>
+                        <span class="text-base font-bold text-slate-900">gwastro/pycbc#${pr.githubPr.number}: ${pr.githubPr.title || pr.title}</span>
+                      </div>
+                      <p class="text-xs text-slate-700 mt-1">
+                        This pull request has been formally approved by a reviewer on <code class="code-font text-slate-800 font-semibold">gwastro/pycbc</code> and is ready to merge into <code class="code-font text-slate-800 font-semibold">master</code>.
+                      </p>
+                    </div>
+                  </div>
+                  <div class="shrink-0 flex items-center gap-2">
+                    <a href="${pr.githubPr.htmlUrl}" target="_blank" class="px-4 py-2 text-xs font-extrabold rounded-md bg-teal-700 text-white hover:bg-teal-800 shadow-xs inline-flex items-center gap-1.5 transition-colors">
+                      <span>Merge PR #${pr.githubPr.number} on GitHub</span>
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                  </div>
+                </div>
+              `;
+            } else if (lc.phase === 'OPEN_UPSTREAM') {
               return `
                 <div class="bg-gradient-to-r from-emerald-50 via-emerald-50/40 to-white border-2 border-emerald-500 rounded-lg p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
                   <div class="flex items-start sm:items-center gap-3.5">

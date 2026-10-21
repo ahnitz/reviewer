@@ -2,12 +2,13 @@
 # ==============================================================================
 # PyCBC Dual-Direction Review Stack - Start Script
 # ==============================================================================
-# Starts all 5 core review services:
+# Starts all 6 core review services:
 #   1. review_server.py    (HTTP dashboard, REST API on port 8080)
 #   2. auto_responder.py   (Immediate review comments auto-responder SLA)
 #   3. ci_tracker.py       (GitHub Actions CI status and matrix tracker)
-#   4. rebase_monitor.py   (Continuous upstream master rebase sentinel)
-#   5. dev_reconciler.py   (Development branch continuous ingestion & roadmap)
+#   4. comment_tracker.py  (GitHub PR inline & timeline review comment scraper/triage)
+#   5. rebase_monitor.py   (Continuous upstream master rebase sentinel)
+#   6. dev_reconciler.py   (Development branch continuous ingestion & roadmap)
 # ==============================================================================
 set -euo pipefail
 
@@ -25,6 +26,7 @@ mkdir -p "$PID_DIR" "$LOG_DIR" "$DATA_DIR"
 SERVER_SCRIPT="$BASE_DIR/server/review_server.py"
 RESPONDER_SCRIPT="$BASE_DIR/sentinel/auto_responder.py"
 CI_TRACKER_SCRIPT="$BASE_DIR/sentinel/ci_tracker.py"
+COMMENT_TRACKER_SCRIPT="$BASE_DIR/sentinel/comment_tracker.py"
 REBASE_SCRIPT="$BASE_DIR/sentinel/rebase_monitor.py"
 RECONCILER_SCRIPT="$BASE_DIR/sentinel/dev_reconciler.py"
 
@@ -113,6 +115,22 @@ else
         echo "✓ CI Tracker started (PID: $CI_PID)"
     else
         echo "⚠️ CI Tracker failed to start. Check $LOG_DIR/ci_tracker.log"
+    fi
+fi
+
+# 5b. Start GitHub Comment Tracker Daemon
+if is_running "$PID_DIR/comment_tracker.pid"; then
+    echo "✓ Comment Tracker is already running (PID: $(cat "$PID_DIR/comment_tracker.pid"))"
+else
+    echo "Starting Comment Tracker daemon (watch: 1800s)..."
+    nohup python3 "$COMMENT_TRACKER_SCRIPT" --watch --interval 1800 > "$LOG_DIR/comment_tracker.log" 2>&1 &
+    CMT_PID=$!
+    echo "$CMT_PID" > "$PID_DIR/comment_tracker.pid"
+    sleep 1
+    if kill -0 "$CMT_PID" 2>/dev/null; then
+        echo "✓ Comment Tracker started (PID: $CMT_PID)"
+    else
+        echo "⚠️ Comment Tracker failed to start. Check $LOG_DIR/comment_tracker.log"
     fi
 fi
 

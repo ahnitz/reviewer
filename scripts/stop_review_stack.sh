@@ -58,6 +58,7 @@ stop_process() {
 
 stop_process "auto_responder" "sentinel/auto_responder.py"
 stop_process "ci_tracker" "sentinel/ci_tracker.py"
+stop_process "comment_tracker" "sentinel/comment_tracker.py"
 stop_process "rebase_monitor" "sentinel/rebase_monitor.py"
 stop_process "dev_reconciler" "sentinel/dev_reconciler.py"
 stop_process "review_server" "review_server.py"

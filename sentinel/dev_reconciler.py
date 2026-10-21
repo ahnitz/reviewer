@@ -149,7 +149,7 @@ INITIAL_PR_REGISTRY = {
         "wave": 1,
         "branch": "pr-feat-frame-gwosc-hdf",
         "title": "feat(frame): eliminate lalframe from core, add pure-Python GWF writer, and unify frame test suite",
-        "status": "PUSHED_TO_ORIGIN",
+        "status": "MERGED_UPSTREAM",
         "dependencies": [],
         "files": ["pycbc/frame/__init__.py", "pycbc/frame/frame.py", "pycbc/frame/gwosc_hdf.py", "test/test_frame.py", "test/test_gwosc_hdf.py"],
         "test_cmd": "python3 test/test_frame.py",
@@ -157,6 +157,78 @@ INITIAL_PR_REGISTRY = {
         "problemDescription": "Previously, PyCBC's frame I/O relied on external C lalframe bindings for writing GWF files and managing stream caches, adding heavy C dependency weight and preventing introspection of available channel names. In addition, GWOSC HDF5 reading duplicated cache filtering, multi-file concatenation, and sub-interval slicing logic, while tests were fragmented across separate test files.",
         "solutionDescription": "1) Added pure-Python GWF frame writing (write_frame_gwf / write_frame) adhering to IGWD Frame format v8 specification with standard POSIX CRC-32 checksums, supporting float32, float64, complex64, complex128, int32, and uint32 series. 2) Decoupled lalframe completely from PyCBC core (0 code imports in pycbc/), refactoring DataBuffer and StatusBuffer onto pure-Python FrameCache and read_frame(). 3) Unified frame cache resolution, gap detection, sub-interval slicing, and series concatenation in read_frame() across both GWF and GWOSC HDF5 files, dramatically simplifying gwosc_hdf.py. 4) Merged test/test_gwosc_hdf.py into test/test_frame.py with cross-compatibility validation ensuring C lalframe can read frames written by pure Python.",
         "simplificationDeepDive": "Completely eliminates lalframe dependency from pycbc/ core. Cuts 406 net lines while adding pure-Python GWF writing capabilities. Unified test suite executes 24 unit and integration tests cleanly in under 1 second."
+    },
+    "PR-VOG": {
+        "wave": 1,
+        "branch": "feature/veto-option-groups",
+        "title": "Vetoes: Define power and auto chisq CLI option groups on their classes",
+        "status": "OPEN_UPSTREAM",
+        "dependencies": [],
+        "files": ["bin/pycbc_inspiral", "pycbc/vetoes/__init__.py", "pycbc/vetoes/autochisq.py", "pycbc/vetoes/chisq.py", "test/test_chisq_option_group.py"],
+        "test_cmd": "pytest test/test_chisq_option_group.py"
+    },
+    "PR-PCBW": {
+        "wave": 1,
+        "branch": "feature/power-chisq-bin-weights",
+        "title": "Add arbitrary bin weights to power chisq and slice optimization",
+        "status": "OPEN_UPSTREAM",
+        "dependencies": [],
+        "files": ["pycbc/vetoes/chisq.py", "test/test_chisq_slicing.py"],
+        "test_cmd": "pytest test/test_chisq_slicing.py"
+    },
+    "PR-SCC": {
+        "wave": 2,
+        "branch": "feature/signal-consistency-chain",
+        "title": "Add SignalConsistency chain manager for modular signal consistency vetoes",
+        "status": "READY_TO_OPEN",
+        "dependencies": [],
+        "files": ["pycbc/vetoes/signal_consistency.py", "test/test_signal_consistency.py"],
+        "test_cmd": "pytest test/test_signal_consistency.py"
+    },
+    "PR-SGCTP": {
+        "wave": 2,
+        "branch": "feature/sg-chisq-template-projection",
+        "title": "Add sine-Gaussian chisq template projection using SignalConsistency",
+        "status": "STAGED_DEPENDENT",
+        "dependencies": ["PR-SCC"],
+        "files": ["pycbc/vetoes/sgchisq.py", "test/test_autochisq.py"],
+        "test_cmd": "pytest test/test_autochisq.py"
+    },
+    "PR-FB": {
+        "wave": 3,
+        "branch": "pr-feat-fir-bank",
+        "title": "Modernize pycbc_fir_bank, RatioFilterBank, and pycbc_inspiral_fir",
+        "status": "MERGED_UPSTREAM",
+        "dependencies": [],
+        "files": ["bin/pycbc_fir_bank", "bin/pycbc_inspiral_fir", "pycbc/filter/matched_filter_ratio.py", "pycbc/waveform/bank.py", "test/test_bank.py"],
+        "test_cmd": "pytest test/test_bank.py"
+    },
+    "PR-MDTF": {
+        "wave": 3,
+        "branch": "pr-feat-multidet-trigger-files",
+        "title": "Support multi-detector trigger files in post-processing and minifollowup workflows",
+        "status": "OPEN_UPSTREAM",
+        "dependencies": [],
+        "files": ["bin/all_sky_search/pycbc_sngls_findtrigs", "bin/hdf_trigger_merge", "bin/minifollowups/pycbc_foreground_minifollowups", "bin/minifollowups/pycbc_injection_minifollowups", "bin/minifollowups/pycbc_sngl_minifollowups", "bin/minifollowups/pycbc_statmap_inj_minifollowups", "bin/plotting/pycbc_plot_singles_timefreq", "bin/plotting/pycbc_plot_trig_timeseries", "bin/pycbc_single_template_plot"],
+        "test_cmd": "pytest test/test_eventmgr.py"
+    },
+    "PR-MDWJ": {
+        "wave": 3,
+        "branch": "pr-feat-multidet-workflow-jobs",
+        "title": "Support multi-detector inspiral workflow job setup without losing analyzable time",
+        "status": "OPEN_UPSTREAM",
+        "dependencies": ["PR-MDTF"],
+        "files": ["pycbc/workflow/coincidence.py", "pycbc/workflow/core.py", "pycbc/workflow/matchedfilter.py", "pycbc/workflow/minifollowups.py", "pycbc/workflow/plotting.py", "pycbc/workflow/segment.py"],
+        "test_cmd": "pytest test/test_workflow.py"
+    },
+    "PR-5496": {
+        "wave": 3,
+        "branch": "pr-feat-workflow-clusterlink",
+        "title": "Support submitting workflows to an external cluster via clusterlink",
+        "status": "OPEN_UPSTREAM",
+        "dependencies": [],
+        "files": ["bin/pycbc_submit_dax", "pycbc/workflow/core.py", "pycbc/workflow/pegasus_workflow.py"],
+        "test_cmd": "pytest test/test_workflow.py"
     },
 
     # WAVE 2: PRECONDITIONING, MODELS & COINCIDENCE

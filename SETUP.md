@@ -6,7 +6,7 @@ This guide describes how to set up, launch, operate, inspect, and restart the co
 
 ## 1. Architecture Overview
 
-The review stack consists of 5 coordinated background services operating around a shared state ledger and local git repository:
+The review stack consists of 6 coordinated background services operating around a shared state ledger and local git repository:
 
 ```
                                     ┌────────────────────────────────────────┐
@@ -36,12 +36,15 @@ The review stack consists of 5 coordinated background services operating around 
    - Automatically acknowledges, addresses, and resolves incoming maintainer comments.
    - Ensures an unbroken **0 unaddressed review comments SLA**.
 3. **CI Tracker Daemon (`sentinel/ci_tracker.py`)**:
-   - Polls GitHub Actions CI status for all open upstream pull requests (`#5475`, `#5474`, `#5473`).
-   - Tracks individual job outcomes across the entire test matrix (NumPy 2, Python 3.9-3.12, LALSuite, MPI, CUDA).
-4. **Rebase Monitor Daemon (`sentinel/rebase_monitor.py`)**:
+   - Polls GitHub Actions CI status for all open upstream pull requests via rate-limit-free HTML check scraping (`_scrape_html_checks`).
+   - Tracks individual job outcomes across the entire test matrix (NumPy 2, Python 3.9-3.12, LALSuite, MPI, CUDA) and verifies local worktrees with `qlty` and `flake8`.
+4. **Comment Tracker Daemon (`sentinel/comment_tracker.py`)**:
+   - Periodically scrapes GitHub PR inline review discussions, review summaries, and timeline comments across all open PRs.
+   - Generates structured AI triage assessments and syncs with `data/github_comments.json` and `/api/comments/unified`.
+5. **Rebase Monitor Daemon (`sentinel/rebase_monitor.py`)**:
    - Checks upstream `gwastro/pycbc:master` every 60 seconds.
    - Automatically rebases local topic branches when master advances, runs validation tests, and syncs with `origin`.
-5. **Dev Branch Reconciler Daemon (`sentinel/dev_reconciler.py`)**:
+6. **Dev Branch Reconciler Daemon (`sentinel/dev_reconciler.py`)**:
    - Continuously monitors the development branch (`firinspiral3-multidet-asym`).
    - Automatically partitions new commits into corresponding Wave 1–4 PR candidates, updating the roadmap.
 

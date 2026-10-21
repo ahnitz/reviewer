@@ -158,43 +158,107 @@ def save_feedback(data):
         pass
 
 DEFAULT_PR_BRANCH_MAP = {
-    "PR-1A": "pr-fix-core-numpy2-optparse",
-    "PR-1B": "pr-fix-io-dictarray-indexing",
-    "PR-1C": "pr-fix-events-numpy2-zerolag",
-    "PR-1D": "pr-perf-waveform-compress",
-    "PR-1F": "pr-feat-events-eventmgr-multi",
-    "PR-1G": "pr-feat-filter-dynamic-snr-renorm",
-    "PR-1H": "pr-feat-inject-injfilter-optimal-snr",
-    "PR-1I": "pr-feat-psd-robust-estimators",
-    "PR-1J": "pr-feat-strain-regularized-inpainting",
     "PR-1K": "pr-feat-frame-gwosc-hdf",
+    "PR-1H": "pr-feat-inject-injfilter-optimal-snr",
+    "PR-1A": "pr-fix-core-numpy2-optparse",
+    "PR-5457": "fix-gating-inpainting",
+    "PR-5446": "ci-http-cache",
+    "PR-5434": "relbin-kernel-vectorize",
+    "PR-5433": "marg-peak-search",
+    "PR-5432": "marg-distance-interp",
+    "PR-5430": "marg-inline-reconstruct",
+    "PR-5429": "marg-reconstruct-cache",
+    "PR-5410": "relbin-calibration",
+    "PR-5409": "relbin-resolution-diagnostic",
+    "PR-5405": "relbin-setup-refactor",
+    "PR-5404": "marg-accuracy-tests",
+    "PR-5371": "staging",
+    "PR-4658": "tsdoc",
+    "PR-4002": "siminj",
+    "PR-VOG": "feature/veto-option-groups",
+    "PR-SCC": "feature/signal-consistency-chain",
+    "PR-PCBW": "feature/power-chisq-bin-weights",
+    "PR-SGCTP": "feature/sg-chisq-template-projection",
+    "PR-FB": "pr-feat-fir-bank",
+    "PR-MDTF": "pr-feat-multidet-trigger-files",
+    "PR-MDWJ": "pr-feat-multidet-workflow-jobs",
+}
+
+BRANCH_ALIASES = {
+    "feature/veto-options-group": "feature/veto-option-groups",
+    "feature-veto-options-group": "feature/veto-option-groups",
+    "feature-veto-option-groups": "feature/veto-option-groups",
+    "feature/signal-consitency-chain": "feature/signal-consistency-chain",
+    "feature-signal-consitency-chain": "feature/signal-consistency-chain",
+    "feature-signal-consistency-chain": "feature/signal-consistency-chain",
+    "feature-sg-chisq-template-projection": "feature/sg-chisq-template-projection",
+    "feature-power-chisq-bin-weights": "feature/power-chisq-bin-weights",
+    "feat-fir-bank": "pr-feat-fir-bank",
+    "fir-bank": "pr-feat-fir-bank",
+    "feat-multidet-trigger-files": "pr-feat-multidet-trigger-files",
+    "multidet-trigger-files": "pr-feat-multidet-trigger-files",
+    "feat-multidet-workflow-jobs": "pr-feat-multidet-workflow-jobs",
+    "multidet-workflow-jobs": "pr-feat-multidet-workflow-jobs",
+}
+
+STACKED_PARENT_BRANCHES = {
+    "feature/signal-consistency-chain": "feature/veto-option-groups",
+    "feature/sg-chisq-template-projection": "feature/signal-consistency-chain",
+    "marg-inline-reconstruct": "marg-reconstruct-cache",
 }
 
 PR_BRANCH_MAP = dict(CFG.get("project", {}).get("branch_map", DEFAULT_PR_BRANCH_MAP))
 USER_REQUESTED_BRANCHES = list(CFG.get("project", {}).get("user_requested_branches", []))
 
+def resolve_git_ref(branch):
+    """Returns the most up-to-date valid git ref (local, origin/branch, or upstream/branch) for a branch name."""
+    if not branch:
+        return None
+    b = BRANCH_ALIASES.get(branch, branch)
+    if b == "ci-http-cache":
+        p_up = subprocess.run(["git", "rev-parse", "--verify", f"{UPSTREAM_REMOTE}/{b}"], cwd=REPO_DIR, capture_output=True, text=True)
+        if p_up.returncode == 0:
+            return f"{UPSTREAM_REMOTE}/{b}"
+    p_loc = subprocess.run(["git", " log", "-1", "--format=%ct", b], cwd=REPO_DIR, capture_output=True, text=True)
+    # Wait: use git log without space
+    p_loc = subprocess.run(["git", "log", "-1", "--format=%ct", b], cwd=REPO_DIR, capture_output=True, text=True)
+    p_orig = subprocess.run(["git", "log", "-1", "--format=%ct", f"{ORIGIN_REMOTE}/{b}"], cwd=REPO_DIR, capture_output=True, text=True)
+    t_loc = int(p_loc.stdout.strip()) if p_loc.returncode == 0 and p_loc.stdout.strip().isdigit() else -1
+    t_orig = int(p_orig.stdout.strip()) if p_orig.returncode == 0 and p_orig.stdout.strip().isdigit() else -1
+    if t_loc >= 0 and t_orig >= 0:
+        return b if t_loc >= t_orig else f"{ORIGIN_REMOTE}/{b}"
+    if t_loc >= 0:
+        return b
+    if t_orig >= 0:
+        return f"{ORIGIN_REMOTE}/{b}"
+    p_up = subprocess.run(["git", "rev-parse", "--verify", f"{UPSTREAM_REMOTE}/{b}"], cwd=REPO_DIR, capture_output=True, text=True)
+    if p_up.returncode == 0:
+        return f"{UPSTREAM_REMOTE}/{b}"
+    return None
+
 def resolve_branch(pr_id):
     if not pr_id:
         return None
+    clean = BRANCH_ALIASES.get(pr_id, BRANCH_ALIASES.get(pr_id.lower(), pr_id))
     # 1. Exact match in configured PR_BRANCH_MAP
-    if pr_id.upper() in PR_BRANCH_MAP:
-        return PR_BRANCH_MAP[pr_id.upper()]
-    # 2. Check in USER_REQUESTED_BRANCHES
+    if clean.upper() in PR_BRANCH_MAP:
+        return PR_BRANCH_MAP[clean.upper()]
+    # 2. Check if clean is already a branch in PR_BRANCH_MAP values
+    for k, v in PR_BRANCH_MAP.items():
+        if v.lower() == clean.lower():
+            return v
+    # 3. Check in USER_REQUESTED_BRANCHES
     for ub in USER_REQUESTED_BRANCHES:
         if isinstance(ub, dict):
-            if ub.get("prId", "").upper() == pr_id.upper():
-                return ub.get("branch")
-        elif str(ub).upper() == pr_id.upper():
-            return str(ub)
-    # 3. Check if pr_id matches a local git branch directly
-    p = subprocess.run(["git", "rev-parse", "--verify", pr_id], cwd=REPO_DIR, capture_output=True, text=True)
-    if p.returncode == 0:
-        return pr_id
-    # 4. Check common naming variations
-    for candidate in [pr_id.lower(), f"pr-{pr_id.lower()}", f"pr_{pr_id.lower()}", f"pr/{pr_id.lower()}"]:
-        p = subprocess.run(["git", "rev-parse", "--verify", candidate], cwd=REPO_DIR, capture_output=True, text=True)
-        if p.returncode == 0:
-            return candidate
+            if ub.get("prId", "").upper() == clean.upper() or ub.get("branch", "").lower() == clean.lower():
+                return BRANCH_ALIASES.get(ub.get("branch"), ub.get("branch"))
+        elif str(ub).upper() == clean.upper() or str(ub).lower() == clean.lower():
+            return BRANCH_ALIASES.get(str(ub), str(ub))
+    # 4. Check if clean or common variations resolve via resolve_git_ref
+    for candidate in [clean, clean.lower(), f"pr-{clean.lower()}", f"pr_{clean.lower()}", f"pr/{clean.lower()}", f"feature/{clean.lower()}"]:
+        cand_norm = BRANCH_ALIASES.get(candidate, candidate)
+        if resolve_git_ref(cand_norm):
+            return cand_norm
     return None
 
 def find_rebase_status_file():
@@ -420,9 +484,17 @@ def get_unified_comments(pr_id=None):
             pass
 
     pr_id_map = {
+        "5500": "PR-MDWJ", "5496": "PR-5496",
+        "5494": "PR-MDTF", "5493": "PR-VOG",
+        "5490": "PR-FB", "5484": "PR-PCBW",
         "5475": "PR-1A", "5474": "PR-1B", "5473": "PR-1D",
         "5480": "PR-1E", "5481": "PR-1F", "5479": "PR-1H",
-        "5482": "PR-1K", "5478": "PR-1M"
+        "5482": "PR-1K", "5478": "PR-1M",
+        "5457": "PR-5457", "5446": "PR-5446", "5434": "PR-5434",
+        "5433": "PR-5433", "5432": "PR-5432", "5430": "PR-5430",
+        "5429": "PR-5429", "5410": "PR-5410", "5409": "PR-5409",
+        "5405": "PR-5405", "5404": "PR-5404", "5371": "PR-5371",
+        "4658": "PR-4658", "4002": "PR-4002",
     }
     # Normalize pr_id if branch name or PR number was passed
     target_pid = None
@@ -464,7 +536,7 @@ def get_unified_comments(pr_id=None):
 
     # 2. GitHub reviewer comments
     for p_num, p_data in gh_data.get("prs", {}).items():
-        mapped_pid = pr_id_map.get(str(p_num), f"PR-{p_num}")
+        mapped_pid = pr_id_map.get(str(p_num), p_data.get("prId") or f"PR-{p_num}")
         if target_pid and mapped_pid.upper() != target_pid.upper():
             continue
         for gc in p_data.get("comments", []):
@@ -499,38 +571,226 @@ def get_unified_comments(pr_id=None):
     return items
 
 GITHUB_PR_CACHE = {"data": None, "time": 0}
+KNOWN_PR_NUM_TO_BRANCH = {
+    5500: "pr-feat-multidet-workflow-jobs",
+    5496: "pr-feat-workflow-clusterlink",
+    5494: "pr-feat-multidet-trigger-files",
+    5493: "feature/veto-option-groups",
+    5490: "pr-feat-fir-bank",
+    5484: "feature/power-chisq-bin-weights",
+    5482: "pr-feat-frame-gwosc-hdf",
+    5481: "pr-feat-events-eventmgr-multi",
+    5480: "pr-feat-vetoes-chisq-slicing",
+    5479: "pr-feat-inject-injfilter-optimal-snr",
+    5478: "pr-fix-filter-resample-copy",
+    5475: "pr-fix-core-numpy2-optparse",
+    5474: "pr-fix-io-dictarray-indexing",
+    5473: "pr-perf-waveform-compress",
+    5457: "fix-gating-inpainting",
+    5446: "ci-http-cache",
+    5434: "relbin-kernel-vectorize",
+    5433: "marg-peak-search",
+    5432: "marg-distance-interp",
+    5430: "marg-inline-reconstruct",
+    5429: "marg-reconstruct-cache",
+    5410: "relbin-calibration",
+    5409: "relbin-resolution-diagnostic",
+    5405: "relbin-setup-refactor",
+    5404: "marg-accuracy-tests",
+    5371: "staging",
+    4658: "tsdoc",
+    4002: "siminj",
+}
 
-def get_github_prs(repo_owner="gwastro", repo_name="pycbc", user_filter=None):
-    """Fetch all pull requests on upstream repo opened by user, with 45s caching."""
+def get_github_prs(repo_owner="gwastro", repo_name="pycbc", user_filter=None, force_refresh=False):
+    """Fetch all pull requests on upstream repo opened by user, using HTML embeddedData (no rate limit) + disk cache."""
     if user_filter is None:
         user_filter = MAINTAINER_FORK.split("/")[0] if "/" in MAINTAINER_FORK else "ahnitz"
     now = time.time()
-    if GITHUB_PR_CACHE["data"] and (now - GITHUB_PR_CACHE["time"] < 45):
+    cache_file = os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "github_prs_cache.json")
+    if not force_refresh and GITHUB_PR_CACHE["data"] and (now - GITHUB_PR_CACHE["time"] < 45):
         return GITHUB_PR_CACHE["data"]
+
+    # Build SHA -> branch name map from git refs
+    sha_to_branch = {}
+    p_refs = subprocess.run(
+        ["git", "for-each-ref", "refs/remotes/origin", "refs/remotes/upstream", "refs/heads", "--format=%(refname:short) %(objectname)"],
+        cwd=REPO_DIR, capture_output=True, text=True
+    )
+    if p_refs.returncode == 0:
+        for line in p_refs.stdout.splitlines():
+            parts = line.split()
+            if len(parts) == 2:
+                ref_short, sha = parts[0], parts[1]
+                for prefix in (f"{ORIGIN_REMOTE}/", f"{UPSTREAM_REMOTE}/"):
+                    if ref_short.startswith(prefix):
+                        ref_short = ref_short[len(prefix):]
+                if ref_short not in ("HEAD", "master", "main", "gh-pages") and not ref_short.startswith("rebased-") and not ref_short.startswith("pr/"):
+                    sha_to_branch[sha] = ref_short
+
+    branch_to_pr = {}
+    # Seed with existing cache for CLOSED/MERGED entries so pagination never drops previously-seen closed/merged PRs
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                cached_prs = json.load(f)
+            for cb, cinfo in cached_prs.items():
+                if isinstance(cinfo, dict) and cinfo.get("state") in ("MERGED", "CLOSED"):
+                    branch_to_pr[cb] = cinfo
+        except Exception:
+            pass
+
+    # Also cross-check git log on upstream/master for squash-merged PRs (#NNNN) and reverted PRs
     try:
-        url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/pulls?state=all&per_page=50"
-        req = urllib.request.Request(url, headers={"User-Agent": "PyCBC-Reviewer-Bot/1.0"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            prs = json.loads(resp.read().decode("utf-8"))
-        branch_to_pr = {}
-        for p in prs:
-            head_user = p.get("head", {}).get("user", {}).get("login")
-            head_ref = p.get("head", {}).get("ref")
-            if head_user == user_filter and head_ref:
-                branch_to_pr[head_ref] = {
-                    "number": p["number"],
-                    "title": p["title"],
-                    "state": "MERGED" if p.get("merged_at") else p["state"].upper(),
-                    "htmlUrl": p["html_url"],
-                    "createdAt": p["created_at"],
-                    "updatedAt": p["updated_at"]
+        p_mlog = subprocess.run(
+            ["git", "log", "-n", "400", "--format=%H %s", f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}"],
+            cwd=REPO_DIR, capture_output=True, text=True
+        )
+        if p_mlog.returncode == 0:
+            reverted_nums = set()
+            num_to_known_branch = dict(KNOWN_PR_NUM_TO_BRANCH)
+            # Process oldest-to-newest so a later Revert overrides an earlier Merge if needed, or track both
+            for line in reversed(p_mlog.stdout.splitlines()):
+                parts = line.split(" ", 1)
+                if len(parts) < 2:
+                    continue
+                c_sha, c_subj = parts[0], parts[1]
+                m_rev = re.match(r'^Revert ".*\(#(\d+)\)"\s*\(#(\d+)\)', c_subj)
+                if m_rev:
+                    rev_num = int(m_rev.group(1))
+                    reverted_nums.add(rev_num)
+                    b_rev = num_to_known_branch.get(rev_num)
+                    if b_rev:
+                        branch_to_pr[b_rev] = {
+                            "number": rev_num,
+                            "title": c_subj,
+                            "state": "REVERTED",
+                            "reviewDecision": "NONE",
+                            "assignees": [],
+                            "headSha": c_sha,
+                            "htmlUrl": f"https://github.com/{repo_owner}/{repo_name}/pull/{rev_num}",
+                            "createdAt": "",
+                            "updatedAt": "",
+                            "commentCount": 0,
+                        }
+                    continue
+                m_pr = re.search(r'\(#(\d+)\)\s*$', c_subj)
+                if m_pr:
+                    p_num = int(m_pr.group(1))
+                    b_merged = num_to_known_branch.get(p_num)
+                    if b_merged and p_num not in reverted_nums:
+                        clean_title = re.sub(r'\s*\(#\d+\)\s*$', '', c_subj).strip()
+                        branch_to_pr[b_merged] = {
+                            "number": p_num,
+                            "title": clean_title,
+                            "state": "MERGED",
+                            "reviewDecision": "APPROVED",
+                            "assignees": [],
+                            "headSha": c_sha,
+                            "htmlUrl": f"https://github.com/{repo_owner}/{repo_name}/pull/{p_num}",
+                            "createdAt": "",
+                            "updatedAt": "",
+                            "commentCount": 0,
+                        }
+    except Exception:
+        pass
+
+    approved_nums = set()
+    changes_requested_nums = set()
+    try:
+        # Query review states via HTML search (no API rate limit)
+        review_queries = [
+            (f"https://github.com/{repo_owner}/{repo_name}/pulls?q=is%3Apr+author%3A{user_filter}+is%3Aopen+review%3Aapproved", approved_nums),
+            (f"https://github.com/{repo_owner}/{repo_name}/pulls?q=is%3Apr+author%3A{user_filter}+is%3Aopen+review%3Achanges_requested", changes_requested_nums),
+        ]
+        for rq_url, target_set in review_queries:
+            try:
+                req_rq = urllib.request.Request(rq_url, headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"})
+                with urllib.request.urlopen(req_rq, timeout=8) as resp_rq:
+                    rq_page = resp_rq.read().decode("utf-8")
+                m_rq = re.search(r'<script type="application/json" data-target="react-app\.embeddedData">(.*?)</script>', rq_page, re.DOTALL)
+                if m_rq:
+                    emb_rq = json.loads(m_rq.group(1))
+                    for r_item in emb_rq.get("payload", {}).get("repoPullsDashboardContentRoute", {}).get("results", []):
+                        target_set.add(int(r_item["number"]))
+            except Exception:
+                pass
+
+        urls = [
+            f"https://github.com/{repo_owner}/{repo_name}/pulls/{user_filter}",
+            f"https://github.com/{repo_owner}/{repo_name}/pulls?q=is%3Apr+author%3A{user_filter}+is%3Aclosed+sort%3Aupdated-desc",
+            f"https://github.com/{repo_owner}/{repo_name}/pulls?q=is%3Apr+author%3A{user_filter}+is%3Aclosed+sort%3Aupdated-desc&page=2",
+        ]
+        for url in urls:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                page = resp.read().decode("utf-8")
+            m = re.search(r'<script type="application/json" data-target="react-app\.embeddedData">(.*?)</script>', page, re.DOTALL)
+            if not m:
+                continue
+            embedded = json.loads(m.group(1))
+            results = embedded.get("payload", {}).get("repoPullsDashboardContentRoute", {}).get("results", [])
+            for r in results:
+                num = int(r["number"])
+                raw_state = r.get("state", "")
+                if "MERGED" in raw_state:
+                    state = "MERGED"
+                elif "OPEN" in raw_state:
+                    state = "OPEN"
+                else:
+                    state = "CLOSED"
+                head_sha = r.get("headSha", "")
+                branch = KNOWN_PR_NUM_TO_BRANCH.get(num) or sha_to_branch.get(head_sha)
+                if not branch:
+                    continue
+                # Preserve REVERTED state if upstream/master later reverted this merged PR
+                if branch in branch_to_pr and branch_to_pr[branch].get("state") == "REVERTED" and state == "MERGED" and branch_to_pr[branch].get("number") == num:
+                    continue
+                # Do not overwrite an OPEN PR entry with an older CLOSED PR of the same branch name
+                if branch in branch_to_pr and branch_to_pr[branch]["state"] == "OPEN" and state != "OPEN":
+                    continue
+                review_decision = "REVIEW_REQUIRED"
+                if num in approved_nums:
+                    review_decision = "APPROVED"
+                elif num in changes_requested_nums:
+                    review_decision = "CHANGES_REQUESTED"
+                assignees = [a.get("login") for a in (r.get("assignees") or []) if a.get("login")]
+                branch_to_pr[branch] = {
+                    "number": num,
+                    "title": r.get("title", "").strip(),
+                    "state": state,
+                    "reviewDecision": review_decision,
+                    "assignees": assignees,
+                    "headSha": head_sha,
+                    "htmlUrl": r.get("permalink") or f"https://github.com/{repo_owner}/{repo_name}/pull/{num}",
+                    "createdAt": r.get("createdAt", ""),
+                    "updatedAt": r.get("updatedAt", ""),
+                    "commentCount": r.get("commentCount", 0),
                 }
-        GITHUB_PR_CACHE["data"] = branch_to_pr
-        GITHUB_PR_CACHE["time"] = now
-        return branch_to_pr
+        if branch_to_pr:
+            GITHUB_PR_CACHE["data"] = branch_to_pr
+            GITHUB_PR_CACHE["time"] = now
+            try:
+                os.makedirs(os.path.dirname(cache_file), exist_ok=True)
+                with open(cache_file, "w", encoding="utf-8") as f:
+                    json.dump(branch_to_pr, f, indent=2)
+            except Exception:
+                pass
+            return branch_to_pr
     except Exception as e:
-        print(f"[ReviewServer WARN] GitHub PR fetch error: {e}", file=sys.stderr)
-        return GITHUB_PR_CACHE["data"] or {}
+        print(f"[ReviewServer WARN] GitHub HTML PR fetch error: {e}", file=sys.stderr)
+
+    if GITHUB_PR_CACHE["data"]:
+        return GITHUB_PR_CACHE["data"]
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                GITHUB_PR_CACHE["data"] = data
+                return data
+        except Exception:
+            pass
+    return {}
 
 def compute_pr_lifecycle(pr_id, branch, gh_prs, roadmap_prs, unaddressed_comments_by_pr):
     """Categorizes a PR topic branch into its actionable lifecycle stage."""
@@ -538,8 +798,34 @@ def compute_pr_lifecycle(pr_id, branch, gh_prs, roadmap_prs, unaddressed_comment
     if gh:
         state = gh.get("state", "").upper()
         if state == "OPEN":
+            rev_dec = gh.get("reviewDecision", "REVIEW_REQUIRED")
+            if rev_dec == "APPROVED":
+                return {
+                    "phase": "APPROVED_UPSTREAM",
+                    "reviewDecision": "APPROVED",
+                    "label": f"Approved to Merge — PR #{gh['number']}",
+                    "badge": f"✅ PR #{gh['number']} (APPROVED)",
+                    "action": f"Approved by reviewer on gwastro/pycbc (#{gh['number']}) and ready to merge!",
+                    "actionUrl": gh["htmlUrl"],
+                    "actionText": f"Merge PR #{gh['number']} on GitHub",
+                    "isActionNeeded": True,
+                    "order": 0
+                }
+            elif rev_dec == "CHANGES_REQUESTED":
+                return {
+                    "phase": "OPEN_UPSTREAM",
+                    "reviewDecision": "CHANGES_REQUESTED",
+                    "label": f"Changes Requested — PR #{gh['number']}",
+                    "badge": f"🟠 PR #{gh['number']} (CHANGES REQUESTED)",
+                    "action": f"Reviewer requested changes on gwastro/pycbc (#{gh['number']})",
+                    "actionUrl": gh["htmlUrl"],
+                    "actionText": f"View PR #{gh['number']} on GitHub",
+                    "isActionNeeded": True,
+                    "order": 1
+                }
             return {
                 "phase": "OPEN_UPSTREAM",
+                "reviewDecision": "REVIEW_REQUIRED",
                 "label": f"Open Upstream PR #{gh['number']}",
                 "badge": f"🟢 PR #{gh['number']} (OPEN)",
                 "action": f"Under active review upstream on gwastro/pycbc (#{gh['number']})",
@@ -558,6 +844,17 @@ def compute_pr_lifecycle(pr_id, branch, gh_prs, roadmap_prs, unaddressed_comment
                 "actionText": f"Merged PR #{gh['number']}",
                 "isActionNeeded": False,
                 "order": 5
+            }
+        elif state == "REVERTED":
+            return {
+                "phase": "STAGED",
+                "label": f"Reverted Upstream (PR #{gh['number']} Reverted in #5491)",
+                "badge": f"🔄 PR #{gh['number']} (REVERTED)",
+                "action": f"PR #{gh['number']} was merged and subsequently reverted in upstream/master; needs rework before re-submitting.",
+                "actionUrl": gh["htmlUrl"],
+                "actionText": f"View Reverted PR #{gh['number']}",
+                "isActionNeeded": True,
+                "order": 3
             }
 
     unresolved_count = unaddressed_comments_by_pr.get(pr_id, 0)
@@ -626,42 +923,54 @@ def compute_pr_lifecycle(pr_id, branch, gh_prs, roadmap_prs, unaddressed_comment
     }
 
 def get_live_pr_hunks(branch_or_id):
-    branch = resolve_branch(branch_or_id) or branch_or_id
-    p_check = subprocess.run(["git", "rev-parse", "--verify", branch], cwd=REPO_DIR, capture_output=True, text=True)
-    if p_check.returncode != 0:
+    branch = resolve_branch(branch_or_id) or BRANCH_ALIASES.get(branch_or_id, branch_or_id)
+    git_ref = resolve_git_ref(branch)
+    if not git_ref:
         return {"status": "error", "message": f"Unknown PR ID or branch: {branch_or_id}"}
 
     inv_map = {v: k for k, v in PR_BRANCH_MAP.items()}
-    pr_id = inv_map.get(branch) or (branch_or_id if branch_or_id.startswith("PR-") else f"PR-{branch_or_id}").upper().replace('/', '-')
-    
-    cmd_sha = ["git", "rev-parse", branch]
+    pr_id = inv_map.get(branch) or (branch_or_id if str(branch_or_id).upper().startswith("PR-") else f"PR-{branch_or_id}").upper().replace('/', '-')
+
+    cmd_sha = ["git", "rev-parse", git_ref]
     p_sha = subprocess.run(cmd_sha, cwd=REPO_DIR, capture_output=True, text=True)
     commit_sha = p_sha.stdout.strip() if p_sha.returncode == 0 else ""
 
-    # 1. Resolve merge base with current upstream master
-    upstream_ref = f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}"
-    p_mb = subprocess.run(["git", "merge-base", upstream_ref, branch], cwd=REPO_DIR, capture_output=True, text=True)
+    # 1. Resolve merge base with stacked parent or current upstream master
+    parent_branch = STACKED_PARENT_BRANCHES.get(branch)
+    parent_ref = resolve_git_ref(parent_branch) if parent_branch else None
+    if parent_ref:
+        upstream_ref = parent_ref
+    else:
+        upstream_ref = f"{UPSTREAM_REMOTE}/{UPSTREAM_BRANCH}"
+
+    p_mb = subprocess.run(["git", "merge-base", upstream_ref, git_ref], cwd=REPO_DIR, capture_output=True, text=True)
     if p_mb.returncode != 0 or not p_mb.stdout.strip():
-        p_mb = subprocess.run(["git", "merge-base", "upstream/master", branch], cwd=REPO_DIR, capture_output=True, text=True)
+        p_mb = subprocess.run(["git", "merge-base", "upstream/master", git_ref], cwd=REPO_DIR, capture_output=True, text=True)
         upstream_ref = "upstream/master"
     if p_mb.returncode != 0 or not p_mb.stdout.strip():
-        p_mb = subprocess.run(["git", "merge-base", "master", branch], cwd=REPO_DIR, capture_output=True, text=True)
+        p_mb = subprocess.run(["git", "merge-base", "master", git_ref], cwd=REPO_DIR, capture_output=True, text=True)
         upstream_ref = "master"
     base_commit = p_mb.stdout.strip() if p_mb.returncode == 0 and p_mb.stdout.strip() else MERGE_BASE
 
-    # True Pull Request diff: triple-dot diff against upstream master (diff from merge-base to branch)
-    diff_target = f"{upstream_ref}...{branch}"
+    # True Pull Request diff: triple-dot diff against upstream_ref (diff from merge-base to git_ref)
+    diff_target = f"{upstream_ref}...{git_ref}"
     diff_cmd_str = f"git diff {upstream_ref}...{branch}"
 
     cmd_stat = ["git", "diff", "--shortstat", diff_target]
     p_stat = subprocess.run(cmd_stat, cwd=REPO_DIR, capture_output=True, text=True)
     diff_stat = p_stat.stdout.strip() if p_stat.returncode == 0 else ""
 
+    # Extract commit subject and body for automatic description synthesis
+    p_log = subprocess.run(["git", "log", "-1", "--format=%s%n%b", git_ref], cwd=REPO_DIR, capture_output=True, text=True)
+    log_lines = [l.strip() for l in p_log.stdout.splitlines() if l.strip() and not l.strip().startswith("Co-Authored-By:")] if p_log.returncode == 0 else []
+    commit_subject = log_lines[0] if log_lines else f"Branch: {branch}"
+    commit_body = " ".join(log_lines[1:]) if len(log_lines) > 1 else ""
+
     cmd_diff = ["git", "diff", "-U3", diff_target]
     p_diff = subprocess.run(cmd_diff, cwd=REPO_DIR, capture_output=True, text=True)
     if p_diff.returncode != 0:
         # Fallback to double-dot against resolved base_commit if triple-dot fails
-        cmd_diff = ["git", "diff", "-U3", f"{base_commit}..{branch}"]
+        cmd_diff = ["git", "diff", "-U3", f"{base_commit}..{git_ref}"]
         p_diff = subprocess.run(cmd_diff, cwd=REPO_DIR, capture_output=True, text=True)
         if p_diff.returncode != 0:
             return {"status": "error", "message": f"Failed running git diff: {p_diff.stderr}"}
@@ -699,7 +1008,7 @@ def get_live_pr_hunks(branch_or_id):
                 "vscodeUrl": f"vscode://file/{REPO_DIR}/{file_name}:1",
                 "filePathLine": f"{file_name}:1",
                 "rationale": meta.get("rationale") or f"Derived from branch {branch}.",
-                "alternatives": meta.get("alternatives") or f"Targeting upstream master ({base_commit[:9]})."
+                "alternatives": meta.get("alternatives") or f"Targeting {upstream_ref} ({base_commit[:9]})."
             })
             continue
 
@@ -729,8 +1038,8 @@ def get_live_pr_hunks(branch_or_id):
                 meta = synthesize_hunk_rationale(file_name, start_line, end_line, body_lines, REPO_DIR)
 
             summary = meta.get("shortSummary") or f"Logic update in {file_name}"
-            rationale = meta.get("rationale") or f"Implementation refinement in {file_name} targeting upstream master."
-            alternatives = meta.get("alternatives") or f"Targeting upstream master ({base_commit[:9]})."
+            rationale = meta.get("rationale") or f"Implementation refinement in {file_name} ({commit_subject})."
+            alternatives = meta.get("alternatives") or f"Targeting {upstream_ref} ({base_commit[:9]})."
 
             hunks.append({
                 "file": file_name,
@@ -754,11 +1063,15 @@ def get_live_pr_hunks(branch_or_id):
         "status": "ok",
         "prId": pr_id.upper(),
         "branch": branch,
+        "gitRef": git_ref,
         "commitSha": commit_sha,
         "baseCommit": base_commit,
         "upstreamRef": upstream_ref,
         "diffCmd": diff_cmd_str,
         "diffStat": diff_stat,
+        "title": (gh_pr.get("title") if gh_pr else None) or commit_subject,
+        "problemDescription": commit_body or f"Review and verification for branch {branch} ({commit_subject}).",
+        "solutionDescription": commit_subject,
         "githubPr": gh_pr,
         "upstreamPrNumber": gh_pr["number"] if gh_pr else None,
         "upstreamPrState": gh_pr["state"] if gh_pr else None,
@@ -829,6 +1142,7 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
         super().do_HEAD()
 
     def do_GET(self):
+        global PR_BRANCH_MAP, USER_REQUESTED_BRANCHES
         req_path = urllib.parse.urlparse(self.path).path
 
         # Direct serve dashboard on root or index.html with no-cache headers
@@ -880,6 +1194,12 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if req_path == "/api/prs":
+            live_cfg = load_config()
+            if live_cfg.get("project", {}).get("branch_map"):
+                PR_BRANCH_MAP = dict(live_cfg["project"]["branch_map"])
+            if "user_requested_branches" in live_cfg.get("project", {}):
+                USER_REQUESTED_BRANCHES = list(live_cfg["project"]["user_requested_branches"])
+
             results = {}
             tracked = dict(PR_BRANCH_MAP)
 
@@ -887,18 +1207,23 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             for ub in USER_REQUESTED_BRANCHES:
                 if isinstance(ub, dict):
                     pid = ub.get("prId") or ub.get("branch", "").upper().replace("/", "-")
-                    bname = ub.get("branch")
+                    bname = BRANCH_ALIASES.get(ub.get("branch"), ub.get("branch"))
                 else:
-                    pid = str(ub).upper().replace("/", "-")
-                    bname = str(ub)
+                    bname = BRANCH_ALIASES.get(str(ub), str(ub))
+                    pid = bname.upper().replace("/", "-")
                 if not pid.startswith("PR-"):
                     pid = f"PR-{pid}"
                 if bname and bname not in tracked.values():
                     tracked[pid] = bname
 
-            # Strictly track only configured PR_BRANCH_MAP and explicit USER_REQUESTED_BRANCHES
+            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            force_ref = qs.get("force", ["0"])[0] in ("1", "true", "yes")
+            gh_all = get_github_prs(force_refresh=force_ref)
 
-            gh_all = get_github_prs()
+            # Automatically include any open PRs on gwastro/pycbc by user_filter
+            for gh_branch, gh_info in gh_all.items():
+                if gh_info.get("state") == "OPEN" and gh_branch not in tracked.values():
+                    tracked[f"PR-{gh_info['number']}"] = gh_branch
 
             # Load roadmap data to resolve dependencies
             roadmap_prs = {}
@@ -936,21 +1261,23 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
 
             for pid, branch in tracked.items():
                 pr_info = get_live_pr_hunks(branch)
+                if pr_info.get("status") != "ok":
+                    continue
                 rm_info = roadmap_prs.get(pid, {})
                 for k in ["title", "category", "problemDescription", "solutionDescription",
                           "simplificationDeepDive", "testCmd", "testTiming", "dependencies",
                           "unblocks", "wave"]:
-                    if k in rm_info and (k not in pr_info or not pr_info[k]):
+                    if k in rm_info and rm_info[k]:
                         pr_info[k] = rm_info[k]
                 pr_info["lifecycle"] = compute_pr_lifecycle(pid, branch, gh_all, roadmap_prs, unaddressed_by_pr)
                 # Match CI status
                 pr_ci = None
                 for pr_num, ci_val in ci_data.items():
-                    if ci_val.get("branch") == branch:
+                    if ci_val.get("branch") == branch or (pr_info.get("githubPr") and str(pr_info["githubPr"].get("number")) == str(pr_num)):
                         pr_ci = ci_val
                         break
                 pr_info["ci"] = pr_ci
-                if pr_info.get("githubPr") and pr_info["githubPr"].get("state") == "MERGED":
+                if pr_info.get("githubPr") and pr_info["githubPr"].get("state") in ("MERGED", "CLOSED"):
                     continue
                 results[pid] = pr_info
 
@@ -958,7 +1285,9 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if req_path == "/api/github/prs":
-            self._send_json({"status": "ok", "githubPrs": get_github_prs()})
+            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            force_ref = qs.get("force", ["0"])[0] in ("1", "true", "yes")
+            self._send_json({"status": "ok", "githubPrs": get_github_prs(force_refresh=force_ref)})
             return
 
         if req_path == "/api/roadmap":

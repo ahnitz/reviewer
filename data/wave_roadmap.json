@@ -9,32 +9,33 @@
     "PR-1A": {
       "wave": 1,
       "branch": "pr-fix-core-numpy2-optparse",
-      "title": "fix(core): numpy2 compatibility, robust to_int parser, bounds checks, resample copy",
-      "status": "PUSHED_TO_ORIGIN",
+      "title": "Make optparse more flexible about int formats",
+      "status": "OPEN",
       "dependencies": [],
+      "problemDescription": "Workflow configuration files frequently specify large integer counts in scientific notation (e.g. 1e6) or float-like strings (1000.0) that fail strict int() parsing in ConfigParser.getint.",
+      "solutionDescription": "Adds a to_int helper in pycbc/types/optparse.py that parses exact integer values represented in scientific or float notation while rejecting non-integer fractional values, overflow, and booleans.",
+      "simplificationDeepDive": "Minimal, well-tested integer parser integrated into ConfigParser alongside NumPy 2 compatibility fixes.",
       "files": [
+        "pycbc/results/render.py",
         "pycbc/types/config.py",
         "pycbc/types/optparse.py",
-        "pycbc/filter/resample.py",
-        "pycbc/filter/qtransform.py",
-        "pycbc/results/render.py",
-        "test/test_optparse.py",
-        "test/test_qtransform.py",
-        "test/test_resample.py"
+        "test/test_optparse.py"
       ],
-      "test_cmd": "pytest test/test_optparse.py test/test_resample.py test/test_qtransform.py"
+      "test_cmd": "pytest test/test_optparse.py",
+      "testCmd": "pytest test/test_optparse.py"
     },
     "PR-1B": {
       "wave": 1,
       "branch": "pr-fix-io-dictarray-indexing",
       "title": "fix(io): DictArray in-place indexing and SingleDetTriggers boolean masking",
-      "status": "PUSHED_TO_ORIGIN",
+      "status": "MERGED",
       "dependencies": [],
       "files": [
         "pycbc/io/hdf.py",
         "test/test_io_hdf.py"
       ],
-      "test_cmd": "pytest test/test_io_hdf.py"
+      "test_cmd": "pytest test/test_io_hdf.py",
+      "upstream_status": "INCORPORATED_UPSTREAM"
     },
     "PR-1C": {
       "wave": 1,
@@ -55,19 +56,20 @@
       "wave": 1,
       "branch": "pr-perf-waveform-compress",
       "title": "perf(waveform): Refine greedy sample point selection in waveform compression",
-      "status": "PUSHED_TO_ORIGIN",
+      "status": "MERGED",
       "dependencies": [],
       "files": [
         "pycbc/waveform/compress.py",
         "test/test_waveform_compress.py"
       ],
-      "test_cmd": "pytest test/test_waveform_compress.py"
+      "test_cmd": "pytest test/test_waveform_compress.py",
+      "upstream_status": "INCORPORATED_UPSTREAM"
     },
     "PR-1E": {
       "wave": 1,
       "branch": "pr-feat-vetoes-chisq-slicing",
       "title": "feat(vetoes): Memory-efficient bin SNR slicing and numerical stability in power chisq",
-      "status": "PUSHED_TO_ORIGIN",
+      "status": "MERGED",
       "dependencies": [],
       "files": [
         "pycbc/vetoes/chisq.py",
@@ -75,20 +77,22 @@
         "test/test_chisq_slicing.py",
         "test/test_autochisq.py"
       ],
-      "test_cmd": "pytest test/test_chisq_slicing.py test/test_autochisq.py"
+      "test_cmd": "pytest test/test_chisq_slicing.py test/test_autochisq.py",
+      "upstream_status": "INCORPORATED_UPSTREAM"
     },
     "PR-1F": {
       "wave": 1,
       "branch": "pr-feat-events-eventmgr-multi",
       "title": "feat(events): Multi-detector HDF5 output schema and strain buffer deallocation",
-      "status": "PUSHED_TO_ORIGIN",
+      "status": "MERGED",
       "dependencies": [],
       "files": [
         "pycbc/events/eventmgr.py",
         "test/test_eventmgr.py",
         "test/test_threshold.py"
       ],
-      "test_cmd": "pytest test/test_eventmgr.py"
+      "test_cmd": "pytest test/test_eventmgr.py",
+      "upstream_status": "INCORPORATED_UPSTREAM"
     },
     "PR-1G": {
       "wave": 1,
@@ -106,14 +110,18 @@
     "PR-1H": {
       "wave": 1,
       "branch": "pr-feat-inject-injfilter-optimal-snr",
-      "title": "feat(inject): Pre-filtering of sub-threshold injections via optimal SNR cut",
-      "status": "PUSHED_TO_ORIGIN",
+      "title": "Pre-filtering of sub-threshold injections via optimal SNR cut *within* inj filter rejector",
+      "status": "OPEN",
       "dependencies": [],
+      "problemDescription": "Generating and injecting waveforms that are far below detection threshold across all segments wastes substantial CPU time during large injection campaigns.",
+      "solutionDescription": "Computes full-band optimal SNR within InjFilterRejector (cached per segment PSD) and rejects injections falling below the configurable optimal SNR threshold prior to time-domain injection.",
+      "simplificationDeepDive": "Deduplicates segment injection logic and caches PSD frequency bounds per segment.",
       "files": [
         "pycbc/inject/injfilterrejector.py",
         "test/test_injfilterrejector.py"
       ],
-      "test_cmd": "pytest test/test_injfilterrejector.py"
+      "test_cmd": "pytest test/test_injfilterrejector.py",
+      "testCmd": "pytest test/test_injfilterrejector.py"
     },
     "PR-1I": {
       "wave": 1,
@@ -766,24 +774,411 @@
     "PR-1K": {
       "wave": 1,
       "branch": "pr-feat-frame-gwosc-hdf",
-      "title": "feat(frame): eliminate lalframe from core, add pure-Python GWF writer, and unify frame test suite",
+      "title": "Add support for reading the GWOSC standard HDF files with read/write frame functions.",
       "status": "OPEN",
       "dependencies": [],
+      "problemDescription": "GWOSC distributes strain data in a standardized HDF5 format (with meta/GPSstart, meta/Duration, meta/Detector, quality/simple, and strain/Strain datasets) that was not directly readable or writable through PyCBC standard read_frame / write_frame interfaces.",
+      "solutionDescription": "Adds pycbc/frame/gwosc_hdf.py with full read/write support for GWOSC HDF5 strain files, state vector bitmask extraction, explicit IFO channel validation, and seamless integration into read_frame and write_frame.",
+      "simplificationDeepDive": "Consolidates GWOSC HDF5 reading and writing behind existing frame I/O entry points without duplicating frame cache or time-slicing logic.",
       "files": [
         "pycbc/frame/__init__.py",
+        "pycbc/frame/buffer.py",
+        "pycbc/frame/cache.py",
         "pycbc/frame/frame.py",
+        "pycbc/frame/gwf.py",
         "pycbc/frame/gwosc_hdf.py",
-        "test/test_frame.py",
-        "test/test_gwosc_hdf.py"
+        "test/test_frame.py"
       ],
-      "test_cmd": "python3 test/test_frame.py",
-      "category": "Frame I/O & Core Decoupling",
-      "problemDescription": "Previously, PyCBC's frame I/O relied on external C lalframe bindings for writing GWF files and managing stream caches, adding heavy C dependency weight and preventing introspection of available channel names. In addition, GWOSC HDF5 reading duplicated cache filtering, multi-file concatenation, and sub-interval slicing logic, while tests were fragmented across separate test files.",
-      "solutionDescription": "1) Added pure-Python GWF frame writing (write_frame_gwf / write_frame) adhering to IGWD Frame format v8 specification with standard POSIX CRC-32 checksums, supporting float32, float64, complex64, complex128, int32, and uint32 series. 2) Decoupled lalframe completely from PyCBC core (0 code imports in pycbc/), refactoring DataBuffer and StatusBuffer onto pure-Python FrameCache and read_frame(). 3) Unified frame cache resolution, gap detection, sub-interval slicing, and series concatenation in read_frame() across both GWF and GWOSC HDF5 files, dramatically simplifying gwosc_hdf.py. 4) Merged test/test_gwosc_hdf.py into test/test_frame.py with cross-compatibility validation ensuring C lalframe can read frames written by pure Python.",
-      "simplificationDeepDive": "Completely eliminates lalframe dependency from pycbc/ core. Cuts 406 net lines while adding pure-Python GWF writing capabilities. Unified test suite executes 24 unit and integration tests cleanly in under 1 second.",
-      "pr": 5482,
-      "pr_number": 5482,
-      "pr_url": "https://github.com/gwastro/pycbc/pull/5482"
+      "test_cmd": "pytest test/test_frame.py",
+      "testCmd": "pytest test/test_frame.py"
+    },
+    "PR-5457": {
+      "wave": 1,
+      "branch": "fix-gating-inpainting",
+      "title": "Fix numerical instability in gating and inpainting",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Overwhitening and Toeplitz/Cholesky strain inpainting encounter singular or ill-conditioned covariance matrices on bandlimited or quantized PSDs when ridge regularization is zero.",
+      "solutionDescription": "Introduces diagonal ridge regularization and stable Cholesky/Toeplitz solver handling in pycbc/strain/gate.py and pycbc/strain/strain.py, with regression tests asserting ridge=0 behavior on bandlimited PSDs.",
+      "simplificationDeepDive": "Replaces fragile unregularized matrix inversion with numerically stable regularized inpainting.",
+      "files": [
+        "pycbc/inference/models/gated_gaussian_noise.py",
+        "pycbc/strain/gate.py",
+        "pycbc/strain/strain.py",
+        "pycbc/types/timeseries.py",
+        "test/test_gate_and_paint.py",
+        "test/test_infmodel.py"
+      ],
+      "test_cmd": "pytest test/test_gate_and_paint.py test/test_infmodel.py",
+      "testCmd": "pytest test/test_gate_and_paint.py test/test_infmodel.py"
+    },
+    "PR-5446": {
+      "wave": 1,
+      "branch": "ci-http-cache",
+      "title": "Ci http cache [TESTING]",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "CI jobs repeatedly download external GWOSC, Zenodo, and LAL data files across test matrices, causing network flakiness and slow workflow execution.",
+      "solutionDescription": "Integrates an HTTP download caching action across GitHub Actions workflows with cache hit/miss reporting and fallback handling.",
+      "simplificationDeepDive": "Reduces CI external download wiring to a unified cache step.",
+      "files": [
+        ".github/workflows/bank-compress-workflow.yml",
+        ".github/workflows/basic-tests.yml",
+        ".github/workflows/inference-workflow.yml",
+        ".github/workflows/mac-test.yml",
+        ".github/workflows/refresh-ci-caches.yml",
+        ".github/workflows/search-splitable-workflow.yml",
+        ".github/workflows/search-workflow.yml",
+        ".github/workflows/tmpltbank-workflow.yml",
+        ".github/workflows/tut-test.yml",
+        ".github/workflows/workflow-tests.yml",
+        "tools/ci_prefetch_test_data.py"
+      ],
+      "test_cmd": "pytest",
+      "testCmd": "pytest"
+    },
+    "PR-5434": {
+      "wave": 1,
+      "branch": "relbin-kernel-vectorize",
+      "title": "Relbin kernel refactor",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Relative binning likelihood evaluation iterated over frequency bins and detectors in scalar loops with redundant intermediate allocations.",
+      "solutionDescription": "Refactors and vectorizes the relative binning kernel computation and generates test waveforms directly with PyCBC.",
+      "simplificationDeepDive": "Streamlines inner-loop summary weight contractions into vectorized array operations.",
+      "files": [
+        "pycbc/inference/models/relbin_cpu.pyx",
+        "test/test_relbin_kernel.py"
+      ],
+      "test_cmd": "pytest test/test_relbin_kernel.py",
+      "testCmd": "pytest test/test_relbin_kernel.py"
+    },
+    "PR-5433": {
+      "wave": 1,
+      "branch": "marg-peak-search",
+      "title": "Allow peak lock to shift with sampling",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Fixed peak-lock windows in relative binning can miss shifted likelihood peaks during sampling in non-stationary noise or wide priors.",
+      "solutionDescription": "Allows the peak search window to track and shift with sampling, warns when the peak search terminates at its boundary, and adds tests in non-stationary noise.",
+      "simplificationDeepDive": "Adaptive peak tracking within the marginalization likelihood workflow.",
+      "files": [
+        "pycbc/inference/models/relbin.py",
+        "pycbc/inference/models/tools.py",
+        "test/test_peak_lock.py"
+      ],
+      "test_cmd": "pytest test/test_peak_lock.py",
+      "testCmd": "pytest test/test_peak_lock.py"
+    },
+    "PR-5432": {
+      "wave": 1,
+      "branch": "marg-distance-interp",
+      "title": "Speed up distance marginalization (when doing lots of it)",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Repeatedly evaluating exact Bessel/distance marginalization integrals across large vector sample sets is a major bottleneck in parameter estimation.",
+      "solutionDescription": "Accelerates distance marginalization via a 2D interpolation table extended safely past its boundary range with comprehensive accuracy tests.",
+      "simplificationDeepDive": "Fast vectorized lookup table replacing expensive per-sample quadrature.",
+      "files": [
+        "pycbc/inference/models/tools.py",
+        "test/test_marg_distance_interp.py"
+      ],
+      "test_cmd": "pytest test/test_marg_distance_interp.py",
+      "testCmd": "pytest test/test_marg_distance_interp.py"
+    },
+    "PR-5429": {
+      "wave": 1,
+      "branch": "marg-reconstruct-cache",
+      "title": "Get inference model stat values to be saved not just in emcee",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Model statistic values and reconstructed marginalized parameters were only properly cached/saved in specific emcee code paths and could return stale stats on revisited points.",
+      "solutionDescription": "Generalizes model stats caching and reconstruction across samplers and re-evaluates revisited points cleanly.",
+      "simplificationDeepDive": "Unifies inference model stat reporting across all sampler backends.",
+      "files": [
+        "bin/inference/pycbc_inference",
+        "pycbc/inference/models/base.py",
+        "pycbc/inference/sampler/base.py",
+        "pycbc/inference/sampler/base_mcmc.py",
+        "pycbc/inference/sampler/emcee.py",
+        "pycbc/pool.py",
+        "test/test_model_stats_cache.py"
+      ],
+      "test_cmd": "pytest test/test_model_stats_cache.py",
+      "testCmd": "pytest test/test_model_stats_cache.py"
+    },
+    "PR-5430": {
+      "wave": 1,
+      "branch": "marg-inline-reconstruct",
+      "title": "Reconstruct marginlized values at sampling time",
+      "status": "OPEN",
+      "dependencies": [
+        "PR-5429"
+      ],
+      "problemDescription": "Post-processing reconstruction of marginalized parameters after sampling requires re-evaluating likelihoods and waveforms.",
+      "solutionDescription": "Reconstructs and records marginalized parameters inline at sampling time, stacked on PR #5429 (marg-reconstruct-cache).",
+      "simplificationDeepDive": "Eliminates separate post-sampling reconstruction pass by recording drawn parameters inline.",
+      "files": [
+        "pycbc/inference/models/marginalized_gaussian_noise.py",
+        "pycbc/inference/models/tools.py"
+      ],
+      "test_cmd": "pytest",
+      "testCmd": "pytest"
+    },
+    "PR-5410": {
+      "wave": 1,
+      "branch": "relbin-calibration",
+      "title": "Support calibration errors in the relative binning model",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "The relative binning inference model lacked support for detector frequency-dependent amplitude and phase calibration uncertainty envelopes.",
+      "solutionDescription": "Adds calibration error perturbation support to the relative binning likelihood model with full injection test coverage.",
+      "simplificationDeepDive": "Applies smooth calibration splines directly to bin-level summary weights.",
+      "files": [
+        "pycbc/inference/models/relbin.py",
+        "pycbc/strain/calibration.py",
+        "test/test_relbin_calibration.py"
+      ],
+      "test_cmd": "pytest test/test_relbin_calibration.py",
+      "testCmd": "pytest test/test_relbin_calibration.py"
+    },
+    "PR-5409": {
+      "wave": 1,
+      "branch": "relbin-resolution-diagnostic",
+      "title": "Relbin resolution diagnostic",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Insufficient frequency bin resolution in relative binning can silently degrade log-likelihood accuracy without warning the user.",
+      "solutionDescription": "Adds resolution diagnostics to validate relative binning accuracy and quietens only the numpy FFT backend logger in unthreaded FFT tests.",
+      "simplificationDeepDive": "Targeted diagnostic check during relative binning setup.",
+      "files": [
+        "pycbc/inference/models/relbin.py",
+        "test/test_fft_unthreaded.py",
+        "test/test_infmodel.py"
+      ],
+      "test_cmd": "pytest test/test_fft_unthreaded.py test/test_infmodel.py",
+      "testCmd": "pytest test/test_fft_unthreaded.py test/test_infmodel.py"
+    },
+    "PR-5405": {
+      "wave": 1,
+      "branch": "relbin-setup-refactor",
+      "title": "Separate generating the fiducial waveform from laying out the bins",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Fiducial waveform generation and frequency bin layout were tightly coupled in relative binning initialization.",
+      "solutionDescription": "Separates generating the fiducial waveform from laying out the frequency bins in pycbc/inference/models/relbin.py.",
+      "simplificationDeepDive": "Clean modular separation enabling flexible bin construction and testing.",
+      "files": [
+        "pycbc/inference/models/relbin.py"
+      ],
+      "test_cmd": "pytest",
+      "testCmd": "pytest"
+    },
+    "PR-5404": {
+      "wave": 1,
+      "branch": "marg-accuracy-tests",
+      "title": "Tests of the relative model marginalization and timing",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Relative binning marginalization schemes needed systematic verification against brute-force numerical integration and timing benchmarks.",
+      "solutionDescription": "Adds comprehensive test suites (test_marg_accuracy.py, test_marg_brute_force.py, marg_test_data.py) asserting marginalization accuracy and timing premises.",
+      "simplificationDeepDive": "Self-contained verification suite for marginalized likelihood models.",
+      "files": [
+        "test/marg_test_data.py",
+        "test/test_marg_accuracy.py",
+        "test/test_marg_brute_force.py",
+        "tools/timing/marg_perf.py"
+      ],
+      "test_cmd": "pytest test/marg_test_data.py test/test_marg_accuracy.py test/test_marg_brute_force.py",
+      "testCmd": "pytest test/marg_test_data.py test/test_marg_accuracy.py test/test_marg_brute_force.py"
+    },
+    "PR-5371": {
+      "wave": 1,
+      "branch": "staging",
+      "title": "allow staging executable output",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Workflow executables writing directly to shared network filesystems can suffer from I/O contention and partial writes.",
+      "solutionDescription": "Allows staging executable output locally before final transfer and avoids urlparse failures on systems with custom URL schemes.",
+      "simplificationDeepDive": "Lightweight staging wrapper in workflow core.",
+      "files": [
+        "pycbc/workflow/core.py"
+      ],
+      "test_cmd": "pytest",
+      "testCmd": "pytest"
+    },
+    "PR-4658": {
+      "wave": 1,
+      "branch": "tsdoc",
+      "title": "update time_slice documentation, add additional option for the exact ...",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "TimeSeries.time_slice documentation and exact boundary slicing options needed clarification for edge-aligned sample slicing.",
+      "solutionDescription": "Updates time_slice docstrings and adds mode support for exact boundary handling.",
+      "simplificationDeepDive": "Focused documentation and slicing mode enhancement.",
+      "files": [
+        "pycbc/types/timeseries.py"
+      ],
+      "test_cmd": "pytest",
+      "testCmd": "pytest"
+    },
+    "PR-4002": {
+      "wave": 1,
+      "branch": "siminj",
+      "title": "simplify injection module [WIP]",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Legacy injection module contained duplicated code paths for signal injection.",
+      "solutionDescription": "Simplifies pycbc/inject/inject.py by removing redundant legacy routines (-386/+26 lines).",
+      "simplificationDeepDive": "Net deletion of 360 lines of legacy injection boilerplate.",
+      "files": [
+        "pycbc/inject/inject.py"
+      ],
+      "test_cmd": "pytest",
+      "testCmd": "pytest"
+    },
+    "PR-SCC": {
+      "wave": 1,
+      "branch": "feature/signal-consistency-chain",
+      "title": "Add SignalConsistencyChain and use it in pycbc_inspiral_fir",
+      "status": "PUSHED_TO_ORIGIN",
+      "dependencies": [],
+      "problemDescription": "Signal consistency tests (power chisq, auto-chisq, sine-Gaussian chisq) and intermediate ranking statistic cuts were hardcoded or batch-shared across templates in pycbc_inspiral_fir, causing triggers to inherit another template's chisq value and losing single-precision phase accuracy in sgchisq on long segments.",
+      "solutionDescription": "Introduces pycbc.vetoes.chain.SignalConsistencyChain to run power, auto, and sine-Gaussian chisq with configurable threshold/skip/remove steps (--signal-consistency-chain), exact double-precision band-limited time shifts in sgchisq.values_at on any template frequency grid, and fixes SingleDetAutoChisq two-sided dof initialization.",
+      "simplificationDeepDive": "Replaces bespoke compute_batch_chisq in pycbc_inspiral_fir with unified SignalConsistencyChain and RatioChisqInputs.",
+      "files": [
+        "bin/pycbc_inspiral_fir",
+        "pycbc/filter/matched_filter_ratio.py",
+        "pycbc/vetoes/autochisq.py",
+        "pycbc/vetoes/chain.py",
+        "pycbc/vetoes/sgchisq.py",
+        "test/test_signal_consistency_chain.py"
+      ],
+      "test_cmd": "pytest test/test_signal_consistency_chain.py",
+      "testCmd": "pytest test/test_signal_consistency_chain.py"
+    },
+    "PR-PCBW": {
+      "wave": 1,
+      "branch": "feature/power-chisq-bin-weights",
+      "title": "Power chisq: weight each bin by the power it holds",
+      "status": "PUSHED_TO_ORIGIN",
+      "dependencies": [],
+      "problemDescription": "Power chisq bins are placed for equal power but contain an integer number of frequency samples, so actual bin power varies (and narrow bins can hold zero power). Consequently, chisq grew with SNR^2 for loud signals matching the template (reaching 1.37x dof at SNR 200 with 256 bins).",
+      "solutionDescription": "Weights each chisq bin by the actual fraction f_j of template power it holds (sum_j |z_j|^2 / f_j - |rho|^2) and merges zero-power bins, ensuring a central chi-squared distribution with 2p - 2 dof across direct time-shift, FFT-per-bin, and sky-max chisq paths.",
+      "simplificationDeepDive": "Zero-overhead bin weighting folded directly into shift_sum and per-bin FFT scaling across CPU, CUDA, and CuPy backends.",
+      "files": [
+        "pycbc/vetoes/chisq.py",
+        "pycbc/vetoes/chisq_cpu.pyx",
+        "pycbc/vetoes/chisq_cuda.py",
+        "pycbc/vetoes/chisq_cupy.py",
+        "test/test_chisq.py"
+      ],
+      "test_cmd": "pytest test/test_chisq.py",
+      "testCmd": "pytest test/test_chisq.py"
+    },
+    "PR-SGCTP": {
+      "wave": 1,
+      "branch": "feature/sg-chisq-template-projection",
+      "title": "Sine-Gaussian chisq: remove the template's own response",
+      "status": "PUSHED_TO_ORIGIN",
+      "dependencies": [
+        "PR-SCC"
+      ],
+      "problemDescription": "A loud signal matching its template deposits significant power in sine-Gaussian tiles that overlap the template near merger, causing sgchisq to grow with SNR^2 and self-veto loud detections (reaching 375 at SNR 200 for 30+30 Msun).",
+      "solutionDescription": "Subtracts the template's expected complex response SNR * <tile|template> from each tile and normalizes by the remaining noise power (1 - |<tile|template>|^2) on the template's own frequency grid, keeping sgchisq at ~1.0 in noise and flat across SNR for matching signals.",
+      "simplificationDeepDive": "Stacked cleanly on feature/signal-consistency-chain; preserves template phase in RatioChisqInputs (conj(ratio) * reference) so block-grid overlaps match exact overlaps to within 2%.",
+      "files": [
+        "pycbc/filter/matched_filter_ratio.py",
+        "pycbc/vetoes/chain.py",
+        "pycbc/vetoes/sgchisq.py",
+        "test/test_sgchisq_projection.py"
+      ],
+      "test_cmd": "pytest test/test_sgchisq_projection.py",
+      "testCmd": "pytest test/test_sgchisq_projection.py"
+    },
+    "PR-VOG": {
+      "wave": 1,
+      "branch": "feature/veto-option-groups",
+      "title": "Define the power and auto chisq options in their classes",
+      "status": "PUSHED_TO_ORIGIN",
+      "dependencies": [],
+      "problemDescription": "CLI option groups for power chisq and auto-chisq were defined inline on SingleDetSkyMaxPowerChisq or in search scripts rather than on the base SingleDetPowerChisq and SingleDetAutoChisq classes.",
+      "solutionDescription": "Moves power chisq and auto-chisq CLI option group definitions into SingleDetPowerChisq.insert_option_group and SingleDetAutoChisq.insert_option_group so any tool or SignalConsistencyChain can reuse them directly.",
+      "simplificationDeepDive": "Consolidates duplicated CLI option definitions across pycbc/vetoes/chisq.py and pycbc/vetoes/autochisq.py.",
+      "files": [
+        "pycbc/vetoes/autochisq.py",
+        "pycbc/vetoes/chisq.py"
+      ],
+      "test_cmd": "pytest test/test_chisq.py",
+      "testCmd": "pytest test/test_chisq.py"
+    },
+    "PR-FB": {
+      "wave": 3,
+      "branch": "pr-feat-fir-bank",
+      "title": "Modernize pycbc_fir_bank, RatioFilterBank, and pycbc_inspiral_fir",
+      "status": "PUSHED_TO_ORIGIN",
+      "dependencies": [],
+      "problemDescription": "Legacy pycbc_fir_bank and RatioFilterBank carried redundant CLI flags (--delta-f, --f-high, low_frequency_cutoff overrides), hardcoded tap snapping/step ladders, and duplicate top-level waveform compression.",
+      "solutionDescription": "Modernizes and simplifies pycbc_fir_bank, RatioFilterBank, and pycbc_inspiral_fir (-918/+731 lines): derives level FFT length from max_taps, stores top-level reference waveforms as CompressedWaveforms with --segment-length, ensures parent templates cover child bandwidth, and optimizes spectral fitting and seed pruning.",
+      "simplificationDeepDive": "Net reduction of 187 lines across bin/pycbc_fir_bank, pycbc/waveform/bank.py, bin/pycbc_inspiral_fir, and examples/ratio_fir_search.",
+      "files": [
+        "bin/pycbc_fir_bank",
+        "bin/pycbc_inspiral_fir",
+        "examples/ratio_fir_search/README.rst",
+        "examples/ratio_fir_search/compare_triggers.py",
+        "examples/ratio_fir_search/make_banks.sh",
+        "examples/ratio_fir_search/make_fir_bank.sh",
+        "examples/ratio_fir_search/run_fir_search.sh",
+        "pycbc/waveform/bank.py"
+      ],
+      "test_cmd": "pytest test/test_bank.py",
+      "testCmd": "pytest test/test_bank.py"
+    },
+    "PR-MDTF": {
+      "wave": 3,
+      "branch": "pr-feat-multidet-trigger-files",
+      "title": "Support multi-detector trigger files in post-processing and minifollowup workflows",
+      "status": "PUSHED_TO_ORIGIN",
+      "dependencies": [],
+      "problemDescription": "Trigger merging (`pycbc_coinc_mergetrigs`), downstream plotting scripts, and minifollowup workflows assumed single-detector trigger files organized strictly per-IFO.",
+      "solutionDescription": "Adds multi-detector trigger file support to `pycbc_coinc_mergetrigs`, `pycbc_sngls_findtrigs`, minifollowup workflows, and plotting scripts while preserving full backward compatibility with per-detector files.",
+      "simplificationDeepDive": "Enables multi-detector trigger sets across 14 post-processing and workflow modules (+413/-280 lines) without duplicating workflow logic.",
+      "files": [
+        "bin/all_sky_search/pycbc_coinc_mergetrigs",
+        "bin/all_sky_search/pycbc_sngls_findtrigs",
+        "bin/minifollowups/pycbc_foreground_minifollowup",
+        "bin/minifollowups/pycbc_injection_minifollowup",
+        "bin/minifollowups/pycbc_sngl_minifollowup",
+        "bin/plotting/pycbc_page_coinc_snrchi",
+        "bin/plotting/pycbc_page_snrchi",
+        "bin/plotting/pycbc_plot_hist",
+        "bin/plotting/pycbc_plot_throughput",
+        "bin/workflows/pycbc_make_offline_search_workflow",
+        "pycbc/workflow/coincidence.py",
+        "pycbc/workflow/core.py",
+        "pycbc/workflow/minifollowups.py",
+        "pycbc/workflow/plotting.py"
+      ],
+      "test_cmd": "pytest test/test_workflow.py",
+      "testCmd": "pytest test/test_workflow.py"
+    },
+    "PR-MDWJ": {
+      "wave": 3,
+      "branch": "pr-feat-multidet-workflow-jobs",
+      "title": "Support multi-detector inspiral workflow job setup without losing analyzable time",
+      "status": "PUSHED_TO_ORIGIN",
+      "dependencies": [],
+      "problemDescription": "Single-detector inspiral workflow job tiling (`PyCBCInspiralExecutable`) tiled each IFO's science segments independently; intersecting IFO segments upfront or requiring all IFOs in every tile loses valid single- and subset-detector analyzable time.",
+      "solutionDescription": "Adds multi-detector inspiral workflow job setup (`setup_matchedfltr_dax_generated_multi`, `_tile_multi_ifo_segments`, `PyCBCInspiralMultiDetExecutable`) that tiles active detector subsets across segment boundaries without losing analyzable time, covered by 396 lines of unit tests in `test/test_workflow_matched_filter.py`.",
+      "simplificationDeepDive": "Extends `pycbc/workflow/jobsetup.py` and `pycbc/workflow/matched_filter.py` (+622/-10 lines across 4 files, including comprehensive test coverage) while keeping single-detector workflows unchanged.",
+      "files": [
+        "pycbc/workflow/core.py",
+        "pycbc/workflow/jobsetup.py",
+        "pycbc/workflow/matched_filter.py",
+        "test/test_workflow_matched_filter.py"
+      ],
+      "test_cmd": "pytest test/test_workflow_matched_filter.py",
+      "testCmd": "pytest test/test_workflow_matched_filter.py"
     }
   },
   "ingestion_log": [

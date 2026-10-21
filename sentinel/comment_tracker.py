@@ -34,13 +34,31 @@ HEADERS = {
 }
 
 PR_MAP = {
-    5473: {"prId": "PR-1D", "branch": "pr-perf-waveform-compress"},
-    5474: {"prId": "PR-1B", "branch": "pr-fix-io-dictarray-indexing"},
-    5475: {"prId": "PR-1A", "branch": "pr-fix-core-numpy2-optparse"},
-    5479: {"prId": "PR-1H", "branch": "pr-feat-inject-injfilter-optimal-snr"},
-    5481: {"prId": "PR-1F", "branch": "pr-feat-events-eventmgr-multi"},
+    5500: {"prId": "PR-MDWJ", "branch": "pr-feat-multidet-workflow-jobs"},
+    5496: {"prId": "PR-5496", "branch": "pr-feat-workflow-clusterlink"},
+    5494: {"prId": "PR-MDTF", "branch": "pr-feat-multidet-trigger-files"},
+    5493: {"prId": "PR-VOG", "branch": "feature/veto-option-groups"},
+    5490: {"prId": "PR-FB", "branch": "pr-feat-fir-bank"},
+    5484: {"prId": "PR-PCBW", "branch": "feature/power-chisq-bin-weights"},
     5482: {"prId": "PR-1K", "branch": "pr-feat-frame-gwosc-hdf"},
+    5479: {"prId": "PR-1H", "branch": "pr-feat-inject-injfilter-optimal-snr"},
+    5475: {"prId": "PR-1A", "branch": "pr-fix-core-numpy2-optparse"},
+    5457: {"prId": "PR-5457", "branch": "fix-gating-inpainting"},
+    5446: {"prId": "PR-5446", "branch": "ci-http-cache"},
+    5434: {"prId": "PR-5434", "branch": "relbin-kernel-vectorize"},
+    5433: {"prId": "PR-5433", "branch": "marg-peak-search"},
+    5432: {"prId": "PR-5432", "branch": "marg-distance-interp"},
+    5430: {"prId": "PR-5430", "branch": "marg-inline-reconstruct"},
+    5429: {"prId": "PR-5429", "branch": "marg-reconstruct-cache"},
+    5410: {"prId": "PR-5410", "branch": "relbin-calibration"},
+    5409: {"prId": "PR-5409", "branch": "relbin-resolution-diagnostic"},
+    5405: {"prId": "PR-5405", "branch": "relbin-setup-refactor"},
+    5404: {"prId": "PR-5404", "branch": "marg-accuracy-tests"},
+    5371: {"prId": "PR-5371", "branch": "staging"},
+    4658: {"prId": "PR-4658", "branch": "tsdoc"},
+    4002: {"prId": "PR-4002", "branch": "siminj"},
 }
+
 
 
 def load_existing_comments(filepath):

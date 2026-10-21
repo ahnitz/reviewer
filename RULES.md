@@ -363,11 +363,15 @@ When an upstream PR merges into `upstream/master`, it has immediate ripple effec
 
 ### Implementation Standard
 1. **Continuous Upstream Polling**: `sentinel/rebase_monitor.py` polls `upstream/master` every 60s (`git fetch upstream master`).
-2. **Merge Detection**: When `upstream_head` advances, the monitor cross-references merge commit SHAs and GitHub PR API states (`/repos/gwastro/pycbc/pulls?state=closed`) to identify which PR merged.
-3. **Lifecycle Transition to `MERGED`**:
-   - The merged PR is marked `MERGED` in `data/wave_roadmap.json`.
-   - The PR card moves to the `MERGED` section on the dashboard.
-4. **Sibling Branch Rebase & Test Execution**:
+2. **Authoritative Merge & Revert Detection**:
+   - `server/review_server.py` (`get_github_prs()`) directly scans `git log -n 400 --format="%H %s" upstream/master` for squash-merged PR numbers (`(#NNNN)`) and revert commits (`Revert "... (#NNNN)"`), queries closed PRs with `sort:updated-desc` across pages 1–2, and persists `MERGED`/`CLOSED` states in `data/github_prs_cache.json`.
+   - This guarantees older PR numbers that recently merged (e.g. `#5371`) never fall off pagination back into `READY_TO_OPEN`, and merged-then-reverted PRs (e.g. `#5409` reverted in `#5491`) are explicitly badged as `REVERTED`.
+3. **Rate-Limit-Free Review Decision & CI Tracking**:
+   - `get_github_prs()` queries GitHub HTML search (`review:approved` and `review:changes_requested`) to annotate every open PR with `APPROVED`, `CHANGES_REQUESTED`, or `REVIEW_REQUIRED`.
+   - Approved PRs are surfaced in a dedicated **"Approved Pull Requests Ready to Merge"** callout section at the top of the dashboard with distinct emerald/teal styling.
+4. **Lifecycle Transition to `MERGED`**:
+   - The merged PR is marked `MERGED` in `data/wave_roadmap.json` and automatically dropped from the active/staging review queues on the dashboard.
+5. **Sibling Branch Rebase & Test Execution**:
    - Every active branch on `origin` is rebased onto the new `upstream/master`.
    - Automated tests (`DEFAULT_BRANCH_TEST_MAP`) execute immediately with `PYTHONPATH=.`.
    - On green tests, force-push to `origin`.

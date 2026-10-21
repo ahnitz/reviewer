@@ -39,18 +39,38 @@ DEFAULT_BRANCH_TEST_MAP = {
     "pr-feat-strain-regularized-inpainting": ["pytest", "test/test_gate_and_paint.py"],
     "pr-feat-frame-gwosc-hdf": ["pytest", "test/test_frame.py"],
     "pr-fix-filter-resample-copy": ["pytest", "test/test_resample.py"],
+    "feature/veto-option-groups": ["pytest", "test/test_chisq_option_group.py"],
+    "feature/signal-consistency-chain": ["pytest", "test/test_signal_consistency.py"],
+    "feature/power-chisq-bin-weights": ["pytest", "test/test_chisq_slicing.py"],
+    "feature/sg-chisq-template-projection": ["pytest", "test/test_autochisq.py"],
+    "pr-feat-fir-bank": ["pytest", "test/test_bank.py"],
+    "pr-feat-multidet-trigger-files": ["pytest", "test/test_eventmgr.py"],
+    "pr-feat-multidet-workflow-jobs": ["pytest", "test/test_workflow.py"],
+    "pr-feat-workflow-clusterlink": ["pytest", "test/test_workflow.py"],
 }
 
 # Branch dependency DAG for Protocol B cascade rebases
 BRANCH_DEPENDENCIES = {
     "pr-fix-events-numpy2-zerolag": "pr-fix-core-numpy2-optparse",
     "pr-feat-psd-robust-estimators": "pr-feat-filter-dynamic-snr-renorm",
+    "feature/sg-chisq-template-projection": "feature/signal-consistency-chain",
 }
 
 # Branches already merged into upstream gwastro/pycbc:master
 MERGED_BRANCHES = {
     "pr-fix-filter-qtransform": {"pr": 5476, "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83"},
     "pr-fix-live-hwinj-support": {"pr": 5476, "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83"},
+    "pr-perf-waveform-compress": {"pr": 5473, "merged_commit": "92a27d1b9"},
+    "pr-fix-io-dictarray-indexing": {"pr": 5474, "merged_commit": "12f38a7c1"},
+    "pr-feat-inject-injfilter-optimal-snr": {"pr": 5479, "merged_commit": "e4c49ef0c"},
+    "pr-feat-vetoes-chisq-slicing": {"pr": 5480, "merged_commit": "58732a4f1"},
+    "pr-feat-events-eventmgr-multi": {"pr": 5481, "merged_commit": "a72844c77"},
+    "pr-feat-frame-gwosc-hdf": {"pr": 5482, "merged_commit": "7bd1ba717"},
+    "pr-feat-fir-bank": {"pr": 5490, "merged_commit": "7face56ab"},
+    "staging": {"pr": 5371, "merged_commit": "02df4d52b"},
+    "relbin-kernel-vectorize": {"pr": 5434, "merged_commit": "be652c2be"},
+    "marg-peak-search": {"pr": 5433, "merged_commit": "f6a56ee20"},
+    "marg-distance-interp": {"pr": 5432, "merged_commit": "165d4f7b1"},
 }
 
 DEFAULT_CONFIG_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "config.json"))

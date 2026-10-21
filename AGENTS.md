@@ -22,6 +22,8 @@ flowchart TD
         ROADMAP[("Wave Roadmap\ndata/wave_roadmap.json")]
         REBASE["Rebase Monitor Daemon\n(sentinel/rebase_monitor.py)"]
         RESPONDER["Auto-Responder Daemon\n(sentinel/auto_responder.py)"]
+        CI_TRACKER["CI Tracker Sentinel\n(sentinel/ci_tracker.py)"]
+        CMT_TRACKER["Comment Tracker Sentinel\n(sentinel/comment_tracker.py)"]
         DEV_RECONCILER["Dev Reconciler Sentinel\n(sentinel/dev_reconciler.py)"]
     end
 
@@ -58,10 +60,12 @@ flowchart TD
 6. **Mandatory Architectural Rationale (MANDATORY)**: Whenever an AI agent refactors code, decomposes PRs, addresses maintainer feedback, or modifies implementations, the agent **must** provide the actual architectural explanation for every hunk (Problem, Logic & Rationale, Alternatives Considered & Rejected). Generic placeholders (`"Implementation update around..."`, `"Refactored code"`) are strictly forbidden. All hunks must be registered in `server/rationale_catalog.py`.
 7. **Strict Triple-Dot Upstream Diffs**: When branches rebase, diffs must strictly reflect the differences against the current `upstream/master` (`git diff upstream/master...<branch>`), never against stale historical merge bases (`f6eaed241`).
 8. **Stable Comment-to-Hunk Anchoring**: Inline review comments must remain pinned to their exact file and line context even after branch rebases, never drifting across files.
-9. **Upstream PR Merge Tracking & Downstream Cascade (Protocol B)**: Continuously monitors `upstream/master` to detect when PRs merge, promotes dependent `STAGED_DEPENDENT` branches to `READY_TO_OPEN`, automatically rebases sibling branches, and recalibrates the developer branch merge base.
-10. **Physical Signal Duration Containment & Fast Unified Test Setup**: Guarantees $\Delta f \le 1 / T_{\text{signal}}$ in frequency-domain tests to avoid time-domain aliasing, and pre-generates shared waveforms in `@classmethod setUpClass` to eliminate redundant generation overhead.
-11. **Terminal Review Statuses**: Recognizes both `ADDRESSED` and `RESOLVED` as terminal non-pending statuses across all APIs, daemons, and dashboard UI counters.
-12. **Codified Engineering Standards**: 19 governing rules (`RULES.md`) inferred from maintainer review feedback.
+9. **Upstream PR Merge Tracking & Downstream Cascade (Protocol B)**: Continuously monitors `upstream/master` to detect when PRs merge (via direct `git log -n 400 --format="%H %s" upstream/master` squash-merge `(#NNNN)` and revert `Revert "... (#NNNN)"` scanning, `sort:updated-desc` closed PR queries across pages 1–2, and persistent `data/github_prs_cache.json`), promotes dependent `STAGED_DEPENDENT` branches to `READY_TO_OPEN`, automatically rebases sibling branches, and recalibrates the developer branch merge base.
+10. **Rate-Limit-Free Approval & CI Tracking**: Queries GitHub HTML search (`review:approved`, `review:changes_requested`) and PR check pages directly to surface `APPROVED`, `CHANGES_REQUESTED`, and `REVIEW_REQUIRED` review states alongside live CI pass/fail summaries and a dedicated **"Approved Pull Requests Ready to Merge"** dashboard callout section without consuming unauthenticated REST API quota.
+11. **Physical Signal Duration Containment & Fast Unified Test Setup**: Guarantees $\Delta f \le 1 / T_{\text{signal}}$ in frequency-domain tests to avoid time-domain aliasing, and pre-generates shared waveforms in `@classmethod setUpClass` to eliminate redundant generation overhead.
+12. **Terminal Review Statuses**: Recognizes both `ADDRESSED` and `RESOLVED` as terminal non-pending statuses across all APIs, daemons, and dashboard UI counters.
+13. **Codified Engineering Standards**: 19 governing rules (`RULES.md`) inferred from maintainer review feedback.
+14. **Autonomous Standing Watchdog Schedule**: Alongside the background Python daemons (`review_server.py`, `auto_responder.py`, `ci_tracker.py`, `comment_tracker.py`), the AI agent maintains a 30-minute recurring `schedule` cron job that checks `GET /api/comments/unified` and `data/action_queue.json` for any new maintainer comments or queued instructions (`PENDING_AGENT_ACTION`, `NEEDS_AGENT_ACTION`, `ACKNOWLEDGED`, `QUEUED`) and autonomously resolves them.
 
 ---
 

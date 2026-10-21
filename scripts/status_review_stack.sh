@@ -41,6 +41,7 @@ check_service() {
 check_service "Review Server" "review_server.py"
 check_service "Auto-Responder" "sentinel/auto_responder.py"
 check_service "CI Tracker" "sentinel/ci_tracker.py"
+check_service "Comment Tracker" "sentinel/comment_tracker.py"
 check_service "Rebase Monitor" "sentinel/rebase_monitor.py"
 check_service "Dev Reconciler" "sentinel/dev_reconciler.py"
 
