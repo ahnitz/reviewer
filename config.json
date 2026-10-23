@@ -36,7 +36,6 @@
       "PR-5410": "relbin-calibration",
       "PR-5409": "relbin-resolution-diagnostic",
       "PR-5405": "relbin-setup-refactor",
-      "PR-5404": "marg-accuracy-tests",
       "PR-5371": "staging",
       "PR-4658": "tsdoc",
       "PR-4002": "siminj",
@@ -79,7 +78,9 @@
       "feature/signal-consistency-chain",
       "feature/power-chisq-bin-weights",
       "feature/sg-chisq-template-projection"
-    ]
+    ],
+    "excluded_prs": [5404],
+    "excluded_branches": ["marg-accuracy-tests"]
   },
   "sentinel": {
     "poll_interval_seconds": 1800,

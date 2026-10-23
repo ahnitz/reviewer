@@ -132,11 +132,11 @@ class CITracker:
             5410: "relbin-calibration",
             5409: "relbin-resolution-diagnostic",
             5405: "relbin-setup-refactor",
-            5404: "marg-accuracy-tests",
             5371: "staging",
             4658: "tsdoc",
             4002: "siminj",
         }
+        excluded_prs = {5404} | {int(x) for x in self.config.get("project", {}).get("excluded_prs", []) if str(x).isdigit()}
 
         try:
             url = f"https://github.com/{self.repo_owner}/{self.repo_name}/pulls/{user_filter}"
@@ -163,6 +163,8 @@ class CITracker:
                     if "OPEN" not in r.get("state", ""):
                         continue
                     num = int(r["number"])
+                    if num in excluded_prs:
+                        continue
                     sha = r.get("headSha", "")
                     branch = known_num_to_branch.get(num) or branch_map.get(f"PR-{num}", f"pr-{num}")
                     out.append(

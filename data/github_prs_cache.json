@@ -622,6 +622,34 @@
     "updatedAt": "2026-04-30T10:28:59Z",
     "commentCount": 10
   },
+  "pr-feat-workflow-clusterlink": {
+    "number": 5496,
+    "title": "add a site for the clusterlink directed jobs into pegasus sites",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "5c349998d419161b961501914695fade53c1c7b4",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5496",
+    "createdAt": "2026-10-19T22:15:07Z",
+    "updatedAt": "2026-10-22T18:30:55Z",
+    "commentCount": 5
+  },
+  "feature/veto-option-groups": {
+    "number": 5493,
+    "title": "Define the power and auto chisq options in their classes",
+    "state": "MERGED",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "102e37537613dac6525d379e11fd184648599d6d",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5493",
+    "createdAt": "2026-10-19T17:38:02Z",
+    "updatedAt": "2026-10-23T16:28:48Z",
+    "commentCount": 4
+  },
   "relbin-resolution-diagnostic": {
     "number": 5409,
     "title": "Revert \"Relbin resolution diagnostic (#5409)\" (#5491)",
@@ -648,20 +676,6 @@
     "updatedAt": "2026-10-21T18:43:02Z",
     "commentCount": 4
   },
-  "pr-feat-workflow-clusterlink": {
-    "number": 5496,
-    "title": "[WIP] add a site for the clusterlink directed jobs into pegasus sites",
-    "state": "OPEN",
-    "reviewDecision": "REVIEW_REQUIRED",
-    "assignees": [
-      "kkacanja"
-    ],
-    "headSha": "ad9501031647c4b840f518ca7502ee372d1877d3",
-    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5496",
-    "createdAt": "2026-10-19T22:15:07Z",
-    "updatedAt": "2026-10-21T16:57:37Z",
-    "commentCount": 3
-  },
   "pr-feat-multidet-trigger-files": {
     "number": 5494,
     "title": "Support multi-detector trigger files in post-processing and minifollowup workflows",
@@ -670,25 +684,11 @@
     "assignees": [
       "GarethCabournDavies"
     ],
-    "headSha": "a293d5e66a7e76dbe4da90f66ef3b78ccde40379",
+    "headSha": "393b6b8436ae4615056bf24fb03357b1bb3d3b3b",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5494",
     "createdAt": "2026-10-19T18:51:45Z",
-    "updatedAt": "2026-10-19T19:00:34Z",
-    "commentCount": 0
-  },
-  "feature/veto-option-groups": {
-    "number": 5493,
-    "title": "Define the power and auto chisq options in their classes",
-    "state": "OPEN",
-    "reviewDecision": "REVIEW_REQUIRED",
-    "assignees": [
-      "GarethCabournDavies"
-    ],
-    "headSha": "102e37537613dac6525d379e11fd184648599d6d",
-    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5493",
-    "createdAt": "2026-10-19T17:38:02Z",
-    "updatedAt": "2026-10-19T17:38:02Z",
-    "commentCount": 0
+    "updatedAt": "2026-10-23T15:50:49Z",
+    "commentCount": 2
   },
   "feature/power-chisq-bin-weights": {
     "number": 5484,
@@ -798,20 +798,6 @@
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5405",
     "createdAt": "2026-08-13T19:03:57Z",
     "updatedAt": "2026-10-19T16:18:22Z",
-    "commentCount": 1
-  },
-  "marg-accuracy-tests": {
-    "number": 5404,
-    "title": "Tests of the relative model marginalization and timing",
-    "state": "OPEN",
-    "reviewDecision": "REVIEW_REQUIRED",
-    "assignees": [
-      "cdcapano"
-    ],
-    "headSha": "992fbddc99fe9d1d86865a5b92abd5b1d83e5340",
-    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5404",
-    "createdAt": "2026-08-13T18:20:19Z",
-    "updatedAt": "2026-10-18T23:07:08Z",
     "commentCount": 1
   },
   "tsdoc": {

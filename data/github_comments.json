@@ -1,27 +1,426 @@
 {
-  "lastUpdated": "2026-10-21T19:28:55Z",
-  "totalComments": 84,
-  "totalHumanComments": 77,
+  "lastUpdated": "2026-10-23T16:46:48Z",
+  "totalComments": 98,
+  "totalHumanComments": 91,
   "prs": {
+    "5500": {
+      "prNumber": 5500,
+      "prId": "PR-MDWJ",
+      "branch": "pr-feat-multidet-workflow-jobs",
+      "totalCount": 4,
+      "humanCount": 4,
+      "botCount": 0,
+      "comments": [
+        {
+          "id": "discussion_r4340361019",
+          "prNumber": 5500,
+          "type": "inline_review",
+          "author": "kkacanja",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/123669569?s=48&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-21T18:17:56Z",
+          "path": "test/test_workflow_matched_filter.py",
+          "lines": "line 20",
+          "diffSnippet": "\"\"\"Unit tests for multi-detector matched-filter workflow job setup.\"\"\"\nimport os\nimport sys",
+          "body": "unused import",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5500#discussion_r4340361019",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @kkacanja: unused import",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "test/test_workflow_matched_filter.py",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "discussion_r4340463120",
+          "prNumber": 5500,
+          "type": "inline_review",
+          "author": "kkacanja",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/123669569?s=48&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-21T18:28:23Z",
+          "path": "test/test_workflow_matched_filter.py",
+          "lines": "line 375",
+          "diffSnippet": "            self.assertIn(\"H1:\", raw_str)\n            self.assertIn(\"L1:\", raw_str)\n    def test_allow_zero_padding(self):",
+          "body": "You might want to add a test where only one detector is observing. ",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5500#discussion_r4340463120",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @kkacanja: You might want to add a test where only one detector is observing.",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "test/test_workflow_matched_filter.py",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "issuecomment-6320855517",
+          "prNumber": 5500,
+          "type": "general_comment",
+          "author": "ahnitz",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/2206534?s=80&amp;u=f9e445fc7b480ffac8acf2fb4da2e1a1a0f5a207&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-21T16:20:33Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "Were you planning on modifying pycbc_make_offline_search_workflow later on?",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5500#issuecomment-6320855517",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @ahnitz: Were you planning on modifying pycbc_make_offline_search_workflow later on?",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "issuecomment-6322200848",
+          "prNumber": 5500,
+          "type": "general_comment",
+          "author": "unknown",
+          "authorAvatar": "",
+          "isBot": false,
+          "createdAt": "2026-10-21T17:24:05Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "@kkacanja Yeah, trying to break this up a bit.",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5500#issuecomment-6322200848",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @unknown: @kkacanja Yeah, trying to break this up a bit.",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        }
+      ],
+      "lastChecked": "2026-10-23T16:46:15Z"
+    },
+    "5496": {
+      "prNumber": 5496,
+      "prId": "PR-5496",
+      "branch": "pr-feat-workflow-clusterlink",
+      "totalCount": 5,
+      "humanCount": 5,
+      "botCount": 0,
+      "comments": [
+        {
+          "id": "issuecomment-6286653346",
+          "prNumber": 5496,
+          "type": "general_comment",
+          "author": "ahnitz",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/2206534?s=80&amp;u=f9e445fc7b480ffac8acf2fb4da2e1a1a0f5a207&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-20T08:19:50Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "@ahnitz A lot of fixes for \"jobs assuming shared filesystem access\" is on the condorpool_container patch. If you use both together how does the test search workflow do?",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5496#issuecomment-6286653346",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @ahnitz: @ahnitz A lot of fixes for \"jobs assuming shared filesystem access\" is on the condorpool_container patch. If you use bot",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "issuecomment-6292015149",
+          "prNumber": 5496,
+          "type": "general_comment",
+          "author": "spxiwh",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/11438929?s=80&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-20T13:29:50Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "@spxiwh Partially, I think the ones you addressed are mostly about the minifollowup workflows themselves which I haven't hit personally but only since we run workflow generation in the local universe. The things that caused problems for me are jobs that don't declare which frame files they need (they usually just assumed they'd be available to query). This is done for some of the plotting scripts that followup triggers. To fix that we need to actually supply the frame files to those jobs. For now I just run them locally with a cache file. \r\n\r\nTo clarify why we don't want to assume frame file access, we are moving to some specialized frame files that are reprocessed to be a lot smaller in size (float32 + 2 Hz) and to avoid the poor scipy filter that was used for the gwosc 4KHz frames.",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5496#issuecomment-6292015149",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @spxiwh: @spxiwh Partially, I think the ones you addressed are mostly about the minifollowup workflows themselves which I haven't",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "issuecomment-6292249660",
+          "prNumber": 5496,
+          "type": "general_comment",
+          "author": "kkacanja",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/123669569?s=40&amp;u=bc7d57343059a2ab67eb75fd941a64e1c517bf90&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-20T13:41:23Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "@ahnitz Okay understood ... Yeah, this is a genuine limitation, and is a bit tricksy because at the moment no datafind information is passed to the minifollowups and if we assume that they don't have shared filesystem access (which we shouldn't). Then it involves passing a bit more information down ... We also need to ensure that the jobs only request the frame files they actually need and that we can allow *all* jobs to just override this and query frames at runtime if they prefer.",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5496#issuecomment-6292249660",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @kkacanja: @ahnitz Okay understood ... Yeah, this is a genuine limitation, and is a bit tricksy because at the moment no datafind i",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "issuecomment-6343839971",
+          "prNumber": 5496,
+          "type": "general_comment",
+          "author": "ahnitz",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/2206534?s=80&amp;u=f9e445fc7b480ffac8acf2fb4da2e1a1a0f5a207&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-22T14:56:35Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "I tested this as well and it works. You might want to add in clusterlink to companion.txt for this to work",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5496#issuecomment-6343839971",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @ahnitz: I tested this as well and it works. You might want to add in clusterlink to companion.txt for this to work",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "issuecomment-6343878912",
+          "prNumber": 5496,
+          "type": "general_comment",
+          "author": "unknown",
+          "authorAvatar": "",
+          "isBot": false,
+          "createdAt": "2026-10-22T14:58:24Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "@kkacanja I think we don't really want to force people to install clusterlink as probably only a few initially will use it. For now I'd leave it as you install it if you need it.",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5496#issuecomment-6343878912",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @unknown: @kkacanja I think we don't really want to force people to install clusterlink as probably only a few initially will use ",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        }
+      ],
+      "lastChecked": "2026-10-23T16:46:16Z"
+    },
     "5494": {
       "prNumber": 5494,
       "prId": "PR-MDTF",
       "branch": "pr-feat-multidet-trigger-files",
-      "totalCount": 0,
-      "humanCount": 0,
+      "totalCount": 2,
+      "humanCount": 2,
       "botCount": 0,
-      "comments": [],
-      "lastChecked": "2026-10-21T19:28:35Z"
+      "comments": [
+        {
+          "id": "issuecomment-6361831656",
+          "prNumber": 5494,
+          "type": "general_comment",
+          "author": "ahnitz",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/2206534?s=40&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-23T09:29:40Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "It looks like this would make the coinc jobs fail, as they wouldn't get the multiple detectors from the one file",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5494#issuecomment-6361831656",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @ahnitz: It looks like this would make the coinc jobs fail, as they wouldn't get the multiple detectors from the one file",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "issuecomment-6368912389",
+          "prNumber": 5494,
+          "type": "general_comment",
+          "author": "unknown",
+          "authorAvatar": "",
+          "isBot": false,
+          "createdAt": "2026-10-23T15:50:49Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "@GarethCabournDavies This just fixes up the codes that otherwise handle single trigger files. The coinc code is not updated yet. Though it will not break unless you pass the combined format e.g. current workflows should not care. \r\n\r\nUpdating the coinc code is a larger change actually that I'd like to do in a PR after this is merged. This current PR should not break any current usage, but gets in a lot of the changes without having to do a massive one all at once. \r\n\r\nThe coinc code changes are also somewhat more invasive as it's not just a matter of supporting the combined format, but also updating it for what we are looking to do, so I need to add an option to gather the coincs slightly differently for example which will also necessitate allowing other options for how background time is calculated.",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5494#issuecomment-6368912389",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @unknown: @GarethCabournDavies This just fixes up the codes that otherwise handle single trigger files. The coinc code is not upda",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        }
+      ],
+      "lastChecked": "2026-10-23T16:46:17Z"
     },
     "5493": {
       "prNumber": 5493,
       "prId": "PR-VOG",
       "branch": "feature/veto-option-groups",
-      "totalCount": 0,
-      "humanCount": 0,
+      "totalCount": 4,
+      "humanCount": 4,
       "botCount": 0,
-      "comments": [],
-      "lastChecked": "2026-10-21T19:28:36Z"
+      "comments": [
+        {
+          "id": "discussion_r4357627432",
+          "prNumber": 5493,
+          "type": "inline_review",
+          "author": "GarethCabournDavies",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/44500294?s=48&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-23T08:31:47Z",
+          "path": "",
+          "lines": "line 115",
+          "diffSnippet": "parser.add_argument(\"--chisq-threshold\", type=float, default=0, help=\"FIXME: ADD\")\nparser.add_argument(\"--chisq-delta\", type=float, default=0, help=\"FIXME: ADD\")",
+          "body": "Do these need addressing as well, or is that for a later PR?",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5493#discussion_r4357627432",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @GarethCabournDavies: Do these need addressing as well, or is that for a later PR?",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "discussion_r4361832898",
+          "prNumber": 5493,
+          "type": "inline_review",
+          "author": "ahnitz",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/2206534?s=48&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-23T16:27:54Z",
+          "path": "",
+          "lines": "line 115",
+          "diffSnippet": "parser.add_argument(\"--chisq-threshold\", type=float, default=0, help=\"FIXME: ADD\")\nparser.add_argument(\"--chisq-delta\", type=float, default=0, help=\"FIXME: ADD\")",
+          "body": "Those are holdovers from really old codes and nothing really supports them anymore. I didn't do any explicit cleanup of code here, I'm not sure what we want to do with this (maybe just remove them to be honest).  \r\n\r\nI don't think this needs to be addressed here. I'd rather leave that up to @spxiwh who I think has some ownership over that script to decide if those options should be deleted, or implemented eventually. ",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5493#discussion_r4361832898",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @ahnitz: Those are holdovers from really old codes and nothing really supports them anymore. I didn't do any explicit cleanup of ",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "pullrequestreview-5625806264",
+          "prNumber": 5493,
+          "type": "review_summary",
+          "author": "GarethCabournDavies",
+          "authorAvatar": "https://avatars.githubusercontent.com/u/44500294?s=48&amp;v=4",
+          "isBot": false,
+          "createdAt": "2026-10-23T16:46:21Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "All looks good to me, so I will approve.\n\nThe only small (non-showstopper) question is in some not-included chisel options that appear in `pycbc_inspiral_skymax`, but not in `pycbc_inspiral`",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5493#pullrequestreview-5625806264",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @GarethCabournDavies: All looks good to me, so I will approve.\n\nThe only small (non-showstopper) question is in some not-included chisel optio",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "issuecomment-6345635908",
+          "prNumber": 5493,
+          "type": "general_comment",
+          "author": "unknown",
+          "authorAvatar": "",
+          "isBot": false,
+          "createdAt": "2026-10-22T16:19:09Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "@GarethCabournDavies Poke",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5493#issuecomment-6345635908",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @unknown: @GarethCabournDavies Poke",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        }
+      ],
+      "lastChecked": "2026-10-23T16:46:21Z"
     },
     "5490": {
       "prNumber": 5490,
@@ -238,7 +637,7 @@
           "author": "kkacanja",
           "authorAvatar": "https://avatars.githubusercontent.com/u/123669569?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-21T19:28:37Z",
+          "createdAt": "2026-10-23T16:46:23Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -307,7 +706,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:37Z"
+      "lastChecked": "2026-10-23T16:46:23Z"
     },
     "5484": {
       "prNumber": 5484,
@@ -368,7 +767,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:38Z"
+      "lastChecked": "2026-10-23T16:46:24Z"
     },
     "5482": {
       "prNumber": 5482,
@@ -410,7 +809,7 @@
           "author": "kkacanja",
           "authorAvatar": "https://avatars.githubusercontent.com/u/123669569?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-21T19:28:39Z",
+          "createdAt": "2026-10-23T16:46:26Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -454,7 +853,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:39Z"
+      "lastChecked": "2026-10-23T16:46:26Z"
     },
     "5479": {
       "prNumber": 5479,
@@ -621,7 +1020,7 @@
           "author": "spxiwh",
           "authorAvatar": "https://avatars.githubusercontent.com/u/11438929?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-21T19:28:40Z",
+          "createdAt": "2026-10-23T16:46:27Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -665,7 +1064,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:40Z"
+      "lastChecked": "2026-10-23T16:46:27Z"
     },
     "5475": {
       "prNumber": 5475,
@@ -807,7 +1206,7 @@
           "author": "spxiwh",
           "authorAvatar": "https://avatars.githubusercontent.com/u/11438929?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-21T19:28:41Z",
+          "createdAt": "2026-10-23T16:46:30Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -826,7 +1225,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:41Z"
+      "lastChecked": "2026-10-23T16:46:30Z"
     },
     "5457": {
       "prNumber": 5457,
@@ -943,7 +1342,7 @@
           "author": "acorreia61201",
           "authorAvatar": "https://avatars.githubusercontent.com/u/51377718?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-21T19:28:43Z",
+          "createdAt": "2026-10-23T16:46:32Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1062,7 +1461,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:43Z"
+      "lastChecked": "2026-10-23T16:46:32Z"
     },
     "5446": {
       "prNumber": 5446,
@@ -1148,7 +1547,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:43Z"
+      "lastChecked": "2026-10-23T16:46:33Z"
     },
     "5434": {
       "prNumber": 5434,
@@ -1158,7 +1557,7 @@
       "humanCount": 0,
       "botCount": 0,
       "comments": [],
-      "lastChecked": "2026-10-21T19:28:44Z"
+      "lastChecked": "2026-10-23T16:46:34Z"
     },
     "5433": {
       "prNumber": 5433,
@@ -1269,7 +1668,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:45Z"
+      "lastChecked": "2026-10-23T16:46:36Z"
     },
     "5432": {
       "prNumber": 5432,
@@ -1336,7 +1735,7 @@
           "author": "aleynaakyuz",
           "authorAvatar": "https://avatars.githubusercontent.com/u/66510261?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-21T19:28:46Z",
+          "createdAt": "2026-10-23T16:46:37Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1380,7 +1779,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:46Z"
+      "lastChecked": "2026-10-23T16:46:37Z"
     },
     "5430": {
       "prNumber": 5430,
@@ -1390,7 +1789,7 @@
       "humanCount": 0,
       "botCount": 0,
       "comments": [],
-      "lastChecked": "2026-10-21T19:28:47Z"
+      "lastChecked": "2026-10-23T16:46:38Z"
     },
     "5429": {
       "prNumber": 5429,
@@ -1400,7 +1799,7 @@
       "humanCount": 0,
       "botCount": 0,
       "comments": [],
-      "lastChecked": "2026-10-21T19:28:48Z"
+      "lastChecked": "2026-10-23T16:46:40Z"
     },
     "5410": {
       "prNumber": 5410,
@@ -1436,7 +1835,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:49Z"
+      "lastChecked": "2026-10-23T16:46:41Z"
     },
     "5409": {
       "prNumber": 5409,
@@ -1528,7 +1927,7 @@
           "author": "aleynaakyuz",
           "authorAvatar": "https://avatars.githubusercontent.com/u/66510261?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-21T19:28:50Z",
+          "createdAt": "2026-10-23T16:46:43Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1572,7 +1971,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:50Z"
+      "lastChecked": "2026-10-23T16:46:43Z"
     },
     "5405": {
       "prNumber": 5405,
@@ -1608,43 +2007,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:51Z"
-    },
-    "5404": {
-      "prNumber": 5404,
-      "prId": "PR-5404",
-      "branch": "marg-accuracy-tests",
-      "totalCount": 1,
-      "humanCount": 1,
-      "botCount": 0,
-      "comments": [
-        {
-          "id": "issuecomment-5284720744",
-          "prNumber": 5404,
-          "type": "general_comment",
-          "author": "unknown",
-          "authorAvatar": "",
-          "isBot": false,
-          "createdAt": "2026-08-13T18:21:14Z",
-          "path": "",
-          "lines": "",
-          "diffSnippet": "",
-          "body": "Also, question for whoever reviews. I'm not opposed to removing the timing script, I just think it's useful, so erred on the side of leaving it in.",
-          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5404#issuecomment-5284720744",
-          "status": "NEEDS_TRIAGE",
-          "aiAssessment": {
-            "type": "GENERAL_FEEDBACK",
-            "category": "CODE_REVIEW",
-            "urgency": "MEDIUM",
-            "summary": "Comment from @unknown: Also, question for whoever reviews. I'm not opposed to removing the timing script, I just think it's useful, so erred on",
-            "recommendation": "Review comment in context of the diff hunk below.",
-            "suggestedAction": "MAINTAINER_REVIEW",
-            "targetFile": "",
-            "draftResponse": ""
-          }
-        }
-      ],
-      "lastChecked": "2026-10-21T19:28:52Z"
+      "lastChecked": "2026-10-23T16:46:44Z"
     },
     "5371": {
       "prNumber": 5371,
@@ -1886,7 +2249,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-21T19:28:53Z",
+          "createdAt": "2026-10-23T16:46:46Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 657",
           "diffSnippet": "            self.out_dir = self.tagged_name + \"_output\"\n        if not os.path.isabs(self.out_dir):",
@@ -1911,7 +2274,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-21T19:28:53Z",
+          "createdAt": "2026-10-23T16:46:46Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 645",
           "diffSnippet": "        if out_dir is not None:\n        if self.cp.has_option_tags(\n            \"pegasus_profile\", \"pycbc|stage-out\", self.tags + [self.name]",
@@ -1936,7 +2299,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-21T19:28:53Z",
+          "createdAt": "2026-10-23T16:46:46Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 648",
           "diffSnippet": "        ):\n            self.out_dir = self.cp.get_opt_tags(\n                \"pegasus_profile\", \"pycbc|stage-out\", self.tags + [self.name]",
@@ -1961,7 +2324,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-21T19:28:53Z",
+          "createdAt": "2026-10-23T16:46:46Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1286",
           "diffSnippet": "                file_url = f\"{directory.rstrip('/')}/{filename}\"\n            else:\n                file_url = os.path.join(directory, filename)",
@@ -1986,7 +2349,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-21T19:28:53Z",
+          "createdAt": "2026-10-23T16:46:46Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1287",
           "diffSnippet": "            else:\n                file_url = os.path.join(directory, filename)\n                if not os.path.isabs(file_url):",
@@ -2011,7 +2374,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-21T19:28:53Z",
+          "createdAt": "2026-10-23T16:46:46Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1288",
           "diffSnippet": "                file_url = os.path.join(directory, filename)\n                if not os.path.isabs(file_url):\n                    file_url = os.path.join(os.getcwd(), file_url)",
@@ -2036,7 +2399,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-21T19:28:53Z",
+          "createdAt": "2026-10-23T16:46:46Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1288",
           "diffSnippet": "                file_url = os.path.join(directory, filename)\n                if not os.path.isabs(file_url):\n                    file_url = os.path.join(os.getcwd(), file_url)",
@@ -2130,7 +2493,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:53Z"
+      "lastChecked": "2026-10-23T16:46:46Z"
     },
     "4658": {
       "prNumber": 4658,
@@ -2241,7 +2604,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:54Z"
+      "lastChecked": "2026-10-23T16:46:47Z"
     },
     "4002": {
       "prNumber": 4002,
@@ -2327,7 +2690,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-21T19:28:55Z"
+      "lastChecked": "2026-10-23T16:46:48Z"
     }
   }
 }

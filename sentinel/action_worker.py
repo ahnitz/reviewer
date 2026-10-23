@@ -55,7 +55,6 @@ PR_BRANCH_MAP = {
     "5410": "relbin-calibration",
     "5409": "relbin-resolution-diagnostic",
     "5405": "relbin-setup-refactor",
-    "5404": "marg-accuracy-tests",
     "5371": "staging",
     "4658": "tsdoc",
     "4002": "siminj",

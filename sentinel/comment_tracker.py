@@ -53,7 +53,6 @@ PR_MAP = {
     5410: {"prId": "PR-5410", "branch": "relbin-calibration"},
     5409: {"prId": "PR-5409", "branch": "relbin-resolution-diagnostic"},
     5405: {"prId": "PR-5405", "branch": "relbin-setup-refactor"},
-    5404: {"prId": "PR-5404", "branch": "marg-accuracy-tests"},
     5371: {"prId": "PR-5371", "branch": "staging"},
     4658: {"prId": "PR-4658", "branch": "tsdoc"},
     4002: {"prId": "PR-4002", "branch": "siminj"},

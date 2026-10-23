@@ -171,7 +171,6 @@ DEFAULT_PR_BRANCH_MAP = {
     "PR-5410": "relbin-calibration",
     "PR-5409": "relbin-resolution-diagnostic",
     "PR-5405": "relbin-setup-refactor",
-    "PR-5404": "marg-accuracy-tests",
     "PR-5371": "staging",
     "PR-4658": "tsdoc",
     "PR-4002": "siminj",
@@ -493,7 +492,7 @@ def get_unified_comments(pr_id=None):
         "5457": "PR-5457", "5446": "PR-5446", "5434": "PR-5434",
         "5433": "PR-5433", "5432": "PR-5432", "5430": "PR-5430",
         "5429": "PR-5429", "5410": "PR-5410", "5409": "PR-5409",
-        "5405": "PR-5405", "5404": "PR-5404", "5371": "PR-5371",
+        "5405": "PR-5405", "5371": "PR-5371",
         "4658": "PR-4658", "4002": "PR-4002",
     }
     # Normalize pr_id if branch name or PR number was passed
@@ -596,11 +595,13 @@ KNOWN_PR_NUM_TO_BRANCH = {
     5410: "relbin-calibration",
     5409: "relbin-resolution-diagnostic",
     5405: "relbin-setup-refactor",
-    5404: "marg-accuracy-tests",
     5371: "staging",
     4658: "tsdoc",
     4002: "siminj",
 }
+
+DEFAULT_EXCLUDED_PRS = {5404}
+DEFAULT_EXCLUDED_BRANCHES = {"marg-accuracy-tests"}
 
 def get_github_prs(repo_owner="gwastro", repo_name="pycbc", user_filter=None, force_refresh=False):
     """Fetch all pull requests on upstream repo opened by user, using HTML embeddedData (no rate limit) + disk cache."""
@@ -635,6 +636,8 @@ def get_github_prs(repo_owner="gwastro", repo_name="pycbc", user_filter=None, fo
             with open(cache_file, "r", encoding="utf-8") as f:
                 cached_prs = json.load(f)
             for cb, cinfo in cached_prs.items():
+                if cb in DEFAULT_EXCLUDED_BRANCHES or (isinstance(cinfo, dict) and cinfo.get("number") in DEFAULT_EXCLUDED_PRS):
+                    continue
                 if isinstance(cinfo, dict) and cinfo.get("state") in ("MERGED", "CLOSED"):
                     branch_to_pr[cb] = cinfo
         except Exception:
@@ -732,6 +735,8 @@ def get_github_prs(repo_owner="gwastro", repo_name="pycbc", user_filter=None, fo
             results = embedded.get("payload", {}).get("repoPullsDashboardContentRoute", {}).get("results", [])
             for r in results:
                 num = int(r["number"])
+                if num in DEFAULT_EXCLUDED_PRS:
+                    continue
                 raw_state = r.get("state", "")
                 if "MERGED" in raw_state:
                     state = "MERGED"
@@ -1220,10 +1225,17 @@ class ReviewRequestHandler(SimpleHTTPRequestHandler):
             force_ref = qs.get("force", ["0"])[0] in ("1", "true", "yes")
             gh_all = get_github_prs(force_refresh=force_ref)
 
-            # Automatically include any open PRs on gwastro/pycbc by user_filter
+            # Automatically include any open PRs on gwastro/pycbc by user_filter (unless excluded)
+            excluded_prs = set(DEFAULT_EXCLUDED_PRS) | {int(x) for x in live_cfg.get("project", {}).get("excluded_prs", []) if str(x).isdigit()}
+            excluded_branches = set(DEFAULT_EXCLUDED_BRANCHES) | set(live_cfg.get("project", {}).get("excluded_branches", []))
             for gh_branch, gh_info in gh_all.items():
+                if gh_info.get("number") in excluded_prs or gh_branch in excluded_branches:
+                    continue
                 if gh_info.get("state") == "OPEN" and gh_branch not in tracked.values():
                     tracked[f"PR-{gh_info['number']}"] = gh_branch
+
+            # Filter out any excluded branches from tracked
+            tracked = {k: v for k, v in tracked.items() if v not in excluded_branches and k not in {f"PR-{n}" for n in excluded_prs}}
 
             # Load roadmap data to resolve dependencies
             roadmap_prs = {}

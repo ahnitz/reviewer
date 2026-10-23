@@ -974,24 +974,6 @@
       "test_cmd": "pytest",
       "testCmd": "pytest"
     },
-    "PR-5404": {
-      "wave": 1,
-      "branch": "marg-accuracy-tests",
-      "title": "Tests of the relative model marginalization and timing",
-      "status": "OPEN",
-      "dependencies": [],
-      "problemDescription": "Relative binning marginalization schemes needed systematic verification against brute-force numerical integration and timing benchmarks.",
-      "solutionDescription": "Adds comprehensive test suites (test_marg_accuracy.py, test_marg_brute_force.py, marg_test_data.py) asserting marginalization accuracy and timing premises.",
-      "simplificationDeepDive": "Self-contained verification suite for marginalized likelihood models.",
-      "files": [
-        "test/marg_test_data.py",
-        "test/test_marg_accuracy.py",
-        "test/test_marg_brute_force.py",
-        "tools/timing/marg_perf.py"
-      ],
-      "test_cmd": "pytest test/marg_test_data.py test/test_marg_accuracy.py test/test_marg_brute_force.py",
-      "testCmd": "pytest test/marg_test_data.py test/test_marg_accuracy.py test/test_marg_brute_force.py"
-    },
     "PR-5371": {
       "wave": 1,
       "branch": "staging",
