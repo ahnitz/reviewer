@@ -113,6 +113,7 @@ class CITracker:
         ).split("/")[0]
 
         known_num_to_branch = {
+            5513: "feature/signal-consistency-chain",
             5512: "feature/chisq-class-updates",
             5500: "pr-feat-multidet-workflow-jobs",
             5496: "pr-feat-workflow-clusterlink",
@@ -302,6 +303,7 @@ class CITracker:
             "pr-feat-multidet-workflow-jobs": "/home/ahnitz/projects/claude/searchdev/pycbc-work/wt-pr-multidet-jobs",
             "feature/veto-option-groups": "/home/ahnitz/projects/claude/searchdev/pycbc-work/topics/veto-options",
             "feature/chisq-class-updates": "/home/ahnitz/projects/claude/searchdev/pycbc-work/topics/veto-options",
+            "feature/signal-consistency-chain": "/home/ahnitz/projects/claude/searchdev/pycbc-work/topics/veto-chain",
         }
         wt_dir = wt_map.get(branch_name)
         if not wt_dir or not os.path.exists(wt_dir):

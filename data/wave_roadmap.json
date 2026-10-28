@@ -1123,7 +1123,7 @@
       "wave": 3,
       "branch": "pr-feat-multidet-trigger-files",
       "title": "Support multi-detector trigger files in post-processing and minifollowup workflows",
-      "status": "PUSHED_TO_ORIGIN",
+      "status": "MERGED",
       "dependencies": [],
       "problemDescription": "Trigger merging (`pycbc_coinc_mergetrigs`), downstream plotting scripts, and minifollowup workflows assumed single-detector trigger files organized strictly per-IFO.",
       "solutionDescription": "Adds multi-detector trigger file support to `pycbc_coinc_mergetrigs`, `pycbc_sngls_findtrigs`, minifollowup workflows, and plotting scripts while preserving full backward compatibility with per-detector files.",
@@ -1145,7 +1145,8 @@
         "pycbc/workflow/plotting.py"
       ],
       "test_cmd": "pytest test/test_workflow.py",
-      "testCmd": "pytest test/test_workflow.py"
+      "testCmd": "pytest test/test_workflow.py",
+      "upstream_status": "INCORPORATED_UPSTREAM"
     },
     "PR-MDWJ": {
       "wave": 3,
