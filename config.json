@@ -42,6 +42,7 @@
       "PR-SCC": "feature/signal-consistency-chain",
       "PR-PCBW": "feature/power-chisq-bin-weights",
       "PR-SGCTP": "feature/sg-chisq-template-projection",
+      "PR-FMMD": "feature/fir-matchedfilter-multidet",
       "PR-VOG": "feature/veto-option-groups",
       "PR-CCU": "feature/chisq-class-updates",
       "PR-FB": "pr-feat-fir-bank",
@@ -83,7 +84,8 @@
       },
       "feature/signal-consistency-chain",
       "feature/power-chisq-bin-weights",
-      "feature/sg-chisq-template-projection"
+      "feature/sg-chisq-template-projection",
+      "feature/fir-matchedfilter-multidet"
     ],
     "excluded_prs": [5404],
     "excluded_branches": ["marg-accuracy-tests"]

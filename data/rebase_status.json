@@ -1,14 +1,15 @@
 {
-  "last_check": "2026-10-13T18:02:17.155515",
-  "upstream_head": "7aa5379772db60a58e037d9aa96dc987b0c06261",
+  "last_check": "2026-10-28T17:02:33.518551",
+  "upstream_head": "de865c2f70d3fdb836083b656778652f760376bc",
   "branches": {
     "pr-fix-core-numpy2-optparse": {
       "status": "UP_TO_DATE",
-      "commit_sha": "a9fa3e86b4b3f218e42038ee6af8628f899e72c5",
-      "ahead": 9,
-      "behind": 2,
+      "commit_sha": "f3829a97e04345c73c4b2b7329c64e41b5abab9d",
+      "ahead": 10,
+      "behind": 0,
+      "base": "upstream/master",
       "merge_clean": true,
-      "last_verified": "2026-10-13T18:02:17.164348"
+      "last_verified": "2026-10-28T17:02:33.518551"
     },
     "pr-fix-io-dictarray-indexing": {
       "status": "UP_TO_DATE",
@@ -107,6 +108,146 @@
       "pr_number": 5476,
       "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83",
       "last_verified": "2026-10-13T18:02:17.157650"
+    },
+    "feature/chisq-class-updates": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "ef9d9c90756c74097a3db4d1676b468cc83d2262",
+      "ahead": 1,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "feature/signal-consistency-chain": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "67c07b90105c37febe182eacc974a29eb375deaa",
+      "ahead": 2,
+      "behind": 0,
+      "base": "feature/chisq-class-updates",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "feature/sg-chisq-template-projection": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "0d2c103efc683aaf3f6e933d48e0e8da1f66c63f",
+      "ahead": 3,
+      "behind": 0,
+      "base": "feature/signal-consistency-chain",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "pr-feat-multidet-workflow-jobs": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "9cedf8147487dd8ff774ef894eac8361a83e395c",
+      "ahead": 1,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "feature/power-chisq-bin-weights": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "0fd36e846f4a0d7e37476e7e5067f13643faa0d3",
+      "ahead": 3,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "fix-gating-inpainting": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "668aa1e2390ba76270b433c27e2be868fb450c6a",
+      "ahead": 5,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "marg-reconstruct-cache": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "8a0750bea97ba86888660ae63460b4216917715c",
+      "ahead": 21,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "marg-inline-reconstruct": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "7fd31f6d57679a3798b8f5172ee4f284d728ccf3",
+      "ahead": 25,
+      "behind": 0,
+      "base": "marg-reconstruct-cache",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "relbin-calibration": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "dfc99dba7540c33f482a8166e4742cd70ac5b064",
+      "ahead": 3,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "relbin-setup-refactor": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "dea63b876c3cf2b496e41e82ad0db8d6fddd21be",
+      "ahead": 1,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "relbin-resolution-diagnostic": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "7eb35387fbf53bdb69391046417014923bf184b6",
+      "ahead": 16,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "tsdoc": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "20411eca593a99516f3838643a3c0e76e085e2ea",
+      "ahead": 2,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "siminj": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "bec6ca678d6f37af1ba7274af7921edd940fbf0c",
+      "ahead": 2,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "ci-http-cache": {
+      "status": "UP_TO_DATE",
+      "commit_sha": "408b588a0e5fe77ee864710be1b3ab7adf063961",
+      "ahead": 28,
+      "behind": 0,
+      "base": "upstream/master",
+      "merge_clean": true,
+      "last_verified": "2026-10-28T17:02:33.518551"
+    },
+    "feature/fir-matchedfilter-multidet": {
+      "branch": "feature/fir-matchedfilter-multidet",
+      "status": "CURRENT_CLEAN",
+      "base_ref": "feature/sg-chisq-template-projection",
+      "base_sha": "0d2c103ef",
+      "head_sha": "87e333338",
+      "commits_behind_master": 0,
+      "commits_ahead_of_base": 1,
+      "last_checked": "2026-10-28T23:00:00Z",
+      "last_rebased": "2026-10-28T22:58:00Z",
+      "qlty_clean": true,
+      "tests_passed": true,
+      "notes": "Rebased onto feature/sg-chisq-template-projection (0d2c103ef) / upstream/master (de865c2f7); qlty check + fmt clean (0 issues); test_matched_filter_ratio passed."
     }
   },
   "upstream_remote": "upstream",

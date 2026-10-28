@@ -676,6 +676,20 @@
     "updatedAt": "",
     "commentCount": 0
   },
+  "feature/fir-matchedfilter-multidet": {
+    "number": 5516,
+    "title": "Multi-level ratio filter, refactoring / rework of pycbc_inspiral_fir",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "kkacanja"
+    ],
+    "headSha": "87e333338c075914b32f9f7ab292a906befbf670",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5516",
+    "createdAt": "2026-10-28T22:49:39Z",
+    "updatedAt": "2026-10-28T22:58:44Z",
+    "commentCount": 1
+  },
   "feature/sg-chisq-template-projection": {
     "number": 5514,
     "title": "Subtract template contribution in sg chisq",
@@ -684,10 +698,10 @@
     "assignees": [
       "spxiwh"
     ],
-    "headSha": "109e0820ce6e101e6f2d350fe24077a7cf61fdca",
+    "headSha": "0d2c103efc683aaf3f6e933d48e0e8da1f66c63f",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5514",
     "createdAt": "2026-10-28T19:10:10Z",
-    "updatedAt": "2026-10-28T19:10:43Z",
+    "updatedAt": "2026-10-28T20:41:49Z",
     "commentCount": 4
   },
   "feature/signal-consistency-chain": {
@@ -700,10 +714,10 @@
       "GarethCabournDavies",
       "kkacanja"
     ],
-    "headSha": "af7e2dcebac61d803d6266693244d5c9ad74dfb2",
+    "headSha": "67c07b90105c37febe182eacc974a29eb375deaa",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5513",
     "createdAt": "2026-10-28T17:41:37Z",
-    "updatedAt": "2026-10-28T17:45:14Z",
+    "updatedAt": "2026-10-28T20:41:16Z",
     "commentCount": 5
   },
   "feature/chisq-class-updates": {
@@ -714,10 +728,10 @@
     "assignees": [
       "GarethCabournDavies"
     ],
-    "headSha": "ed0f5e785820e637bb84d25f6aba58c7aedfa705",
+    "headSha": "ef9d9c90756c74097a3db4d1676b468cc83d2262",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5512",
     "createdAt": "2026-10-28T16:48:52Z",
-    "updatedAt": "2026-10-28T16:49:32Z",
+    "updatedAt": "2026-10-28T20:40:04Z",
     "commentCount": 2
   },
   "pr-feat-multidet-workflow-jobs": {
@@ -728,10 +742,10 @@
     "assignees": [
       "kkacanja"
     ],
-    "headSha": "c35b419dce88f2a9632ed19a62835c9c444cae06",
+    "headSha": "2ee16a5bdc20c0aaf293eee9af6791c733ff5d5a",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5500",
     "createdAt": "2026-10-20T17:16:42Z",
-    "updatedAt": "2026-10-21T18:43:02Z",
+    "updatedAt": "2026-10-28T23:03:09Z",
     "commentCount": 4
   },
   "feature/power-chisq-bin-weights": {
@@ -742,10 +756,10 @@
     "assignees": [
       "spxiwh"
     ],
-    "headSha": "d280250fc791a901b8f3415897350bffd605ff20",
+    "headSha": "0fd36e846f4a0d7e37476e7e5067f13643faa0d3",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5484",
     "createdAt": "2026-10-14T20:34:33Z",
-    "updatedAt": "2026-10-19T17:23:56Z",
+    "updatedAt": "2026-10-28T20:58:51Z",
     "commentCount": 2
   },
   "pr-fix-core-numpy2-optparse": {
@@ -756,10 +770,10 @@
     "assignees": [
       "spxiwh"
     ],
-    "headSha": "fbf351a8e0de3aa57a81fa2bf54cea49aeb974d1",
+    "headSha": "f3829a97e04345c73c4b2b7329c64e41b5abab9d",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5475",
     "createdAt": "2026-10-09T15:11:21Z",
-    "updatedAt": "2026-10-18T23:07:08Z",
+    "updatedAt": "2026-10-28T20:56:56Z",
     "commentCount": 8
   },
   "fix-gating-inpainting": {
@@ -770,10 +784,10 @@
     "assignees": [
       "acorreia61201"
     ],
-    "headSha": "75d2ac4424f07ecc73b18e62d5d1c7351dcebff1",
+    "headSha": "668aa1e2390ba76270b433c27e2be868fb450c6a",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5457",
     "createdAt": "2026-09-29T01:05:17Z",
-    "updatedAt": "2026-10-18T23:07:09Z",
+    "updatedAt": "2026-10-28T20:48:19Z",
     "commentCount": 10
   },
   "ci-http-cache": {
@@ -782,10 +796,10 @@
     "state": "OPEN",
     "reviewDecision": "REVIEW_REQUIRED",
     "assignees": [],
-    "headSha": "4ae1b9046b34cccfd94eaef72664bfc80a64d4ad",
+    "headSha": "408b588a0e5fe77ee864710be1b3ab7adf063961",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5446",
     "createdAt": "2026-09-06T17:19:11Z",
-    "updatedAt": "2026-10-18T23:07:26Z",
+    "updatedAt": "2026-10-28T21:02:49Z",
     "commentCount": 3
   },
   "marg-inline-reconstruct": {
@@ -796,10 +810,10 @@
     "assignees": [
       "aleynaakyuz"
     ],
-    "headSha": "869021f4d56fc33c7250765ed2aacd3d728d0482",
+    "headSha": "7fd31f6d57679a3798b8f5172ee4f284d728ccf3",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5430",
     "createdAt": "2026-08-29T14:00:54Z",
-    "updatedAt": "2026-10-18T23:07:08Z",
+    "updatedAt": "2026-10-28T21:01:35Z",
     "commentCount": 1
   },
   "marg-reconstruct-cache": {
@@ -810,10 +824,10 @@
     "assignees": [
       "cdcapano"
     ],
-    "headSha": "eaefff4f550f94b985ac21724748aa893f76fdee",
+    "headSha": "8a0750bea97ba86888660ae63460b4216917715c",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5429",
     "createdAt": "2026-08-28T03:27:50Z",
-    "updatedAt": "2026-10-18T23:07:09Z",
+    "updatedAt": "2026-10-28T21:01:24Z",
     "commentCount": 8
   },
   "relbin-calibration": {
@@ -824,10 +838,10 @@
     "assignees": [
       "sum33it"
     ],
-    "headSha": "1a2ef24586a377fb59ba202345fd136867516343",
+    "headSha": "dfc99dba7540c33f482a8166e4742cd70ac5b064",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5410",
     "createdAt": "2026-08-18T23:42:36Z",
-    "updatedAt": "2026-10-19T16:17:33Z",
+    "updatedAt": "2026-10-28T20:49:40Z",
     "commentCount": 1
   },
   "relbin-setup-refactor": {
@@ -839,10 +853,10 @@
       "cdcapano",
       "aleynaakyuz"
     ],
-    "headSha": "19faa377d1f8ccf99ceb1bca1255ba02d4158138",
+    "headSha": "dea63b876c3cf2b496e41e82ad0db8d6fddd21be",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5405",
     "createdAt": "2026-08-13T19:03:57Z",
-    "updatedAt": "2026-10-28T19:23:56Z",
+    "updatedAt": "2026-10-28T20:50:07Z",
     "commentCount": 2
   },
   "tsdoc": {
@@ -851,10 +865,10 @@
     "state": "OPEN",
     "reviewDecision": "REVIEW_REQUIRED",
     "assignees": [],
-    "headSha": "5652aeed2a53de51e77dddefc8e194c8edcc7c0c",
+    "headSha": "20411eca593a99516f3838643a3c0e76e085e2ea",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/4658",
     "createdAt": "2024-02-28T19:47:14Z",
-    "updatedAt": "2026-10-18T23:07:08Z",
+    "updatedAt": "2026-10-28T20:50:11Z",
     "commentCount": 4
   },
   "siminj": {
@@ -863,10 +877,10 @@
     "state": "OPEN",
     "reviewDecision": "REVIEW_REQUIRED",
     "assignees": [],
-    "headSha": "83324c7d530355b28d0144f1921bcfa725d2c4fd",
+    "headSha": "bec6ca678d6f37af1ba7274af7921edd940fbf0c",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/4002",
     "createdAt": "2022-04-20T23:01:18Z",
-    "updatedAt": "2026-10-18T23:07:08Z",
+    "updatedAt": "2026-10-28T21:01:38Z",
     "commentCount": 3
   }
 }

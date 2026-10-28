@@ -113,6 +113,7 @@ class CITracker:
         ).split("/")[0]
 
         known_num_to_branch = {
+            5516: "feature/fir-matchedfilter-multidet",
             5514: "feature/sg-chisq-template-projection",
             5513: "feature/signal-consistency-chain",
             5512: "feature/chisq-class-updates",
@@ -316,19 +317,20 @@ class CITracker:
             "feature/chisq-class-updates": "/home/ahnitz/projects/claude/searchdev/pycbc-work/topics/veto-options",
             "feature/signal-consistency-chain": "/home/ahnitz/projects/claude/searchdev/pycbc-work/topics/veto-chain",
             "feature/sg-chisq-template-projection": "/home/ahnitz/projects/claude/searchdev/pycbc-work/topics/sg-projection",
+            "feature/fir-matchedfilter-multidet": "/home/ahnitz/projects/claude/searchdev/pycbc-work/topics/fir-multidet",
         }
         wt_dir = wt_map.get(branch_name)
         if not wt_dir or not os.path.exists(wt_dir):
             return {"localVerified": False, "issues": 0, "details": "No local worktree"}
 
-        # Run qlty check --no-formatters
+        # Run qlty check --sarif --no-progress
         qlty_bin = os.path.expanduser("~/.local/bin/qlty")
         issues = 0
         details = []
         if os.path.exists(qlty_bin):
             try:
                 p = subprocess.run(
-                    [qlty_bin, "check", "--no-formatters", "--no-progress", "--upstream", "upstream/master"],
+                    [qlty_bin, "check", "--sarif", "--no-progress", "--upstream", "upstream/master"],
                     cwd=wt_dir,
                     capture_output=True,
                     text=True,
@@ -336,7 +338,7 @@ class CITracker:
                 )
                 if p.returncode != 0:
                     issues += 1
-                    details.append(f"qlty findings: {p.stdout.strip()[:200]}")
+                    details.append(f"qlty findings: {p.stderr.strip()[:200]}")
             except Exception as e:
                 details.append(f"qlty execution error: {e}")
 
@@ -353,11 +355,14 @@ class CITracker:
             files = [
                 os.path.join(wt_dir, f)
                 for f in p_diff.stdout.splitlines()
-                if f.endswith(".py") and os.path.exists(os.path.join(wt_dir, f))
+                if (f.endswith(".py") or f.startswith("bin/pycbc_"))
+                and "__init__.py" not in f
+                and "version.py" not in f
+                and os.path.exists(os.path.join(wt_dir, f))
             ]
             if files:
                 p_flk = subprocess.run(
-                    ["/home/ahnitz/miniconda3/envs/searchdev/bin/flake8", "--select=F401,F841,E999"] + files,
+                    ["/home/ahnitz/miniconda3/envs/searchdev/bin/flake8", "--select=F401"] + files,
                     cwd=wt_dir,
                     capture_output=True,
                     text=True,

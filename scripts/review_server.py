@@ -179,6 +179,7 @@ DEFAULT_PR_BRANCH_MAP = {
     "PR-SCC": "feature/signal-consistency-chain",
     "PR-PCBW": "feature/power-chisq-bin-weights",
     "PR-SGCTP": "feature/sg-chisq-template-projection",
+    "PR-FMMD": "feature/fir-matchedfilter-multidet",
     "PR-FB": "pr-feat-fir-bank",
     "PR-MDTF": "pr-feat-multidet-trigger-files",
     "PR-MDWJ": "pr-feat-multidet-workflow-jobs",
@@ -195,6 +196,9 @@ BRANCH_ALIASES = {
     "feature-signal-consitency-chain": "feature/signal-consistency-chain",
     "feature-signal-consistency-chain": "feature/signal-consistency-chain",
     "feature-sg-chisq-template-projection": "feature/sg-chisq-template-projection",
+    "feature-fir-matchedfilter-multidet": "feature/fir-matchedfilter-multidet",
+    "fir-matchedfilter-multidet": "feature/fir-matchedfilter-multidet",
+    "ahnitz:feature/fir-matchedfilter-multidet": "feature/fir-matchedfilter-multidet",
     "feature-power-chisq-bin-weights": "feature/power-chisq-bin-weights",
     "feat-fir-bank": "pr-feat-fir-bank",
     "fir-bank": "pr-feat-fir-bank",
@@ -207,6 +211,7 @@ BRANCH_ALIASES = {
 STACKED_PARENT_BRANCHES = {
     "feature/signal-consistency-chain": "feature/chisq-class-updates",
     "feature/sg-chisq-template-projection": "feature/signal-consistency-chain",
+    "feature/fir-matchedfilter-multidet": "feature/sg-chisq-template-projection",
     "marg-inline-reconstruct": "marg-reconstruct-cache",
 }
 
@@ -487,7 +492,7 @@ def get_unified_comments(pr_id=None):
             pass
 
     pr_id_map = {
-        "5514": "PR-SGCTP", "5513": "PR-SCC", "5512": "PR-CCU",
+        "5516": "PR-FMMD", "5514": "PR-SGCTP", "5513": "PR-SCC", "5512": "PR-CCU",
         "5500": "PR-MDWJ", "5496": "PR-5496",
         "5494": "PR-MDTF", "5493": "PR-VOG",
         "5490": "PR-FB", "5484": "PR-PCBW",
@@ -576,6 +581,7 @@ def get_unified_comments(pr_id=None):
 
 GITHUB_PR_CACHE = {"data": None, "time": 0}
 KNOWN_PR_NUM_TO_BRANCH = {
+    5516: "feature/fir-matchedfilter-multidet",
     5514: "feature/sg-chisq-template-projection",
     5513: "feature/signal-consistency-chain",
     5512: "feature/chisq-class-updates",

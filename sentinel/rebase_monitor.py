@@ -43,6 +43,7 @@ DEFAULT_BRANCH_TEST_MAP = {
     "feature/signal-consistency-chain": ["pytest", "test/test_signal_consistency.py"],
     "feature/power-chisq-bin-weights": ["pytest", "test/test_chisq_slicing.py"],
     "feature/sg-chisq-template-projection": ["pytest", "test/test_autochisq.py"],
+    "feature/fir-matchedfilter-multidet": ["pytest", "test/test_matched_filter_ratio.py"],
     "pr-feat-fir-bank": ["pytest", "test/test_bank.py"],
     "pr-feat-multidet-trigger-files": ["pytest", "test/test_eventmgr.py"],
     "pr-feat-multidet-workflow-jobs": ["pytest", "test/test_workflow.py"],
@@ -53,7 +54,9 @@ DEFAULT_BRANCH_TEST_MAP = {
 BRANCH_DEPENDENCIES = {
     "pr-fix-events-numpy2-zerolag": "pr-fix-core-numpy2-optparse",
     "pr-feat-psd-robust-estimators": "pr-feat-filter-dynamic-snr-renorm",
+    "feature/signal-consistency-chain": "feature/chisq-class-updates",
     "feature/sg-chisq-template-projection": "feature/signal-consistency-chain",
+    "feature/fir-matchedfilter-multidet": "feature/sg-chisq-template-projection",
 }
 
 # Branches already merged into upstream gwastro/pycbc:master

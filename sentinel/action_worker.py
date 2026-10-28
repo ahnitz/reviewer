@@ -31,6 +31,7 @@ DEFAULT_COMMENTS_FILE = os.path.abspath(
 )
 
 PR_BRANCH_MAP = {
+    "5516": "feature/fir-matchedfilter-multidet",
     "5514": "feature/sg-chisq-template-projection",
     "5513": "feature/signal-consistency-chain",
     "5512": "feature/chisq-class-updates",
@@ -70,6 +71,7 @@ PR_BRANCH_MAP = {
     "PR-PCBW": "feature/power-chisq-bin-weights",
     "PR-SCC": "feature/signal-consistency-chain",
     "PR-SGCTP": "feature/sg-chisq-template-projection",
+    "PR-FMMD": "feature/fir-matchedfilter-multidet",
     "PR-1A": "pr-fix-core-numpy2-optparse",
     "PR-1B": "pr-fix-io-dictarray-indexing",
     "PR-1D": "pr-perf-waveform-compress",

@@ -194,6 +194,24 @@ INITIAL_PR_REGISTRY = {
         "files": ["pycbc/vetoes/sgchisq.py", "test/test_autochisq.py"],
         "test_cmd": "pytest test/test_autochisq.py"
     },
+    "PR-FMMD": {
+        "wave": 3,
+        "branch": "feature/fir-matchedfilter-multidet",
+        "title": "Multi-level ratio filter, refactoring / rework of pycbc_inspiral_fir",
+        "status": "OPEN_UPSTREAM",
+        "dependencies": ["PR-SGCTP", "PR-SCC", "PR-CCU"],
+        "files": [
+            "bin/pycbc_fir_bank",
+            "bin/pycbc_inspiral_fir",
+            "companion.txt",
+            "examples/ratio_fir_search/run_fir_search.sh",
+            "pycbc/events/eventmgr.py",
+            "pycbc/filter/matched_filter_ratio.py",
+            "pycbc/waveform/bank.py",
+            "test/test_matched_filter_ratio.py"
+        ],
+        "test_cmd": "pytest test/test_matched_filter_ratio.py"
+    },
     "PR-FB": {
         "wave": 3,
         "branch": "pr-feat-fir-bank",

@@ -1,68 +1,99 @@
 {
-  "lastUpdated": "2026-10-28T19:33:05Z",
+  "lastUpdated": "2026-10-28T23:05:05Z",
   "totalComments": 101,
-  "totalHumanComments": 92,
+  "totalHumanComments": 94,
   "prs": {
-    "5512": {
-      "prNumber": 5512,
-      "prId": "PR-CCU",
-      "branch": "feature/chisq-class-updates",
-      "totalCount": 2,
-      "humanCount": 0,
-      "botCount": 2,
+    "5516": {
+      "prNumber": 5516,
+      "prId": "PR-FMMD",
+      "branch": "feature/fir-matchedfilter-multidet",
+      "totalCount": 1,
+      "humanCount": 1,
+      "botCount": 0,
       "comments": [
         {
-          "id": "discussion_r4403488090",
-          "prNumber": 5512,
-          "type": "inline_review",
-          "author": "github-advanced-security[bot]",
-          "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
-          "isBot": true,
-          "createdAt": "2026-10-28T19:32:44Z",
-          "path": "pycbc/vetoes/chisq.py",
-          "lines": "line 392",
-          "diffSnippet": "        safe_dict.update(math.__dict__)\n        safe_dict.update(pycbc.pnutils.__dict__)\n        return eval(arg, {\"__builtins__\": None}, safe_dict)",
-          "body": "[qlty / ] Use of possibly insecure function; consider using ast.literal_eval\nShow more details",
-          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5512#discussion_r4403488090",
+          "id": "issuecomment-6482729829",
+          "prNumber": 5516,
+          "type": "general_comment",
+          "author": "unknown",
+          "authorAvatar": "",
+          "isBot": false,
+          "createdAt": "2026-10-28T22:50:31Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "Since this requires all the opened chisq related PRs to merge first. @kkacanja If you want to start looking at this one now, look at the diff relative to the chisq PRs. \r\n\r\nhttps://github.com/ahnitz/pycbc/compare/feature/sg-chisq-template-projection...feature/fir-matchedfilter-multidet",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5516#issuecomment-6482729829",
           "status": "NEEDS_TRIAGE",
           "aiAssessment": {
-            "type": "BOT_FINDING",
-            "category": "LINTER_CODE_QUALITY",
-            "urgency": "LOW",
-            "summary": "Automated linter alert from github-advanced-security[bot]: [qlty / ] Use of possibly insecure function; consider using ast.literal_eval\nShow more details",
-            "recommendation": "Check whether this unused import or linter alert should be cleaned up or added to `__all__`.",
-            "suggestedAction": "INVESTIGATE_IF_REGRESSION",
-            "targetFile": "pycbc/vetoes/chisq.py",
-            "draftResponse": ""
-          }
-        },
-        {
-          "id": "discussion_r4403488119",
-          "prNumber": 5512,
-          "type": "inline_review",
-          "author": "github-advanced-security[bot]",
-          "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
-          "isBot": true,
-          "createdAt": "2026-10-28T19:32:44Z",
-          "path": "pycbc/vetoes/sgchisq.py",
-          "lines": "line 154",
-          "diffSnippet": "        safe_dict.update(math.__dict__)\n        safe_dict.update(pycbc.pnutils.__dict__)\n        return eval(arg, {\"__builtins__\": None}, safe_dict)",
-          "body": "[qlty / ] Variable N in function should be lowercase\nShow more details",
-          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5512#discussion_r4403488119",
-          "status": "NEEDS_TRIAGE",
-          "aiAssessment": {
-            "type": "BOT_FINDING",
-            "category": "LINTER_CODE_QUALITY",
-            "urgency": "LOW",
-            "summary": "Automated linter alert from github-advanced-security[bot]: [qlty / ] Variable N in function should be lowercase\nShow more details",
-            "recommendation": "Check whether this unused import or linter alert should be cleaned up or added to `__all__`.",
-            "suggestedAction": "INVESTIGATE_IF_REGRESSION",
-            "targetFile": "pycbc/vetoes/sgchisq.py",
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @unknown: Since this requires all the opened chisq related PRs to merge first. @kkacanja If you want to start looking at this one ",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
             "draftResponse": ""
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:44Z"
+      "lastChecked": "2026-10-28T23:04:40Z"
+    },
+    "5514": {
+      "prNumber": 5514,
+      "prId": "PR-SGCTP",
+      "branch": "feature/sg-chisq-template-projection",
+      "totalCount": 0,
+      "humanCount": 0,
+      "botCount": 0,
+      "comments": [],
+      "lastChecked": "2026-10-28T23:04:41Z"
+    },
+    "5513": {
+      "prNumber": 5513,
+      "prId": "PR-SCC",
+      "branch": "feature/signal-consistency-chain",
+      "totalCount": 1,
+      "humanCount": 1,
+      "botCount": 0,
+      "comments": [
+        {
+          "id": "issuecomment-6476280747",
+          "prNumber": 5513,
+          "type": "general_comment",
+          "author": "unknown",
+          "authorAvatar": "",
+          "isBot": false,
+          "createdAt": "2026-10-28T17:42:43Z",
+          "path": "",
+          "lines": "",
+          "diffSnippet": "",
+          "body": "@kkacanja I'd like your review in the context of the pycbc_inspiral_fir uses. \r\n\r\n@GarethCabournDavies @spxiwh I'd like your feedback in regards to how this affects the larger codebase. \r\n\r\nNote that that a bunch of the changes are really from #5512. Also, this currently does not affect existing search codes like pycbc_inspiral (unless people would like that).",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5513#issuecomment-6476280747",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "GENERAL_FEEDBACK",
+            "category": "CODE_REVIEW",
+            "urgency": "MEDIUM",
+            "summary": "Comment from @unknown: @kkacanja I'd like your review in the context of the pycbc_inspiral_fir uses. \r\n\r\n@GarethCabournDavies @spxiwh I'd like ",
+            "recommendation": "Review comment in context of the diff hunk below.",
+            "suggestedAction": "MAINTAINER_REVIEW",
+            "targetFile": "",
+            "draftResponse": ""
+          }
+        }
+      ],
+      "lastChecked": "2026-10-28T23:04:42Z"
+    },
+    "5512": {
+      "prNumber": 5512,
+      "prId": "PR-CCU",
+      "branch": "feature/chisq-class-updates",
+      "totalCount": 0,
+      "humanCount": 0,
+      "botCount": 0,
+      "comments": [],
+      "lastChecked": "2026-10-28T23:04:43Z"
     },
     "5500": {
       "prNumber": 5500,
@@ -173,7 +204,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:45Z"
+      "lastChecked": "2026-10-28T23:04:44Z"
     },
     "5496": {
       "prNumber": 5496,
@@ -309,7 +340,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:45Z"
+      "lastChecked": "2026-10-28T23:04:44Z"
     },
     "5494": {
       "prNumber": 5494,
@@ -370,7 +401,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:46Z"
+      "lastChecked": "2026-10-28T23:04:45Z"
     },
     "5493": {
       "prNumber": 5493,
@@ -437,7 +468,7 @@
           "author": "GarethCabournDavies",
           "authorAvatar": "https://avatars.githubusercontent.com/u/44500294?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T19:32:47Z",
+          "createdAt": "2026-10-28T23:04:46Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -481,7 +512,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:47Z"
+      "lastChecked": "2026-10-28T23:04:46Z"
     },
     "5490": {
       "prNumber": 5490,
@@ -698,7 +729,7 @@
           "author": "kkacanja",
           "authorAvatar": "https://avatars.githubusercontent.com/u/123669569?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T19:32:48Z",
+          "createdAt": "2026-10-28T23:04:47Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -767,7 +798,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:48Z"
+      "lastChecked": "2026-10-28T23:04:47Z"
     },
     "5484": {
       "prNumber": 5484,
@@ -828,7 +859,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:49Z"
+      "lastChecked": "2026-10-28T23:04:48Z"
     },
     "5482": {
       "prNumber": 5482,
@@ -870,7 +901,7 @@
           "author": "kkacanja",
           "authorAvatar": "https://avatars.githubusercontent.com/u/123669569?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T19:32:50Z",
+          "createdAt": "2026-10-28T23:04:49Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -914,7 +945,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:50Z"
+      "lastChecked": "2026-10-28T23:04:49Z"
     },
     "5479": {
       "prNumber": 5479,
@@ -1081,7 +1112,7 @@
           "author": "spxiwh",
           "authorAvatar": "https://avatars.githubusercontent.com/u/11438929?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T19:32:51Z",
+          "createdAt": "2026-10-28T23:04:50Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1125,7 +1156,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:51Z"
+      "lastChecked": "2026-10-28T23:04:50Z"
     },
     "5475": {
       "prNumber": 5475,
@@ -1267,7 +1298,7 @@
           "author": "spxiwh",
           "authorAvatar": "https://avatars.githubusercontent.com/u/11438929?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T19:32:53Z",
+          "createdAt": "2026-10-28T23:04:51Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1286,7 +1317,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:53Z"
+      "lastChecked": "2026-10-28T23:04:51Z"
     },
     "5457": {
       "prNumber": 5457,
@@ -1403,7 +1434,7 @@
           "author": "acorreia61201",
           "authorAvatar": "https://avatars.githubusercontent.com/u/51377718?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T19:32:54Z",
+          "createdAt": "2026-10-28T23:04:52Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1522,7 +1553,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:54Z"
+      "lastChecked": "2026-10-28T23:04:52Z"
     },
     "5446": {
       "prNumber": 5446,
@@ -1608,7 +1639,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:54Z"
+      "lastChecked": "2026-10-28T23:04:53Z"
     },
     "5434": {
       "prNumber": 5434,
@@ -1618,7 +1649,7 @@
       "humanCount": 0,
       "botCount": 0,
       "comments": [],
-      "lastChecked": "2026-10-28T19:32:55Z"
+      "lastChecked": "2026-10-28T23:04:53Z"
     },
     "5433": {
       "prNumber": 5433,
@@ -1729,7 +1760,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:56Z"
+      "lastChecked": "2026-10-28T23:04:54Z"
     },
     "5432": {
       "prNumber": 5432,
@@ -1796,7 +1827,7 @@
           "author": "aleynaakyuz",
           "authorAvatar": "https://avatars.githubusercontent.com/u/66510261?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T19:32:57Z",
+          "createdAt": "2026-10-28T23:04:55Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1840,7 +1871,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:32:57Z"
+      "lastChecked": "2026-10-28T23:04:55Z"
     },
     "5430": {
       "prNumber": 5430,
@@ -1850,7 +1881,7 @@
       "humanCount": 0,
       "botCount": 0,
       "comments": [],
-      "lastChecked": "2026-10-28T19:32:58Z"
+      "lastChecked": "2026-10-28T23:04:56Z"
     },
     "5429": {
       "prNumber": 5429,
@@ -1860,7 +1891,7 @@
       "humanCount": 0,
       "botCount": 0,
       "comments": [],
-      "lastChecked": "2026-10-28T19:32:59Z"
+      "lastChecked": "2026-10-28T23:04:58Z"
     },
     "5410": {
       "prNumber": 5410,
@@ -1896,7 +1927,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:33:00Z"
+      "lastChecked": "2026-10-28T23:04:58Z"
     },
     "5409": {
       "prNumber": 5409,
@@ -1988,7 +2019,7 @@
           "author": "aleynaakyuz",
           "authorAvatar": "https://avatars.githubusercontent.com/u/66510261?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T19:33:01Z",
+          "createdAt": "2026-10-28T23:05:00Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -2032,7 +2063,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:33:01Z"
+      "lastChecked": "2026-10-28T23:05:00Z"
     },
     "5405": {
       "prNumber": 5405,
@@ -2093,7 +2124,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:33:02Z"
+      "lastChecked": "2026-10-28T23:05:01Z"
     },
     "5371": {
       "prNumber": 5371,
@@ -2335,7 +2366,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T19:33:04Z",
+          "createdAt": "2026-10-28T23:05:03Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 657",
           "diffSnippet": "            self.out_dir = self.tagged_name + \"_output\"\n        if not os.path.isabs(self.out_dir):",
@@ -2360,7 +2391,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T19:33:04Z",
+          "createdAt": "2026-10-28T23:05:03Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 645",
           "diffSnippet": "        if out_dir is not None:\n        if self.cp.has_option_tags(\n            \"pegasus_profile\", \"pycbc|stage-out\", self.tags + [self.name]",
@@ -2385,7 +2416,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T19:33:04Z",
+          "createdAt": "2026-10-28T23:05:03Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 648",
           "diffSnippet": "        ):\n            self.out_dir = self.cp.get_opt_tags(\n                \"pegasus_profile\", \"pycbc|stage-out\", self.tags + [self.name]",
@@ -2410,7 +2441,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T19:33:04Z",
+          "createdAt": "2026-10-28T23:05:03Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1286",
           "diffSnippet": "                file_url = f\"{directory.rstrip('/')}/{filename}\"\n            else:\n                file_url = os.path.join(directory, filename)",
@@ -2435,7 +2466,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T19:33:04Z",
+          "createdAt": "2026-10-28T23:05:03Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1287",
           "diffSnippet": "            else:\n                file_url = os.path.join(directory, filename)\n                if not os.path.isabs(file_url):",
@@ -2460,7 +2491,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T19:33:04Z",
+          "createdAt": "2026-10-28T23:05:03Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1288",
           "diffSnippet": "                file_url = os.path.join(directory, filename)\n                if not os.path.isabs(file_url):\n                    file_url = os.path.join(os.getcwd(), file_url)",
@@ -2485,7 +2516,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T19:33:04Z",
+          "createdAt": "2026-10-28T23:05:03Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1288",
           "diffSnippet": "                file_url = os.path.join(directory, filename)\n                if not os.path.isabs(file_url):\n                    file_url = os.path.join(os.getcwd(), file_url)",
@@ -2579,7 +2610,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:33:04Z"
+      "lastChecked": "2026-10-28T23:05:03Z"
     },
     "4658": {
       "prNumber": 4658,
@@ -2690,7 +2721,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:33:05Z"
+      "lastChecked": "2026-10-28T23:05:04Z"
     },
     "4002": {
       "prNumber": 4002,
@@ -2776,7 +2807,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T19:33:05Z"
+      "lastChecked": "2026-10-28T23:05:05Z"
     }
   }
 }

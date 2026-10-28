@@ -1189,6 +1189,32 @@
       ],
       "test_cmd": "pytest test/test_autochisq.py test/test_bank_chisq.py test/test_chisq.py test/test_sgchisq.py",
       "testCmd": "pytest test/test_autochisq.py test/test_bank_chisq.py test/test_chisq.py test/test_sgchisq.py"
+    },
+    "PR-FMMD": {
+      "wave": 3,
+      "branch": "feature/fir-matchedfilter-multidet",
+      "title": "Multi-level ratio filter, refactoring / rework of pycbc_inspiral_fir",
+      "status": "OPEN",
+      "dependencies": [
+        "PR-SGCTP",
+        "PR-SCC",
+        "PR-CCU"
+      ],
+      "problemDescription": "Single-detector two-level FIR matched filtering in pycbc_inspiral_fir had bespoke Python filtering loops, no multi-level tree hierarchy or multi-IFO sub-threshold follow-up, and mixed orchestration logic between the CLI script and library modules.",
+      "solutionDescription": "Integrates the matchedfilter C++/Python library into RatioFilterBank.build_search_hierarchy and MatchedFilterRatioControl to support arbitrary-depth hierarchical FIR filtering, multi-IFO segment filtering, sub-threshold secondary follow-up around primary triggers, and per-trigger signal-consistency veto callbacks.",
+      "simplificationDeepDive": "Reworks pycbc_inspiral_fir into a thin CLI driver delegating bank hierarchy construction to RatioFilterBank and filtering/follow-up orchestration to MatchedFilterRatioControl, backed by comprehensive end-to-end tests in test/test_matched_filter_ratio.py.",
+      "files": [
+        "bin/pycbc_fir_bank",
+        "bin/pycbc_inspiral_fir",
+        "companion.txt",
+        "examples/ratio_fir_search/run_fir_search.sh",
+        "pycbc/events/eventmgr.py",
+        "pycbc/filter/matched_filter_ratio.py",
+        "pycbc/waveform/bank.py",
+        "test/test_matched_filter_ratio.py"
+      ],
+      "test_cmd": "pytest test/test_matched_filter_ratio.py",
+      "testCmd": "pytest test/test_matched_filter_ratio.py"
     }
   },
   "ingestion_log": [

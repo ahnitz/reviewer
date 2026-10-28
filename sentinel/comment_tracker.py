@@ -34,6 +34,7 @@ HEADERS = {
 }
 
 PR_MAP = {
+    5516: {"prId": "PR-FMMD", "branch": "feature/fir-matchedfilter-multidet"},
     5514: {"prId": "PR-SGCTP", "branch": "feature/sg-chisq-template-projection"},
     5513: {"prId": "PR-SCC", "branch": "feature/signal-consistency-chain"},
     5512: {"prId": "PR-CCU", "branch": "feature/chisq-class-updates"},
