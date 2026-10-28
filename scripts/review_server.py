@@ -42,8 +42,8 @@ def find_config_path(config_path=None):
     if config_path and os.path.exists(config_path):
         return os.path.abspath(config_path)
     candidates = [
-        os.path.abspath(os.path.join(SERVER_DIR, "..", "config.json")),
         os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "config.json")),
+        os.path.abspath(os.path.join(SERVER_DIR, "..", "config.json")),
         os.path.abspath(os.path.join(SERVER_DIR, "..", "search_dev_notes", "tools", "reviewer", "config.json")),
         os.path.abspath(os.path.join(os.getcwd(), "agent-dual-review", "config.json")),
         os.path.abspath(os.path.join(os.getcwd(), "config.json")),
@@ -271,6 +271,7 @@ def resolve_branch(pr_id):
 
 def find_rebase_status_file():
     candidates = [
+        os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "rebase_status.json"),
         os.path.join(SERVER_DIR, "..", "data", "rebase_status.json"),
         os.path.join(ROOT_DIR, "agent-dual-review", "data", "rebase_status.json"),
         os.path.join(ROOT_DIR, "data", "rebase_status.json"),
@@ -278,10 +279,11 @@ def find_rebase_status_file():
     for c in candidates:
         if os.path.exists(c):
             return os.path.abspath(c)
-    return os.path.abspath(os.path.join(SERVER_DIR, "..", "data", "rebase_status.json"))
+    return os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "rebase_status.json"))
 
 def find_roadmap_file():
     candidates = [
+        os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "wave_roadmap.json"),
         os.path.join(SERVER_DIR, "..", "data", "wave_roadmap.json"),
         os.path.join(ROOT_DIR, "agent-dual-review", "data", "wave_roadmap.json"),
         os.path.join(ROOT_DIR, "data", "wave_roadmap.json"),
@@ -289,7 +291,7 @@ def find_roadmap_file():
     for c in candidates:
         if os.path.exists(c):
             return os.path.abspath(c)
-    return os.path.abspath(os.path.join(SERVER_DIR, "..", "data", "wave_roadmap.json"))
+    return os.path.abspath(os.path.join(SERVER_DIR, "..", "agent-dual-review", "data", "wave_roadmap.json"))
 
 def find_ci_status_file():
     candidates = [
