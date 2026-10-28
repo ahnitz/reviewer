@@ -1,8 +1,69 @@
 {
-  "lastUpdated": "2026-10-28T16:51:15Z",
-  "totalComments": 98,
+  "lastUpdated": "2026-10-28T17:01:27Z",
+  "totalComments": 100,
   "totalHumanComments": 91,
   "prs": {
+    "5512": {
+      "prNumber": 5512,
+      "prId": "PR-CCU",
+      "branch": "feature/chisq-class-updates",
+      "totalCount": 2,
+      "humanCount": 0,
+      "botCount": 2,
+      "comments": [
+        {
+          "id": "discussion_r4403488090",
+          "prNumber": 5512,
+          "type": "inline_review",
+          "author": "github-advanced-security[bot]",
+          "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
+          "isBot": true,
+          "createdAt": "2026-10-28T17:01:03Z",
+          "path": "pycbc/vetoes/chisq.py",
+          "lines": "line 392",
+          "diffSnippet": "        safe_dict.update(math.__dict__)\n        safe_dict.update(pycbc.pnutils.__dict__)\n        return eval(arg, {\"__builtins__\": None}, safe_dict)",
+          "body": "[qlty / ] Use of possibly insecure function; consider using ast.literal_eval\nShow more details",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5512#discussion_r4403488090",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "BOT_FINDING",
+            "category": "LINTER_CODE_QUALITY",
+            "urgency": "LOW",
+            "summary": "Automated linter alert from github-advanced-security[bot]: [qlty / ] Use of possibly insecure function; consider using ast.literal_eval\nShow more details",
+            "recommendation": "Check whether this unused import or linter alert should be cleaned up or added to `__all__`.",
+            "suggestedAction": "INVESTIGATE_IF_REGRESSION",
+            "targetFile": "pycbc/vetoes/chisq.py",
+            "draftResponse": ""
+          }
+        },
+        {
+          "id": "discussion_r4403488119",
+          "prNumber": 5512,
+          "type": "inline_review",
+          "author": "github-advanced-security[bot]",
+          "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
+          "isBot": true,
+          "createdAt": "2026-10-28T17:01:03Z",
+          "path": "pycbc/vetoes/sgchisq.py",
+          "lines": "line 154",
+          "diffSnippet": "        safe_dict.update(math.__dict__)\n        safe_dict.update(pycbc.pnutils.__dict__)\n        return eval(arg, {\"__builtins__\": None}, safe_dict)",
+          "body": "[qlty / ] Variable N in function should be lowercase\nShow more details",
+          "htmlUrl": "https://github.com/gwastro/pycbc/pull/5512#discussion_r4403488119",
+          "status": "NEEDS_TRIAGE",
+          "aiAssessment": {
+            "type": "BOT_FINDING",
+            "category": "LINTER_CODE_QUALITY",
+            "urgency": "LOW",
+            "summary": "Automated linter alert from github-advanced-security[bot]: [qlty / ] Variable N in function should be lowercase\nShow more details",
+            "recommendation": "Check whether this unused import or linter alert should be cleaned up or added to `__all__`.",
+            "suggestedAction": "INVESTIGATE_IF_REGRESSION",
+            "targetFile": "pycbc/vetoes/sgchisq.py",
+            "draftResponse": ""
+          }
+        }
+      ],
+      "lastChecked": "2026-10-28T17:01:03Z"
+    },
     "5500": {
       "prNumber": 5500,
       "prId": "PR-MDWJ",
@@ -112,7 +173,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:50:47Z"
+      "lastChecked": "2026-10-28T17:01:04Z"
     },
     "5496": {
       "prNumber": 5496,
@@ -248,7 +309,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:50:48Z"
+      "lastChecked": "2026-10-28T17:01:05Z"
     },
     "5494": {
       "prNumber": 5494,
@@ -309,7 +370,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:50:49Z"
+      "lastChecked": "2026-10-28T17:01:06Z"
     },
     "5493": {
       "prNumber": 5493,
@@ -376,7 +437,7 @@
           "author": "GarethCabournDavies",
           "authorAvatar": "https://avatars.githubusercontent.com/u/44500294?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T16:50:50Z",
+          "createdAt": "2026-10-28T17:01:07Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -420,7 +481,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:50:50Z"
+      "lastChecked": "2026-10-28T17:01:07Z"
     },
     "5490": {
       "prNumber": 5490,
@@ -637,7 +698,7 @@
           "author": "kkacanja",
           "authorAvatar": "https://avatars.githubusercontent.com/u/123669569?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T16:50:52Z",
+          "createdAt": "2026-10-28T17:01:08Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -706,7 +767,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:50:52Z"
+      "lastChecked": "2026-10-28T17:01:08Z"
     },
     "5484": {
       "prNumber": 5484,
@@ -767,7 +828,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:50:53Z"
+      "lastChecked": "2026-10-28T17:01:10Z"
     },
     "5482": {
       "prNumber": 5482,
@@ -809,7 +870,7 @@
           "author": "kkacanja",
           "authorAvatar": "https://avatars.githubusercontent.com/u/123669569?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T16:50:54Z",
+          "createdAt": "2026-10-28T17:01:11Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -853,7 +914,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:50:54Z"
+      "lastChecked": "2026-10-28T17:01:11Z"
     },
     "5479": {
       "prNumber": 5479,
@@ -1020,7 +1081,7 @@
           "author": "spxiwh",
           "authorAvatar": "https://avatars.githubusercontent.com/u/11438929?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T16:50:56Z",
+          "createdAt": "2026-10-28T17:01:12Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1064,7 +1125,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:50:56Z"
+      "lastChecked": "2026-10-28T17:01:12Z"
     },
     "5475": {
       "prNumber": 5475,
@@ -1206,7 +1267,7 @@
           "author": "spxiwh",
           "authorAvatar": "https://avatars.githubusercontent.com/u/11438929?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T16:50:58Z",
+          "createdAt": "2026-10-28T17:01:13Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1225,7 +1286,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:50:58Z"
+      "lastChecked": "2026-10-28T17:01:13Z"
     },
     "5457": {
       "prNumber": 5457,
@@ -1342,7 +1403,7 @@
           "author": "acorreia61201",
           "authorAvatar": "https://avatars.githubusercontent.com/u/51377718?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T16:50:59Z",
+          "createdAt": "2026-10-28T17:01:15Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1461,7 +1522,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:50:59Z"
+      "lastChecked": "2026-10-28T17:01:15Z"
     },
     "5446": {
       "prNumber": 5446,
@@ -1547,7 +1608,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:51:00Z"
+      "lastChecked": "2026-10-28T17:01:16Z"
     },
     "5434": {
       "prNumber": 5434,
@@ -1557,7 +1618,7 @@
       "humanCount": 0,
       "botCount": 0,
       "comments": [],
-      "lastChecked": "2026-10-28T16:51:01Z"
+      "lastChecked": "2026-10-28T17:01:16Z"
     },
     "5433": {
       "prNumber": 5433,
@@ -1668,7 +1729,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:51:03Z"
+      "lastChecked": "2026-10-28T17:01:18Z"
     },
     "5432": {
       "prNumber": 5432,
@@ -1735,7 +1796,7 @@
           "author": "aleynaakyuz",
           "authorAvatar": "https://avatars.githubusercontent.com/u/66510261?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T16:51:04Z",
+          "createdAt": "2026-10-28T17:01:19Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1779,7 +1840,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:51:04Z"
+      "lastChecked": "2026-10-28T17:01:19Z"
     },
     "5430": {
       "prNumber": 5430,
@@ -1789,7 +1850,7 @@
       "humanCount": 0,
       "botCount": 0,
       "comments": [],
-      "lastChecked": "2026-10-28T16:51:05Z"
+      "lastChecked": "2026-10-28T17:01:20Z"
     },
     "5429": {
       "prNumber": 5429,
@@ -1799,7 +1860,7 @@
       "humanCount": 0,
       "botCount": 0,
       "comments": [],
-      "lastChecked": "2026-10-28T16:51:06Z"
+      "lastChecked": "2026-10-28T17:01:21Z"
     },
     "5410": {
       "prNumber": 5410,
@@ -1835,7 +1896,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:51:07Z"
+      "lastChecked": "2026-10-28T17:01:22Z"
     },
     "5409": {
       "prNumber": 5409,
@@ -1927,7 +1988,7 @@
           "author": "aleynaakyuz",
           "authorAvatar": "https://avatars.githubusercontent.com/u/66510261?s=48&amp;v=4",
           "isBot": false,
-          "createdAt": "2026-10-28T16:51:09Z",
+          "createdAt": "2026-10-28T17:01:23Z",
           "path": "",
           "lines": "",
           "diffSnippet": "",
@@ -1971,7 +2032,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:51:09Z"
+      "lastChecked": "2026-10-28T17:01:23Z"
     },
     "5405": {
       "prNumber": 5405,
@@ -2007,7 +2068,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:51:10Z"
+      "lastChecked": "2026-10-28T17:01:24Z"
     },
     "5371": {
       "prNumber": 5371,
@@ -2249,7 +2310,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T16:51:13Z",
+          "createdAt": "2026-10-28T17:01:25Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 657",
           "diffSnippet": "            self.out_dir = self.tagged_name + \"_output\"\n        if not os.path.isabs(self.out_dir):",
@@ -2274,7 +2335,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T16:51:13Z",
+          "createdAt": "2026-10-28T17:01:25Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 645",
           "diffSnippet": "        if out_dir is not None:\n        if self.cp.has_option_tags(\n            \"pegasus_profile\", \"pycbc|stage-out\", self.tags + [self.name]",
@@ -2299,7 +2360,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T16:51:13Z",
+          "createdAt": "2026-10-28T17:01:25Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 648",
           "diffSnippet": "        ):\n            self.out_dir = self.cp.get_opt_tags(\n                \"pegasus_profile\", \"pycbc|stage-out\", self.tags + [self.name]",
@@ -2324,7 +2385,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T16:51:13Z",
+          "createdAt": "2026-10-28T17:01:25Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1286",
           "diffSnippet": "                file_url = f\"{directory.rstrip('/')}/{filename}\"\n            else:\n                file_url = os.path.join(directory, filename)",
@@ -2349,7 +2410,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T16:51:13Z",
+          "createdAt": "2026-10-28T17:01:25Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1287",
           "diffSnippet": "            else:\n                file_url = os.path.join(directory, filename)\n                if not os.path.isabs(file_url):",
@@ -2374,7 +2435,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T16:51:13Z",
+          "createdAt": "2026-10-28T17:01:25Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1288",
           "diffSnippet": "                file_url = os.path.join(directory, filename)\n                if not os.path.isabs(file_url):\n                    file_url = os.path.join(os.getcwd(), file_url)",
@@ -2399,7 +2460,7 @@
           "author": "github-advanced-security[bot]",
           "authorAvatar": "https://avatars.githubusercontent.com/in/57789?v=4",
           "isBot": true,
-          "createdAt": "2026-10-28T16:51:13Z",
+          "createdAt": "2026-10-28T17:01:25Z",
           "path": "pycbc/workflow/core.py",
           "lines": "line 1288",
           "diffSnippet": "                file_url = os.path.join(directory, filename)\n                if not os.path.isabs(file_url):\n                    file_url = os.path.join(os.getcwd(), file_url)",
@@ -2493,7 +2554,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:51:13Z"
+      "lastChecked": "2026-10-28T17:01:25Z"
     },
     "4658": {
       "prNumber": 4658,
@@ -2604,7 +2665,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:51:14Z"
+      "lastChecked": "2026-10-28T17:01:26Z"
     },
     "4002": {
       "prNumber": 4002,
@@ -2690,7 +2751,7 @@
           }
         }
       ],
-      "lastChecked": "2026-10-28T16:51:15Z"
+      "lastChecked": "2026-10-28T17:01:27Z"
     }
   }
 }

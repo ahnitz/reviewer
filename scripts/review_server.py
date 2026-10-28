@@ -906,9 +906,18 @@ def compute_pr_lifecycle(pr_id, branch, gh_prs, roadmap_prs, unaddressed_comment
             "order": 0
         }
 
-    deps = pdata.get("dependencies", [])
+    deps = list(pdata.get("dependencies", []))
+    parent_branch = STACKED_PARENT_BRANCHES.get(branch)
+    if parent_branch:
+        inv_map = {v: k for k, v in PR_BRANCH_MAP.items()}
+        parent_pid = inv_map.get(parent_branch, parent_branch)
+        if parent_pid not in deps:
+            deps.append(parent_pid)
     merged_branches = {b for b, p in gh_prs.items() if p.get("state") == "MERGED"}
-    unmerged_deps = [d for d in deps if roadmap_prs.get(d, {}).get("branch") not in merged_branches]
+    unmerged_deps = [
+        d for d in deps
+        if (roadmap_prs.get(d, {}).get("branch") or PR_BRANCH_MAP.get(d) or d) not in merged_branches
+    ]
 
     if unmerged_deps:
         return {
