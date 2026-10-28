@@ -556,13 +556,47 @@ def scrape_pr_comments(pr_num):
     return comments
 
 
+def get_active_pr_map():
+    pr_map = dict(PR_MAP)
+    cfg = {}
+    if os.path.exists(DEFAULT_CONFIG_PATH):
+        try:
+            with open(DEFAULT_CONFIG_PATH, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except Exception:
+            pass
+    branch_to_pid = {v: k for k, v in cfg.get("project", {}).get("branch_map", {}).items()}
+    excluded_prs = {5404} | {int(x) for x in cfg.get("project", {}).get("excluded_prs", []) if str(x).isdigit()}
+    cache_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "github_prs_cache.json"))
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                gh_cache = json.load(f)
+            for branch, info in gh_cache.items():
+                if not isinstance(info, dict):
+                    continue
+                num = info.get("number")
+                if not num or int(num) in excluded_prs:
+                    continue
+                num = int(num)
+                if num not in pr_map and info.get("state") == "OPEN":
+                    pr_map[num] = {
+                        "prId": branch_to_pid.get(branch, f"PR-{num}"),
+                        "branch": branch,
+                    }
+        except Exception:
+            pass
+    return pr_map
+
+
 def poll_all_prs(comments_file=DEFAULT_COMMENTS_FILE):
     existing = load_existing_comments(comments_file)
     results = {}
     total_comments = 0
     total_human = 0
+    active_pr_map = get_active_pr_map()
 
-    for pr_num in PR_MAP.keys():
+    for pr_num, pr_meta in active_pr_map.items():
         pr_comments = scrape_pr_comments(pr_num)
         pr_str = str(pr_num)
 
@@ -595,8 +629,8 @@ def poll_all_prs(comments_file=DEFAULT_COMMENTS_FILE):
 
         results[pr_str] = {
             "prNumber": pr_num,
-            "prId": PR_MAP[pr_num]["prId"],
-            "branch": PR_MAP[pr_num]["branch"],
+            "prId": pr_meta["prId"],
+            "branch": pr_meta["branch"],
             "totalCount": len(merged_comments),
             "humanCount": human_count,
             "botCount": bot_count,

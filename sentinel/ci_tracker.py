@@ -140,6 +140,16 @@ class CITracker:
             4002: "siminj",
         }
         excluded_prs = {5404} | {int(x) for x in self.config.get("project", {}).get("excluded_prs", []) if str(x).isdigit()}
+        cache_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "github_prs_cache.json"))
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    gh_cache = json.load(f)
+                for bname, binfo in gh_cache.items():
+                    if isinstance(binfo, dict) and binfo.get("number"):
+                        known_num_to_branch.setdefault(int(binfo["number"]), bname)
+            except Exception:
+                pass
 
         try:
             url = f"https://github.com/{self.repo_owner}/{self.repo_name}/pulls/{user_filter}"
