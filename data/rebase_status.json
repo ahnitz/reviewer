@@ -143,7 +143,8 @@
       "behind": 0,
       "base": "upstream/master",
       "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
+      "last_verified": "2026-10-28T17:02:33.518551",
+      "head_sha": "2ee16a5bd"
     },
     "feature/power-chisq-bin-weights": {
       "status": "UP_TO_DATE",
@@ -170,7 +171,8 @@
       "behind": 0,
       "base": "upstream/master",
       "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
+      "last_verified": "2026-10-28T17:02:33.518551",
+      "head_sha": "3b3465603"
     },
     "marg-inline-reconstruct": {
       "status": "UP_TO_DATE",
@@ -179,7 +181,9 @@
       "behind": 0,
       "base": "marg-reconstruct-cache",
       "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
+      "last_verified": "2026-10-28T17:02:33.518551",
+      "head_sha": "2d893ae8d",
+      "base_sha": "3b3465603"
     },
     "relbin-calibration": {
       "status": "UP_TO_DATE",
