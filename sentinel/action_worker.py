@@ -31,6 +31,7 @@ DEFAULT_COMMENTS_FILE = os.path.abspath(
 )
 
 PR_BRANCH_MAP = {
+    "5512": "feature/chisq-class-updates",
     "5500": "pr-feat-multidet-workflow-jobs",
     "5496": "pr-feat-workflow-clusterlink",
     "5494": "pr-feat-multidet-trigger-files",
@@ -58,6 +59,7 @@ PR_BRANCH_MAP = {
     "5371": "staging",
     "4658": "tsdoc",
     "4002": "siminj",
+    "PR-CCU": "feature/chisq-class-updates",
     "PR-MDWJ": "pr-feat-multidet-workflow-jobs",
     "PR-5496": "pr-feat-workflow-clusterlink",
     "PR-MDTF": "pr-feat-multidet-trigger-files",

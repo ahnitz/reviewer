@@ -467,6 +467,57 @@ CURATED_HUNKS = {
             "rationale": "Documents waveform match comparisons, high-spin faithfulness validation, and workflow parameters.",
             "alternatives": "Essential user documentation."
         }
+    ],
+    # -------------------------------------------------------------
+    # PR-CCU (PR #5512): Standardize single-detector chi-square classes
+    # -------------------------------------------------------------
+    ("PR-CCU", "bin/pycbc_inspiral"): [
+        {
+            "symbol": "SingleDetBankVeto",
+            "shortSummary": "Use SingleDetBankVeto.insert_option_group and from_cli in pycbc_inspiral",
+            "rationale": "Removes inline --bank-veto-bank-file CLI argument and explicit SingleDetBankVeto constructor arguments from pycbc_inspiral, delegating CLI setup and lazy filter bank initialization to SingleDetBankVeto.insert_option_group and SingleDetBankVeto.from_cli (and simplifying SingleDetSGChisq.from_cli).",
+            "alternatives": "Inline CLI option definitions and eager FilterBank construction duplicated veto setup across search scripts."
+        }
+    ],
+    ("PR-CCU", "bin/pycbc_inspiral_skymax"): [
+        {
+            "symbol": "SingleDetSkyMaxBankVeto",
+            "shortSummary": "Use SingleDetSkyMaxBankVeto.insert_option_group and from_cli in pycbc_inspiral_skymax",
+            "rationale": "Standardizes bank veto and sine-Gaussian chisq initialization in pycbc_inspiral_skymax using insert_option_group and from_cli.",
+            "alternatives": "Maintains identical CLI contract with pycbc_inspiral."
+        }
+    ],
+    ("PR-CCU", "pycbc/vetoes/autochisq.py"): [
+        {
+            "symbol": "one_sided",
+            "shortSummary": "Fix two-sided degrees of freedom check (`if not self.one_sided:`)",
+            "rationale": "Previously `if onesided is not None:` doubled dof even when `onesided=True` was passed explicitly, and failed to double dof when `onesided=False` (default) was compared against None. Checking `if not self.one_sided:` ensures dof is doubled if and only if two-sided auto-chisq is used.",
+            "alternatives": "None; direct bug fix."
+        }
+    ],
+    ("PR-CCU", "pycbc/vetoes/bank_chisq.py"): [
+        {
+            "symbol": "SingleDetBankVeto",
+            "shortSummary": "Add insert_option_group/from_cli, lazy FilterBank loading, sigmasq(low_frequency_cutoff), and overwhitened flag",
+            "rationale": "Adds SingleDetBankVeto.insert_option_group and from_cli, defers FilterBank loading until values() knows stilde's flen/delta_f/dtype and template.f_lower, uses explicit sigmasq(..., low_frequency_cutoff=...) so plain FrequencySeries templates work without cached .sigmasq(), and supports overwhitened=True/False.",
+            "alternatives": "Eager FilterBank construction in __init__ required callers to pass segment length and dtype before reading data."
+        }
+    ],
+    ("PR-CCU", "pycbc/vetoes/chisq.py"): [
+        {
+            "symbol": "parse_option",
+            "shortSummary": "Coerce chisq bin expression to str before eval() in parse_option",
+            "rationale": "Allows integer num_bins (e.g. num_bins=16) as well as string expressions ('16') to be passed directly to SingleDetPowerChisq without raising TypeError in eval().",
+            "alternatives": "Requiring callers to convert integer bin counts to strings was error-prone in programmatic usage and tests."
+        }
+    ],
+    ("PR-CCU", "pycbc/vetoes/sgchisq.py"): [
+        {
+            "symbol": "SingleDetSGChisq",
+            "shortSummary": "Cache sine-Gaussian tiles in LimitedSizeDict, vectorize newsnr threshold check, and support overwhitened=False",
+            "rationale": "Extracts peak_frequency() and cached_tiles() (bounded by LimitedSizeDict(size_limit=16)) so sine-Gaussian tiles and their sigmas are reused across segments and triggers, restricts apply_fseries_time_shift to [klo, khi], makes bchisq/snr_threshold optional, and supports overwhitened=True/False.",
+            "alternatives": "Re-evaluating fd_sine_gaussian and full-band time shifts per trigger was unnecessarily slow and prevented standalone evaluation without power chisq."
+        }
     ]
 }
 

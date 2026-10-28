@@ -43,12 +43,18 @@
       "PR-PCBW": "feature/power-chisq-bin-weights",
       "PR-SGCTP": "feature/sg-chisq-template-projection",
       "PR-VOG": "feature/veto-option-groups",
+      "PR-CCU": "feature/chisq-class-updates",
       "PR-FB": "pr-feat-fir-bank",
       "PR-MDTF": "pr-feat-multidet-trigger-files",
       "PR-MDWJ": "pr-feat-multidet-workflow-jobs",
       "PR-5496": "pr-feat-workflow-clusterlink"
     },
     "user_requested_branches": [
+      {
+        "prId": "PR-CCU",
+        "branch": "feature/chisq-class-updates",
+        "title": "Standardize single-detector chi-square classes and expand unit tests"
+      },
       {
         "prId": "PR-VOG",
         "branch": "feature/veto-option-groups",

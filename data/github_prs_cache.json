@@ -662,6 +662,20 @@
     "updatedAt": "",
     "commentCount": 0
   },
+  "feature/chisq-class-updates": {
+    "number": 5512,
+    "title": "Standardize single-detector chi-square classes and expand unit tests",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "GarethCabournDavies"
+    ],
+    "headSha": "ed0f5e785820e637bb84d25f6aba58c7aedfa705",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5512",
+    "createdAt": "2026-10-28T16:48:52Z",
+    "updatedAt": "2026-10-28T16:49:32Z",
+    "commentCount": 2
+  },
   "pr-feat-multidet-workflow-jobs": {
     "number": 5500,
     "title": "Support multi-detector inspiral workflow job setup",
@@ -680,14 +694,14 @@
     "number": 5494,
     "title": "Support multi-detector trigger files in post-processing and minifollowup workflows",
     "state": "OPEN",
-    "reviewDecision": "REVIEW_REQUIRED",
+    "reviewDecision": "APPROVED",
     "assignees": [
       "GarethCabournDavies"
     ],
     "headSha": "393b6b8436ae4615056bf24fb03357b1bb3d3b3b",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5494",
     "createdAt": "2026-10-19T18:51:45Z",
-    "updatedAt": "2026-10-23T15:50:49Z",
+    "updatedAt": "2026-10-28T10:09:17Z",
     "commentCount": 2
   },
   "feature/power-chisq-bin-weights": {

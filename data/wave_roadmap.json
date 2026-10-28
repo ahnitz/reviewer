@@ -1024,7 +1024,9 @@
       "branch": "feature/signal-consistency-chain",
       "title": "Add SignalConsistencyChain and use it in pycbc_inspiral_fir",
       "status": "PUSHED_TO_ORIGIN",
-      "dependencies": [],
+      "dependencies": [
+        "PR-CCU"
+      ],
       "problemDescription": "Signal consistency tests (power chisq, auto-chisq, sine-Gaussian chisq) and intermediate ranking statistic cuts were hardcoded or batch-shared across templates in pycbc_inspiral_fir, causing triggers to inherit another template's chisq value and losing single-precision phase accuracy in sgchisq on long segments.",
       "solutionDescription": "Introduces pycbc.vetoes.chain.SignalConsistencyChain to run power, auto, and sine-Gaussian chisq with configurable threshold/skip/remove steps (--signal-consistency-chain), exact double-precision band-limited time shifts in sgchisq.values_at on any template frequency grid, and fixes SingleDetAutoChisq two-sided dof initialization.",
       "simplificationDeepDive": "Replaces bespoke compute_batch_chisq in pycbc_inspiral_fir with unified SignalConsistencyChain and RatioChisqInputs.",
@@ -1082,7 +1084,7 @@
       "wave": 1,
       "branch": "feature/veto-option-groups",
       "title": "Define the power and auto chisq options in their classes",
-      "status": "PUSHED_TO_ORIGIN",
+      "status": "MERGED",
       "dependencies": [],
       "problemDescription": "CLI option groups for power chisq and auto-chisq were defined inline on SingleDetSkyMaxPowerChisq or in search scripts rather than on the base SingleDetPowerChisq and SingleDetAutoChisq classes.",
       "solutionDescription": "Moves power chisq and auto-chisq CLI option group definitions into SingleDetPowerChisq.insert_option_group and SingleDetAutoChisq.insert_option_group so any tool or SignalConsistencyChain can reuse them directly.",
@@ -1092,7 +1094,8 @@
         "pycbc/vetoes/chisq.py"
       ],
       "test_cmd": "pytest test/test_chisq.py",
-      "testCmd": "pytest test/test_chisq.py"
+      "testCmd": "pytest test/test_chisq.py",
+      "upstream_status": "INCORPORATED_UPSTREAM"
     },
     "PR-FB": {
       "wave": 3,
@@ -1161,6 +1164,30 @@
       ],
       "test_cmd": "pytest test/test_workflow_matched_filter.py",
       "testCmd": "pytest test/test_workflow_matched_filter.py"
+    },
+    "PR-CCU": {
+      "wave": 1,
+      "branch": "feature/chisq-class-updates",
+      "title": "Standardize single-detector chi-square classes and expand unit tests",
+      "status": "OPEN",
+      "dependencies": [],
+      "problemDescription": "Single-detector chi-square classes (SingleDetBankVeto, SingleDetSGChisq, SingleDetAutoChisq, SingleDetPowerChisq) had inconsistent CLI initialization, eager FilterBank construction requiring segment length/dtype upfront, no tile caching in SingleDetSGChisq, a two-sided dof bug in SingleDetAutoChisq, and lacked unit tests for SingleDetBankVeto and SingleDetSGChisq.",
+      "solutionDescription": "Adds insert_option_group/from_cli and lazy FilterBank loading to SingleDetBankVeto, caches sine-Gaussian tiles in LimitedSizeDict and supports overwhitened=True/False in SingleDetSGChisq and SingleDetBankVeto, fixes SingleDetAutoChisq two-sided dof doubling (`if not self.one_sided:`), coerces chisq bin expressions to str before eval(), and adds unit tests in test_bank_chisq.py, test_sgchisq.py, test_autochisq.py, and test_chisq.py.",
+      "simplificationDeepDive": "Unifies CLI option group setup and `from_cli` constructors across all four single-detector chi-square classes while expanding unit test coverage (+456/-125 lines across 10 files).",
+      "files": [
+        "bin/pycbc_inspiral",
+        "bin/pycbc_inspiral_skymax",
+        "pycbc/vetoes/autochisq.py",
+        "pycbc/vetoes/bank_chisq.py",
+        "pycbc/vetoes/chisq.py",
+        "pycbc/vetoes/sgchisq.py",
+        "test/test_autochisq.py",
+        "test/test_bank_chisq.py",
+        "test/test_chisq.py",
+        "test/test_sgchisq.py"
+      ],
+      "test_cmd": "pytest test/test_autochisq.py test/test_bank_chisq.py test/test_chisq.py test/test_sgchisq.py",
+      "testCmd": "pytest test/test_autochisq.py test/test_bank_chisq.py test/test_chisq.py test/test_sgchisq.py"
     }
   },
   "ingestion_log": [

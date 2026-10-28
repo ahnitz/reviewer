@@ -175,6 +175,7 @@ DEFAULT_PR_BRANCH_MAP = {
     "PR-4658": "tsdoc",
     "PR-4002": "siminj",
     "PR-VOG": "feature/veto-option-groups",
+    "PR-CCU": "feature/chisq-class-updates",
     "PR-SCC": "feature/signal-consistency-chain",
     "PR-PCBW": "feature/power-chisq-bin-weights",
     "PR-SGCTP": "feature/sg-chisq-template-projection",
@@ -187,6 +188,9 @@ BRANCH_ALIASES = {
     "feature/veto-options-group": "feature/veto-option-groups",
     "feature-veto-options-group": "feature/veto-option-groups",
     "feature-veto-option-groups": "feature/veto-option-groups",
+    "feature-chisq-class-updates": "feature/chisq-class-updates",
+    "chisq-class-updates": "feature/chisq-class-updates",
+    "ahnitz:feature/chisq-class-updates": "feature/chisq-class-updates",
     "feature/signal-consitency-chain": "feature/signal-consistency-chain",
     "feature-signal-consitency-chain": "feature/signal-consistency-chain",
     "feature-signal-consistency-chain": "feature/signal-consistency-chain",
@@ -201,7 +205,7 @@ BRANCH_ALIASES = {
 }
 
 STACKED_PARENT_BRANCHES = {
-    "feature/signal-consistency-chain": "feature/veto-option-groups",
+    "feature/signal-consistency-chain": "feature/chisq-class-updates",
     "feature/sg-chisq-template-projection": "feature/signal-consistency-chain",
     "marg-inline-reconstruct": "marg-reconstruct-cache",
 }
@@ -483,6 +487,7 @@ def get_unified_comments(pr_id=None):
             pass
 
     pr_id_map = {
+        "5512": "PR-CCU",
         "5500": "PR-MDWJ", "5496": "PR-5496",
         "5494": "PR-MDTF", "5493": "PR-VOG",
         "5490": "PR-FB", "5484": "PR-PCBW",
@@ -571,6 +576,7 @@ def get_unified_comments(pr_id=None):
 
 GITHUB_PR_CACHE = {"data": None, "time": 0}
 KNOWN_PR_NUM_TO_BRANCH = {
+    5512: "feature/chisq-class-updates",
     5500: "pr-feat-multidet-workflow-jobs",
     5496: "pr-feat-workflow-clusterlink",
     5494: "pr-feat-multidet-trigger-files",
