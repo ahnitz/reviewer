@@ -676,6 +676,20 @@
     "updatedAt": "",
     "commentCount": 0
   },
+  "feature/sg-chisq-template-projection": {
+    "number": 5514,
+    "title": "Subtract template contribution in sg chisq",
+    "state": "OPEN",
+    "reviewDecision": "REVIEW_REQUIRED",
+    "assignees": [
+      "spxiwh"
+    ],
+    "headSha": "109e0820ce6e101e6f2d350fe24077a7cf61fdca",
+    "htmlUrl": "https://github.com/gwastro/pycbc/pull/5514",
+    "createdAt": "2026-10-28T19:10:10Z",
+    "updatedAt": "2026-10-28T19:10:43Z",
+    "commentCount": 4
+  },
   "feature/signal-consistency-chain": {
     "number": 5513,
     "title": "Configurable signal consistency chain",
@@ -822,13 +836,14 @@
     "state": "OPEN",
     "reviewDecision": "REVIEW_REQUIRED",
     "assignees": [
-      "cdcapano"
+      "cdcapano",
+      "aleynaakyuz"
     ],
     "headSha": "19faa377d1f8ccf99ceb1bca1255ba02d4158138",
     "htmlUrl": "https://github.com/gwastro/pycbc/pull/5405",
     "createdAt": "2026-08-13T19:03:57Z",
-    "updatedAt": "2026-10-19T16:18:22Z",
-    "commentCount": 1
+    "updatedAt": "2026-10-28T19:23:56Z",
+    "commentCount": 2
   },
   "tsdoc": {
     "number": 4658,

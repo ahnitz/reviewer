@@ -34,6 +34,7 @@ HEADERS = {
 }
 
 PR_MAP = {
+    5514: {"prId": "PR-SGCTP", "branch": "feature/sg-chisq-template-projection"},
     5513: {"prId": "PR-SCC", "branch": "feature/signal-consistency-chain"},
     5512: {"prId": "PR-CCU", "branch": "feature/chisq-class-updates"},
     5500: {"prId": "PR-MDWJ", "branch": "pr-feat-multidet-workflow-jobs"},

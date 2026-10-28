@@ -31,6 +31,7 @@ DEFAULT_COMMENTS_FILE = os.path.abspath(
 )
 
 PR_BRANCH_MAP = {
+    "5514": "feature/sg-chisq-template-projection",
     "5513": "feature/signal-consistency-chain",
     "5512": "feature/chisq-class-updates",
     "5500": "pr-feat-multidet-workflow-jobs",

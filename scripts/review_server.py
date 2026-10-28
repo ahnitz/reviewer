@@ -487,7 +487,7 @@ def get_unified_comments(pr_id=None):
             pass
 
     pr_id_map = {
-        "5513": "PR-SCC", "5512": "PR-CCU",
+        "5514": "PR-SGCTP", "5513": "PR-SCC", "5512": "PR-CCU",
         "5500": "PR-MDWJ", "5496": "PR-5496",
         "5494": "PR-MDTF", "5493": "PR-VOG",
         "5490": "PR-FB", "5484": "PR-PCBW",
@@ -576,6 +576,7 @@ def get_unified_comments(pr_id=None):
 
 GITHUB_PR_CACHE = {"data": None, "time": 0}
 KNOWN_PR_NUM_TO_BRANCH = {
+    5514: "feature/sg-chisq-template-projection",
     5513: "feature/signal-consistency-chain",
     5512: "feature/chisq-class-updates",
     5500: "pr-feat-multidet-workflow-jobs",
