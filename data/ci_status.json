@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-29T03:20:58Z",
+  "lastUpdated": "2026-10-29T03:51:13Z",
   "openPrCount": 15,
   "prs": {
     "5516": {
@@ -7,11 +7,11 @@
       "title": "Multi-level ratio filter, refactoring / rework of pycbc_inspiral_fir",
       "branch": "feature/fir-matchedfilter-multidet",
       "headSha": "87e333338c075914b32f9f7ab292a906befbf670",
-      "overallStatus": "IN_PROGRESS",
+      "overallStatus": "SUCCESS",
       "totalChecks": 34,
-      "successCount": 31,
+      "successCount": 33,
       "failureCount": 0,
-      "inProgressCount": 2,
+      "inProgressCount": 0,
       "actionableCount": 0,
       "failures": [],
       "checkRuns": [
@@ -79,8 +79,8 @@
           "id": "123152521734",
           "name": "build (macos-latest, 3.11)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784001821/job/123152521734?pr=5516",
           "startedAt": null,
           "completedAt": null
@@ -89,8 +89,8 @@
           "id": "123152521667",
           "name": "build (macos-latest, 3.12)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784001821/job/123152521667?pr=5516",
           "startedAt": null,
           "completedAt": null
@@ -362,7 +362,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:20:37Z"
+      "lastChecked": "2026-10-29T03:51:12Z"
     },
     "5514": {
       "prNumber": 5514,
@@ -724,7 +724,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:20:38Z"
+      "lastChecked": "2026-10-29T03:51:12Z"
     },
     "5513": {
       "prNumber": 5513,
@@ -1086,7 +1086,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:20:38Z"
+      "lastChecked": "2026-10-29T03:51:12Z"
     },
     "5512": {
       "prNumber": 5512,
@@ -1448,7 +1448,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:20:39Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "5500": {
       "prNumber": 5500,
@@ -1810,7 +1810,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:20:39Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "5484": {
       "prNumber": 5484,
@@ -2171,7 +2171,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:20:39Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "5475": {
       "prNumber": 5475,
@@ -2533,7 +2533,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:20:40Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "5457": {
       "prNumber": 5457,
@@ -2894,7 +2894,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:20:40Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "5446": {
       "prNumber": 5446,
@@ -3583,7 +3583,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:20:40Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "5430": {
       "prNumber": 5430,
@@ -3944,18 +3944,18 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:20:49Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "5429": {
       "prNumber": 5429,
       "title": "Get inference model stat values to be saved not just in emcee",
       "branch": "marg-reconstruct-cache",
       "headSha": "341ac389ba4ab31b42aba8fff36adceaa5e97c8b",
-      "overallStatus": "IN_PROGRESS",
+      "overallStatus": "SUCCESS",
       "totalChecks": 34,
-      "successCount": 32,
+      "successCount": 33,
       "failureCount": 0,
-      "inProgressCount": 1,
+      "inProgressCount": 0,
       "actionableCount": 0,
       "failures": [],
       "checkRuns": [
@@ -3973,8 +3973,8 @@
           "id": "123201224753",
           "name": "build (macos-latest, 3.12)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634104/job/123201224753?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4305,7 +4305,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:20:58Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "5410": {
       "prNumber": 5410,
@@ -4666,7 +4666,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:20:58Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "5405": {
       "prNumber": 5405,
@@ -5027,7 +5027,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:20:58Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "4658": {
       "prNumber": 4658,
@@ -5388,7 +5388,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:20:58Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     },
     "4002": {
       "prNumber": 4002,
@@ -5932,7 +5932,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:20:58Z"
+      "lastChecked": "2026-10-29T03:51:13Z"
     }
   }
 }
