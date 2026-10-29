@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-29T01:59:35Z",
+  "lastUpdated": "2026-10-29T02:29:59Z",
   "openPrCount": 15,
   "prs": {
     "5516": {
@@ -8,10 +8,10 @@
       "branch": "feature/fir-matchedfilter-multidet",
       "headSha": "87e333338c075914b32f9f7ab292a906befbf670",
       "overallStatus": "IN_PROGRESS",
-      "totalChecks": 33,
-      "successCount": 28,
+      "totalChecks": 34,
+      "successCount": 31,
       "failureCount": 0,
-      "inProgressCount": 4,
+      "inProgressCount": 2,
       "actionableCount": 0,
       "failures": [],
       "checkRuns": [
@@ -49,9 +49,19 @@
           "id": "123152523364",
           "name": "Build wheels on macos-latest",
           "workflow": "Build Wheels",
-          "status": "queued",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784001778/job/123152523364?pr=5516",
+          "startedAt": null,
+          "completedAt": null
+        },
+        {
+          "id": "123224305252",
+          "name": "Package and publish to PyPI",
+          "workflow": "Build Wheels",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/40784001778/job/123224305252?pr=5516",
           "startedAt": null,
           "completedAt": null
         },
@@ -89,8 +99,8 @@
           "id": "123152521697",
           "name": "build (macos-latest, 3.13)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784001821/job/123152521697?pr=5516",
           "startedAt": null,
           "completedAt": null
@@ -352,7 +362,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:59:27Z"
+      "lastChecked": "2026-10-29T02:29:53Z"
     },
     "5514": {
       "prNumber": 5514,
@@ -714,7 +724,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:59:28Z"
+      "lastChecked": "2026-10-29T02:29:53Z"
     },
     "5513": {
       "prNumber": 5513,
@@ -1076,7 +1086,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:59:28Z"
+      "lastChecked": "2026-10-29T02:29:54Z"
     },
     "5512": {
       "prNumber": 5512,
@@ -1438,7 +1448,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:59:28Z"
+      "lastChecked": "2026-10-29T02:29:54Z"
     },
     "5500": {
       "prNumber": 5500,
@@ -1547,7 +1557,7 @@
           "id": "123154366904",
           "name": "build (macos-latest, 3.12)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784553615/job/123154366904?pr=5500",
           "startedAt": null,
@@ -1800,7 +1810,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:59:30Z"
+      "lastChecked": "2026-10-29T02:29:55Z"
     },
     "5484": {
       "prNumber": 5484,
@@ -2161,7 +2171,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:59:31Z"
+      "lastChecked": "2026-10-29T02:29:55Z"
     },
     "5475": {
       "prNumber": 5475,
@@ -2523,7 +2533,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:59:31Z"
+      "lastChecked": "2026-10-29T02:29:56Z"
     },
     "5457": {
       "prNumber": 5457,
@@ -2884,7 +2894,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:59:31Z"
+      "lastChecked": "2026-10-29T02:29:56Z"
     },
     "5446": {
       "prNumber": 5446,
@@ -2892,10 +2902,10 @@
       "branch": "ci-http-cache",
       "headSha": "408b588a0e5fe77ee864710be1b3ab7adf063961",
       "overallStatus": "IN_PROGRESS",
-      "totalChecks": 65,
-      "successCount": 56,
+      "totalChecks": 66,
+      "successCount": 61,
       "failureCount": 1,
-      "inProgressCount": 6,
+      "inProgressCount": 2,
       "actionableCount": 0,
       "failures": [
         {
@@ -3171,7 +3181,7 @@
           "id": "123099374691",
           "name": "build (macos-latest, 3.12)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768605492/job/123099374691?pr=5446",
           "startedAt": null,
@@ -3181,8 +3191,8 @@
           "id": "123099374611",
           "name": "build (macos-latest, 3.13)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768605492/job/123099374611?pr=5446",
           "startedAt": null,
           "completedAt": null
@@ -3191,8 +3201,8 @@
           "id": "123099374278",
           "name": "build (macos-latest, 3.14)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768605492/job/123099374278?pr=5446",
           "startedAt": null,
           "completedAt": null
@@ -3251,8 +3261,8 @@
           "id": "123099403396",
           "name": "build (macos-latest, 3.12)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768613308/job/123099403396?pr=5446",
           "startedAt": null,
           "completedAt": null
@@ -3271,7 +3281,7 @@
           "id": "123099403371",
           "name": "build (macos-latest, 3.14)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768613308/job/123099403371?pr=5446",
           "startedAt": null,
@@ -3531,9 +3541,19 @@
           "id": "123099402359",
           "name": "Build wheels on macos-latest",
           "workflow": "Build Wheels",
-          "status": "queued",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768613536/job/123099402359?pr=5446",
+          "startedAt": null,
+          "completedAt": null
+        },
+        {
+          "id": "123222565037",
+          "name": "Package and publish to PyPI",
+          "workflow": "Build Wheels",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/40768613536/job/123222565037?pr=5446",
           "startedAt": null,
           "completedAt": null
         },
@@ -3563,7 +3583,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:59:33Z"
+      "lastChecked": "2026-10-29T02:29:57Z"
     },
     "5430": {
       "prNumber": 5430,
@@ -3571,10 +3591,10 @@
       "branch": "marg-inline-reconstruct",
       "headSha": "849482cff2ea72f73ef6796165cfb65dd8f505a3",
       "overallStatus": "IN_PROGRESS",
-      "totalChecks": 33,
-      "successCount": 27,
+      "totalChecks": 34,
+      "successCount": 30,
       "failureCount": 0,
-      "inProgressCount": 5,
+      "inProgressCount": 3,
       "actionableCount": 0,
       "failures": [],
       "checkRuns": [
@@ -3632,8 +3652,8 @@
           "id": "123201375737",
           "name": "build (macos-latest, 3.14)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660292/job/123201375737?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3902,9 +3922,19 @@
           "id": "123201186833",
           "name": "Build wheels on macos-latest",
           "workflow": "Build Wheels",
-          "status": "queued",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660603/job/123201186833?pr=5430",
+          "startedAt": null,
+          "completedAt": null
+        },
+        {
+          "id": "123226480916",
+          "name": "Package and publish to PyPI",
+          "workflow": "Build Wheels",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/40798660603/job/123226480916?pr=5430",
           "startedAt": null,
           "completedAt": null
         }
@@ -3914,7 +3944,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:59:34Z"
+      "lastChecked": "2026-10-29T02:29:58Z"
     },
     "5429": {
       "prNumber": 5429,
@@ -3963,7 +3993,7 @@
           "id": "123201224670",
           "name": "build (macos-latest, 3.14)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634104/job/123201224670?pr=5429",
           "startedAt": null,
@@ -4275,7 +4305,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:59:35Z"
+      "lastChecked": "2026-10-29T02:29:59Z"
     },
     "5410": {
       "prNumber": 5410,
@@ -4636,7 +4666,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:59:35Z"
+      "lastChecked": "2026-10-29T02:29:59Z"
     },
     "5405": {
       "prNumber": 5405,
@@ -4997,7 +5027,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:59:35Z"
+      "lastChecked": "2026-10-29T02:29:59Z"
     },
     "4658": {
       "prNumber": 4658,
@@ -5358,7 +5388,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:59:35Z"
+      "lastChecked": "2026-10-29T02:29:59Z"
     },
     "4002": {
       "prNumber": 4002,
@@ -5902,7 +5932,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:59:35Z"
+      "lastChecked": "2026-10-29T02:29:59Z"
     }
   }
 }
