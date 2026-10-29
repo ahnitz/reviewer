@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-29T01:29:06Z",
+  "lastUpdated": "2026-10-29T01:59:35Z",
   "openPrCount": 15,
   "prs": {
     "5516": {
@@ -89,7 +89,7 @@
           "id": "123152521697",
           "name": "build (macos-latest, 3.13)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784001821/job/123152521697?pr=5516",
           "startedAt": null,
@@ -352,7 +352,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:28:58Z"
+      "lastChecked": "2026-10-29T01:59:27Z"
     },
     "5514": {
       "prNumber": 5514,
@@ -714,7 +714,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:28:58Z"
+      "lastChecked": "2026-10-29T01:59:28Z"
     },
     "5513": {
       "prNumber": 5513,
@@ -1076,7 +1076,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:28:58Z"
+      "lastChecked": "2026-10-29T01:59:28Z"
     },
     "5512": {
       "prNumber": 5512,
@@ -1438,7 +1438,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:28:58Z"
+      "lastChecked": "2026-10-29T01:59:28Z"
     },
     "5500": {
       "prNumber": 5500,
@@ -1446,10 +1446,10 @@
       "branch": "pr-feat-multidet-workflow-jobs",
       "headSha": "2ee16a5bdc20c0aaf293eee9af6791c733ff5d5a",
       "overallStatus": "IN_PROGRESS",
-      "totalChecks": 33,
-      "successCount": 27,
+      "totalChecks": 34,
+      "successCount": 32,
       "failureCount": 0,
-      "inProgressCount": 5,
+      "inProgressCount": 1,
       "actionableCount": 0,
       "failures": [],
       "checkRuns": [
@@ -1537,8 +1537,8 @@
           "id": "123154366709",
           "name": "build (macos-latest, 3.11)",
           "workflow": "macos basic tests",
-          "status": "queued",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784553615/job/123154366709?pr=5500",
           "startedAt": null,
           "completedAt": null
@@ -1557,8 +1557,8 @@
           "id": "123154366784",
           "name": "build (macos-latest, 3.13)",
           "workflow": "macos basic tests",
-          "status": "queued",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784553615/job/123154366784?pr=5500",
           "startedAt": null,
           "completedAt": null
@@ -1567,8 +1567,8 @@
           "id": "123154366347",
           "name": "build (macos-latest, 3.14)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784553615/job/123154366347?pr=5500",
           "startedAt": null,
           "completedAt": null
@@ -1587,9 +1587,19 @@
           "id": "123154363528",
           "name": "Build wheels on macos-latest",
           "workflow": "Build Wheels",
-          "status": "queued",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784553622/job/123154363528?pr=5500",
+          "startedAt": null,
+          "completedAt": null
+        },
+        {
+          "id": "123212749281",
+          "name": "Package and publish to PyPI",
+          "workflow": "Build Wheels",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/40784553622/job/123212749281?pr=5500",
           "startedAt": null,
           "completedAt": null
         },
@@ -1790,18 +1800,18 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:29:00Z"
+      "lastChecked": "2026-10-29T01:59:30Z"
     },
     "5484": {
       "prNumber": 5484,
       "title": "Bruce chisq bins aren't always equally power, so weight them  [WIP]",
       "branch": "feature/power-chisq-bin-weights",
       "headSha": "0fd36e846f4a0d7e37476e7e5067f13643faa0d3",
-      "overallStatus": "IN_PROGRESS",
+      "overallStatus": "SUCCESS",
       "totalChecks": 34,
-      "successCount": 30,
+      "successCount": 33,
       "failureCount": 0,
-      "inProgressCount": 3,
+      "inProgressCount": 0,
       "actionableCount": 0,
       "failures": [],
       "checkRuns": [
@@ -2089,8 +2099,8 @@
           "id": "123097405751",
           "name": "build (macos-latest, 3.11)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768035770/job/123097405751?pr=5484",
           "startedAt": null,
           "completedAt": null
@@ -2099,8 +2109,8 @@
           "id": "123097405741",
           "name": "build (macos-latest, 3.12)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768035770/job/123097405741?pr=5484",
           "startedAt": null,
           "completedAt": null
@@ -2119,8 +2129,8 @@
           "id": "123097406413",
           "name": "build (macos-latest, 3.14)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768035770/job/123097406413?pr=5484",
           "startedAt": null,
           "completedAt": null
@@ -2151,7 +2161,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:29:01Z"
+      "lastChecked": "2026-10-29T01:59:31Z"
     },
     "5475": {
       "prNumber": 5475,
@@ -2513,7 +2523,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T01:29:01Z"
+      "lastChecked": "2026-10-29T01:59:31Z"
     },
     "5457": {
       "prNumber": 5457,
@@ -2874,7 +2884,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:29:01Z"
+      "lastChecked": "2026-10-29T01:59:31Z"
     },
     "5446": {
       "prNumber": 5446,
@@ -3171,7 +3181,7 @@
           "id": "123099374611",
           "name": "build (macos-latest, 3.13)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768605492/job/123099374611?pr=5446",
           "startedAt": null,
@@ -3181,7 +3191,7 @@
           "id": "123099374278",
           "name": "build (macos-latest, 3.14)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768605492/job/123099374278?pr=5446",
           "startedAt": null,
@@ -3241,7 +3251,7 @@
           "id": "123099403396",
           "name": "build (macos-latest, 3.12)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40768613308/job/123099403396?pr=5446",
           "startedAt": null,
@@ -3553,7 +3563,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:29:03Z"
+      "lastChecked": "2026-10-29T01:59:33Z"
     },
     "5430": {
       "prNumber": 5430,
@@ -3561,10 +3571,10 @@
       "branch": "marg-inline-reconstruct",
       "headSha": "849482cff2ea72f73ef6796165cfb65dd8f505a3",
       "overallStatus": "IN_PROGRESS",
-      "totalChecks": 32,
-      "successCount": 16,
+      "totalChecks": 33,
+      "successCount": 27,
       "failureCount": 0,
-      "inProgressCount": 16,
+      "inProgressCount": 5,
       "actionableCount": 0,
       "failures": [],
       "checkRuns": [
@@ -3622,7 +3632,7 @@
           "id": "123201375737",
           "name": "build (macos-latest, 3.14)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660292/job/123201375737?pr=5430",
           "startedAt": null,
@@ -3632,8 +3642,8 @@
           "id": "123201183224",
           "name": "build",
           "workflow": "run small splittable search using pegasus + condor",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660306/job/123201183224?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3672,8 +3682,8 @@
           "id": "123201182891",
           "name": "build (ubuntu-24.04, 3.12)",
           "workflow": "tutorial tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660365/job/123201182891?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3692,8 +3702,8 @@
           "id": "123201183165",
           "name": "build",
           "workflow": "run small search using pegasus + condor",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660427/job/123201183165?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3702,8 +3712,8 @@
           "id": "123201182912",
           "name": "build",
           "workflow": "build the LVK virtualenv",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660429/job/123201182912?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3722,8 +3732,8 @@
           "id": "123201183813",
           "name": "build (ubuntu-24.04, 3.11, unittest)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660480/job/123201183813?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3752,8 +3762,8 @@
           "id": "123201183784",
           "name": "build (ubuntu-24.04, 3.12, unittest)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660480/job/123201183784?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3762,8 +3772,8 @@
           "id": "123201183418",
           "name": "build (ubuntu-24.04, 3.12, search)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660480/job/123201183418?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3782,8 +3792,8 @@
           "id": "123201184053",
           "name": "build (ubuntu-24.04, 3.13, unittest)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660480/job/123201184053?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3792,8 +3802,8 @@
           "id": "123201183957",
           "name": "build (ubuntu-24.04, 3.13, search)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660480/job/123201183957?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3812,8 +3822,8 @@
           "id": "123201183823",
           "name": "build (ubuntu-24.04, 3.14, unittest)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660480/job/123201183823?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3839,11 +3849,21 @@
           "completedAt": null
         },
         {
+          "id": "123213865434",
+          "name": "deploy_documentation",
+          "workflow": "basic tests",
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/40798660480/job/123213865434?pr=5430",
+          "startedAt": null,
+          "completedAt": null
+        },
+        {
           "id": "123201184154",
           "name": "build",
           "workflow": "run small template bank generation using pegasus + condor",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660520/job/123201184154?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3894,7 +3914,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:29:04Z"
+      "lastChecked": "2026-10-29T01:59:34Z"
     },
     "5429": {
       "prNumber": 5429,
@@ -3902,10 +3922,10 @@
       "branch": "marg-reconstruct-cache",
       "headSha": "341ac389ba4ab31b42aba8fff36adceaa5e97c8b",
       "overallStatus": "IN_PROGRESS",
-      "totalChecks": 33,
-      "successCount": 15,
+      "totalChecks": 34,
+      "successCount": 29,
       "failureCount": 0,
-      "inProgressCount": 18,
+      "inProgressCount": 4,
       "actionableCount": 0,
       "failures": [],
       "checkRuns": [
@@ -3983,8 +4003,8 @@
           "id": "123201095597",
           "name": "build",
           "workflow": "run small template bank generation using pegasus + condor",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634140/job/123201095597?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -3993,8 +4013,8 @@
           "id": "123201096294",
           "name": "build (ubuntu-24.04, 3.11, unittest)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634160/job/123201096294?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4003,8 +4023,8 @@
           "id": "123201096146",
           "name": "build (ubuntu-24.04, 3.11, search)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634160/job/123201096146?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4023,8 +4043,8 @@
           "id": "123201096050",
           "name": "build (ubuntu-24.04, 3.12, unittest)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634160/job/123201096050?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4033,8 +4053,8 @@
           "id": "123201095854",
           "name": "build (ubuntu-24.04, 3.12, search)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634160/job/123201095854?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4053,8 +4073,8 @@
           "id": "123201096265",
           "name": "build (ubuntu-24.04, 3.13, unittest)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634160/job/123201096265?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4063,8 +4083,8 @@
           "id": "123201096141",
           "name": "build (ubuntu-24.04, 3.13, search)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634160/job/123201096141?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4083,8 +4103,8 @@
           "id": "123201096350",
           "name": "build (ubuntu-24.04, 3.14, unittest)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634160/job/123201096350?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4093,8 +4113,8 @@
           "id": "123201096032",
           "name": "build (ubuntu-24.04, 3.14, search)",
           "workflow": "basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634160/job/123201096032?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4106,6 +4126,16 @@
           "status": "completed",
           "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634160/job/123201095986?pr=5429",
+          "startedAt": null,
+          "completedAt": null
+        },
+        {
+          "id": "123215038025",
+          "name": "deploy_documentation",
+          "workflow": "basic tests",
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://github.com/gwastro/pycbc/actions/runs/40798634160/job/123215038025?pr=5429",
           "startedAt": null,
           "completedAt": null
         },
@@ -4123,8 +4153,8 @@
           "id": "123201095605",
           "name": "build",
           "workflow": "run small splittable search using pegasus + condor",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634217/job/123201095605?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4163,8 +4193,8 @@
           "id": "123201096018",
           "name": "build",
           "workflow": "build the LVK virtualenv",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634247/job/123201096018?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4173,8 +4203,8 @@
           "id": "123201095624",
           "name": "build",
           "workflow": "run small search using pegasus + condor",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634282/job/123201095624?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4183,8 +4213,8 @@
           "id": "123201096415",
           "name": "build (ubuntu-24.04, 3.11)",
           "workflow": "tutorial tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634294/job/123201096415?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4203,8 +4233,8 @@
           "id": "123201096181",
           "name": "build (ubuntu-24.04, 3.13)",
           "workflow": "tutorial tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634294/job/123201096181?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -4245,7 +4275,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:29:05Z"
+      "lastChecked": "2026-10-29T01:59:35Z"
     },
     "5410": {
       "prNumber": 5410,
@@ -4606,7 +4636,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:29:05Z"
+      "lastChecked": "2026-10-29T01:59:35Z"
     },
     "5405": {
       "prNumber": 5405,
@@ -4967,7 +4997,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:29:05Z"
+      "lastChecked": "2026-10-29T01:59:35Z"
     },
     "4658": {
       "prNumber": 4658,
@@ -5328,7 +5358,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:29:06Z"
+      "lastChecked": "2026-10-29T01:59:35Z"
     },
     "4002": {
       "prNumber": 4002,
@@ -5872,7 +5902,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T01:29:06Z"
+      "lastChecked": "2026-10-29T01:59:35Z"
     }
   }
 }
