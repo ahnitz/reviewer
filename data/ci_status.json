@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-10-29T03:00:22Z",
+  "lastUpdated": "2026-10-29T03:20:58Z",
   "openPrCount": 15,
   "prs": {
     "5516": {
@@ -79,7 +79,7 @@
           "id": "123152521734",
           "name": "build (macos-latest, 3.11)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784001821/job/123152521734?pr=5516",
           "startedAt": null,
@@ -89,7 +89,7 @@
           "id": "123152521667",
           "name": "build (macos-latest, 3.12)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40784001821/job/123152521667?pr=5516",
           "startedAt": null,
@@ -362,7 +362,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:00:19Z"
+      "lastChecked": "2026-10-29T03:20:37Z"
     },
     "5514": {
       "prNumber": 5514,
@@ -724,7 +724,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:00:19Z"
+      "lastChecked": "2026-10-29T03:20:38Z"
     },
     "5513": {
       "prNumber": 5513,
@@ -1086,7 +1086,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:00:19Z"
+      "lastChecked": "2026-10-29T03:20:38Z"
     },
     "5512": {
       "prNumber": 5512,
@@ -1448,7 +1448,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:00:19Z"
+      "lastChecked": "2026-10-29T03:20:39Z"
     },
     "5500": {
       "prNumber": 5500,
@@ -1810,7 +1810,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:00:20Z"
+      "lastChecked": "2026-10-29T03:20:39Z"
     },
     "5484": {
       "prNumber": 5484,
@@ -2171,7 +2171,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:00:20Z"
+      "lastChecked": "2026-10-29T03:20:39Z"
     },
     "5475": {
       "prNumber": 5475,
@@ -2533,7 +2533,7 @@
         "passed": true,
         "details": "All local checks passed (clean lint & style)"
       },
-      "lastChecked": "2026-10-29T03:00:20Z"
+      "lastChecked": "2026-10-29T03:20:40Z"
     },
     "5457": {
       "prNumber": 5457,
@@ -2894,7 +2894,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:00:20Z"
+      "lastChecked": "2026-10-29T03:20:40Z"
     },
     "5446": {
       "prNumber": 5446,
@@ -3583,18 +3583,18 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:00:20Z"
+      "lastChecked": "2026-10-29T03:20:40Z"
     },
     "5430": {
       "prNumber": 5430,
       "title": "Reconstruct marginlized values at sampling time",
       "branch": "marg-inline-reconstruct",
       "headSha": "849482cff2ea72f73ef6796165cfb65dd8f505a3",
-      "overallStatus": "IN_PROGRESS",
+      "overallStatus": "SUCCESS",
       "totalChecks": 34,
-      "successCount": 30,
+      "successCount": 33,
       "failureCount": 0,
-      "inProgressCount": 3,
+      "inProgressCount": 0,
       "actionableCount": 0,
       "failures": [],
       "checkRuns": [
@@ -3622,8 +3622,8 @@
           "id": "123201376086",
           "name": "build (macos-latest, 3.11)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660292/job/123201376086?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3632,8 +3632,8 @@
           "id": "123201376294",
           "name": "build (macos-latest, 3.12)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660292/job/123201376294?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3642,8 +3642,8 @@
           "id": "123201376733",
           "name": "build (macos-latest, 3.13)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798660292/job/123201376733?pr=5430",
           "startedAt": null,
           "completedAt": null
@@ -3944,7 +3944,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:00:21Z"
+      "lastChecked": "2026-10-29T03:20:49Z"
     },
     "5429": {
       "prNumber": 5429,
@@ -3953,9 +3953,9 @@
       "headSha": "341ac389ba4ab31b42aba8fff36adceaa5e97c8b",
       "overallStatus": "IN_PROGRESS",
       "totalChecks": 34,
-      "successCount": 31,
+      "successCount": 32,
       "failureCount": 0,
-      "inProgressCount": 2,
+      "inProgressCount": 1,
       "actionableCount": 0,
       "failures": [],
       "checkRuns": [
@@ -3963,8 +3963,8 @@
           "id": "123201224890",
           "name": "build (macos-latest, 3.11)",
           "workflow": "macos basic tests",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634104/job/123201224890?pr=5429",
           "startedAt": null,
           "completedAt": null
@@ -3973,7 +3973,7 @@
           "id": "123201224753",
           "name": "build (macos-latest, 3.12)",
           "workflow": "macos basic tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null,
           "url": "https://github.com/gwastro/pycbc/actions/runs/40798634104/job/123201224753?pr=5429",
           "startedAt": null,
@@ -4305,7 +4305,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:00:22Z"
+      "lastChecked": "2026-10-29T03:20:58Z"
     },
     "5410": {
       "prNumber": 5410,
@@ -4666,7 +4666,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:00:22Z"
+      "lastChecked": "2026-10-29T03:20:58Z"
     },
     "5405": {
       "prNumber": 5405,
@@ -5027,7 +5027,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:00:22Z"
+      "lastChecked": "2026-10-29T03:20:58Z"
     },
     "4658": {
       "prNumber": 4658,
@@ -5388,7 +5388,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:00:22Z"
+      "lastChecked": "2026-10-29T03:20:58Z"
     },
     "4002": {
       "prNumber": 4002,
@@ -5932,7 +5932,7 @@
         "issues": 0,
         "details": "No local worktree"
       },
-      "lastChecked": "2026-10-29T03:00:22Z"
+      "lastChecked": "2026-10-29T03:20:58Z"
     }
   }
 }
