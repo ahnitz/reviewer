@@ -1,5 +1,5 @@
 {
-  "last_check": "2026-10-28T17:02:33.518551",
+  "last_check": "2026-10-28T20:29:48.582671",
   "upstream_head": "de865c2f70d3fdb836083b656778652f760376bc",
   "branches": {
     "pr-fix-core-numpy2-optparse": {
@@ -7,17 +7,15 @@
       "commit_sha": "f3829a97e04345c73c4b2b7329c64e41b5abab9d",
       "ahead": 10,
       "behind": 0,
-      "base": "upstream/master",
       "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
+      "last_verified": "2026-10-28T20:29:48.590669"
     },
     "pr-fix-io-dictarray-indexing": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "105dcf157f4262fb9a4b85c603de75561406b906",
-      "ahead": 2,
-      "behind": 2,
-      "merge_clean": true,
-      "last_verified": "2026-10-13T18:02:17.170325"
+      "status": "MERGED",
+      "branch": "pr-fix-io-dictarray-indexing",
+      "pr_number": 5474,
+      "merged_commit": "12f38a7c1",
+      "last_verified": "2026-10-28T20:29:48.584817"
     },
     "pr-fix-events-numpy2-zerolag": {
       "status": "WAITING_DEPENDENCY",
@@ -25,45 +23,41 @@
       "commit_sha": "6996e102959b2f7fb7e605b3ac87bc8f6252fcb7",
       "dependency": "pr-fix-core-numpy2-optparse",
       "note": "Awaiting upstream merge of parent branch pr-fix-core-numpy2-optparse before cascade rebase",
-      "last_verified": "2026-10-13T18:02:17.173117"
+      "last_verified": "2026-10-28T20:29:48.593499"
     },
     "pr-perf-waveform-compress": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "abd57e5844156a21954997f7b3805d8448e0141c",
-      "ahead": 10,
-      "behind": 0,
-      "merge_clean": true,
-      "last_verified": "2026-10-13T18:02:17.178208"
+      "status": "MERGED",
+      "branch": "pr-perf-waveform-compress",
+      "pr_number": 5473,
+      "merged_commit": "92a27d1b9",
+      "last_verified": "2026-10-28T20:29:48.584815"
     },
     "pr-feat-vetoes-chisq-slicing": {
-      "status": "CONFLICT",
+      "status": "MERGED",
       "branch": "pr-feat-vetoes-chisq-slicing",
-      "error": "Rebasing (1/6)\nerror: could not apply e525fe01a... feat(vetoes): Memory-efficient bin SNR slicing and numerical stability in power chisq\nhint: Resolve all conflicts manually, mark them as resolved with\nhint: \"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\nhint: You can instead skip this commit: run \"git rebase --skip\".\nhint: To abort and get back to the state before \"git rebase\", run \"git rebase --abort\".\nhint: Disable this message with \"git config set advice.mergeConflict false\"\nCould not apply e525fe01a... # feat(vetoes): Memory-efficient bin SNR slicing and numerical stability in power chisq",
-      "timestamp": "2026-10-13T18:02:17.203661"
+      "pr_number": 5480,
+      "merged_commit": "58732a4f1",
+      "last_verified": "2026-10-28T20:29:48.584819"
     },
     "pr-feat-events-eventmgr-multi": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "8fe5f270e9aae6d0c2905a9fc9bceecbf1f26f14",
-      "ahead": 5,
-      "behind": 0,
-      "merge_clean": true,
-      "last_verified": "2026-10-13T18:02:17.208867"
+      "status": "MERGED",
+      "branch": "pr-feat-events-eventmgr-multi",
+      "pr_number": 5481,
+      "merged_commit": "a72844c77",
+      "last_verified": "2026-10-28T20:29:48.584819"
     },
     "pr-feat-filter-dynamic-snr-renorm": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "bdd863f9daee4e166f602c45fe56cccf42779a19",
-      "ahead": 1,
-      "behind": 0,
-      "merge_clean": true,
-      "last_verified": "2026-10-13T18:02:17.213530"
+      "status": "CONFLICT",
+      "branch": "pr-feat-filter-dynamic-snr-renorm",
+      "error": "Rebasing (1/1)\nerror: could not apply bdd863f9d... feat(filter): Dynamic SNR renormalization via hollow rolling window variance envelope\nhint: Resolve all conflicts manually, mark them as resolved with\nhint: \"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\nhint: You can instead skip this commit: run \"git rebase --skip\".\nhint: To abort and get back to the state before \"git rebase\", run \"git rebase --abort\".\nhint: Disable this message with \"git config set advice.mergeConflict false\"\nCould not apply bdd863f9d... # feat(filter): Dynamic SNR renormalization via hollow rolling window variance envelope",
+      "timestamp": "2026-10-28T20:29:48.754082"
     },
     "pr-feat-inject-injfilter-optimal-snr": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "24446f28b9a5c43bea53d2cab2e5f2792e3e5c6a",
-      "ahead": 6,
-      "behind": 0,
-      "merge_clean": true,
-      "last_verified": "2026-10-13T18:02:17.217913"
+      "status": "MERGED",
+      "branch": "pr-feat-inject-injfilter-optimal-snr",
+      "pr_number": 5479,
+      "merged_commit": "e4c49ef0c",
+      "last_verified": "2026-10-28T20:29:48.584817"
     },
     "pr-feat-psd-robust-estimators": {
       "status": "WAITING_DEPENDENCY",
@@ -71,187 +65,134 @@
       "commit_sha": "639133d2487bebc792ccafef7095596725bb0c4f",
       "dependency": "pr-feat-filter-dynamic-snr-renorm",
       "note": "Awaiting upstream merge of parent branch pr-feat-filter-dynamic-snr-renorm before cascade rebase",
-      "last_verified": "2026-10-13T18:02:17.220188"
+      "last_verified": "2026-10-28T20:29:48.758548"
     },
     "pr-feat-strain-regularized-inpainting": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "e330b7378944a3d5090db4af8301899439924e6d",
-      "ahead": 4,
-      "behind": 0,
-      "merge_clean": true,
-      "last_verified": "2026-10-13T18:02:17.223825"
+      "status": "CONFLICT",
+      "branch": "pr-feat-strain-regularized-inpainting",
+      "error": "Rebasing (1/4)\nerror: could not apply 51db8c52f... Fix numerical instability in gating and inpainting\nhint: Resolve all conflicts manually, mark them as resolved with\nhint: \"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\nhint: You can instead skip this commit: run \"git rebase --skip\".\nhint: To abort and get back to the state before \"git rebase\", run \"git rebase --abort\".\nhint: Disable this message with \"git config set advice.mergeConflict false\"\nCould not apply 51db8c52f... # Fix numerical instability in gating and inpainting",
+      "timestamp": "2026-10-28T20:29:48.920832"
     },
     "pr-feat-frame-gwosc-hdf": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "692ca6a2c6055539407ba52189590d6b525d204c",
-      "ahead": 5,
-      "behind": 0,
-      "merge_clean": true,
-      "last_verified": "2026-10-13T18:02:17.227500"
+      "status": "MERGED",
+      "branch": "pr-feat-frame-gwosc-hdf",
+      "pr_number": 5482,
+      "merged_commit": "7bd1ba717",
+      "last_verified": "2026-10-28T20:29:48.584820"
     },
     "pr-fix-filter-qtransform": {
       "status": "MERGED",
       "branch": "pr-fix-filter-qtransform",
       "pr_number": 5476,
       "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83",
-      "last_verified": "2026-10-13T18:02:17.157647"
+      "last_verified": "2026-10-28T20:29:48.584811"
     },
     "pr-fix-filter-resample-copy": {
       "status": "CONFLICT",
       "branch": "pr-fix-filter-resample-copy",
       "error": "Rebasing (1/2)\nerror: could not apply e95b13b46... fix(filter): preserve caller copy semantics in resample_to_delta_t\nhint: Resolve all conflicts manually, mark them as resolved with\nhint: \"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\nhint: You can instead skip this commit: run \"git rebase --skip\".\nhint: To abort and get back to the state before \"git rebase\", run \"git rebase --abort\".\nhint: Disable this message with \"git config set advice.mergeConflict false\"\nCould not apply e95b13b46... # fix(filter): preserve caller copy semantics in resample_to_delta_t",
-      "timestamp": "2026-10-13T18:02:17.251979"
+      "timestamp": "2026-10-28T20:29:49.068279"
     },
     "pr-fix-live-hwinj-support": {
       "status": "MERGED",
       "branch": "pr-fix-live-hwinj-support",
       "pr_number": 5476,
       "merged_commit": "62ee71cbfe3bd9e7c4438be10a712b768e5fdb83",
-      "last_verified": "2026-10-13T18:02:17.157650"
-    },
-    "feature/chisq-class-updates": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "ef9d9c90756c74097a3db4d1676b468cc83d2262",
-      "ahead": 1,
-      "behind": 0,
-      "base": "upstream/master",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
+      "last_verified": "2026-10-28T20:29:48.584814"
     },
     "feature/signal-consistency-chain": {
-      "status": "UP_TO_DATE",
+      "status": "WAITING_DEPENDENCY",
+      "branch": "feature/signal-consistency-chain",
       "commit_sha": "67c07b90105c37febe182eacc974a29eb375deaa",
-      "ahead": 2,
-      "behind": 0,
-      "base": "feature/chisq-class-updates",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
+      "dependency": "feature/chisq-class-updates",
+      "note": "Awaiting upstream merge of parent branch feature/chisq-class-updates before cascade rebase",
+      "last_verified": "2026-10-28T20:29:49.072228"
     },
     "feature/sg-chisq-template-projection": {
-      "status": "UP_TO_DATE",
+      "status": "WAITING_DEPENDENCY",
+      "branch": "feature/sg-chisq-template-projection",
       "commit_sha": "0d2c103efc683aaf3f6e933d48e0e8da1f66c63f",
-      "ahead": 3,
-      "behind": 0,
-      "base": "feature/signal-consistency-chain",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
+      "dependency": "feature/signal-consistency-chain",
+      "note": "Awaiting upstream merge of parent branch feature/signal-consistency-chain before cascade rebase",
+      "last_verified": "2026-10-28T20:29:49.079676"
     },
     "pr-feat-multidet-workflow-jobs": {
       "status": "UP_TO_DATE",
-      "commit_sha": "9cedf8147487dd8ff774ef894eac8361a83e395c",
+      "commit_sha": "2ee16a5bdc20c0aaf293eee9af6791c733ff5d5a",
       "ahead": 1,
       "behind": 0,
-      "base": "upstream/master",
       "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551",
-      "head_sha": "2ee16a5bd"
+      "last_verified": "2026-10-28T20:29:49.220796"
     },
     "feature/power-chisq-bin-weights": {
       "status": "UP_TO_DATE",
       "commit_sha": "0fd36e846f4a0d7e37476e7e5067f13643faa0d3",
       "ahead": 3,
       "behind": 0,
-      "base": "upstream/master",
       "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
-    },
-    "fix-gating-inpainting": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "668aa1e2390ba76270b433c27e2be868fb450c6a",
-      "ahead": 5,
-      "behind": 0,
-      "base": "upstream/master",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
-    },
-    "marg-reconstruct-cache": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "8a0750bea97ba86888660ae63460b4216917715c",
-      "ahead": 21,
-      "behind": 0,
-      "base": "upstream/master",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551",
-      "head_sha": "3b3465603"
-    },
-    "marg-inline-reconstruct": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "7fd31f6d57679a3798b8f5172ee4f284d728ccf3",
-      "ahead": 25,
-      "behind": 0,
-      "base": "marg-reconstruct-cache",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551",
-      "head_sha": "2d893ae8d",
-      "base_sha": "3b3465603"
-    },
-    "relbin-calibration": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "dfc99dba7540c33f482a8166e4742cd70ac5b064",
-      "ahead": 3,
-      "behind": 0,
-      "base": "upstream/master",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
-    },
-    "relbin-setup-refactor": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "dea63b876c3cf2b496e41e82ad0db8d6fddd21be",
-      "ahead": 1,
-      "behind": 0,
-      "base": "upstream/master",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
-    },
-    "relbin-resolution-diagnostic": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "7eb35387fbf53bdb69391046417014923bf184b6",
-      "ahead": 16,
-      "behind": 0,
-      "base": "upstream/master",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
-    },
-    "tsdoc": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "20411eca593a99516f3838643a3c0e76e085e2ea",
-      "ahead": 2,
-      "behind": 0,
-      "base": "upstream/master",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
-    },
-    "siminj": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "bec6ca678d6f37af1ba7274af7921edd940fbf0c",
-      "ahead": 2,
-      "behind": 0,
-      "base": "upstream/master",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
-    },
-    "ci-http-cache": {
-      "status": "UP_TO_DATE",
-      "commit_sha": "408b588a0e5fe77ee864710be1b3ab7adf063961",
-      "ahead": 28,
-      "behind": 0,
-      "base": "upstream/master",
-      "merge_clean": true,
-      "last_verified": "2026-10-28T17:02:33.518551"
+      "last_verified": "2026-10-28T20:29:49.077462"
     },
     "feature/fir-matchedfilter-multidet": {
+      "status": "WAITING_DEPENDENCY",
       "branch": "feature/fir-matchedfilter-multidet",
-      "status": "CURRENT_CLEAN",
-      "base_ref": "feature/sg-chisq-template-projection",
-      "base_sha": "0d2c103ef",
-      "head_sha": "87e333338",
-      "commits_behind_master": 0,
-      "commits_ahead_of_base": 1,
-      "last_checked": "2026-10-28T23:00:00Z",
-      "last_rebased": "2026-10-28T22:58:00Z",
-      "qlty_clean": true,
-      "tests_passed": true,
-      "notes": "Rebased onto feature/sg-chisq-template-projection (0d2c103ef) / upstream/master (de865c2f7); qlty check + fmt clean (0 issues); test_matched_filter_ratio passed."
+      "commit_sha": "87e333338c075914b32f9f7ab292a906befbf670",
+      "dependency": "feature/sg-chisq-template-projection",
+      "note": "Awaiting upstream merge of parent branch feature/sg-chisq-template-projection before cascade rebase",
+      "last_verified": "2026-10-28T20:29:49.082195"
+    },
+    "pr-feat-fir-bank": {
+      "status": "MERGED",
+      "branch": "pr-feat-fir-bank",
+      "pr_number": 5490,
+      "merged_commit": "7face56ab",
+      "last_verified": "2026-10-28T20:29:48.584821"
+    },
+    "staging": {
+      "status": "MERGED",
+      "branch": "staging",
+      "pr_number": 5371,
+      "merged_commit": "02df4d52b",
+      "last_verified": "2026-10-28T20:29:48.584822"
+    },
+    "relbin-kernel-vectorize": {
+      "status": "MERGED",
+      "branch": "relbin-kernel-vectorize",
+      "pr_number": 5434,
+      "merged_commit": "be652c2be",
+      "last_verified": "2026-10-28T20:29:48.584823"
+    },
+    "marg-peak-search": {
+      "status": "MERGED",
+      "branch": "marg-peak-search",
+      "pr_number": 5433,
+      "merged_commit": "f6a56ee20",
+      "last_verified": "2026-10-28T20:29:48.584824"
+    },
+    "marg-distance-interp": {
+      "status": "MERGED",
+      "branch": "marg-distance-interp",
+      "pr_number": 5432,
+      "merged_commit": "165d4f7b1",
+      "last_verified": "2026-10-28T20:29:48.584825"
+    },
+    "feature/veto-option-groups": {
+      "status": "SKIPPED_NO_WORKTREE",
+      "branch": "feature/veto-option-groups",
+      "commit_sha": "102e37537613dac6525d379e11fd184648599d6d",
+      "error": "No dedicated worktree found; skipping to protect main dev checkout",
+      "last_verified": "2026-10-28T20:29:49.069199"
+    },
+    "pr-feat-multidet-trigger-files": {
+      "status": "CONFLICT",
+      "branch": "pr-feat-multidet-trigger-files",
+      "error": "Rebasing (1/2)\nerror: could not apply b5331c27a... Support multi-detector trigger files in post-processing and workflows\nhint: Resolve all conflicts manually, mark them as resolved with\nhint: \"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\nhint: You can instead skip this commit: run \"git rebase --skip\".\nhint: To abort and get back to the state before \"git rebase\", run \"git rebase --abort\".\nhint: Disable this message with \"git config set advice.mergeConflict false\"\nCould not apply b5331c27a... # Support multi-detector trigger files in post-processing and workflows",
+      "timestamp": "2026-10-28T20:29:49.213164"
+    },
+    "pr-feat-workflow-clusterlink": {
+      "status": "CONFLICT",
+      "branch": "pr-feat-workflow-clusterlink",
+      "error": "Rebasing (1/1)\nerror: could not apply ad9501031... feat(workflow): add clusterlink execution site to Pegasus site catalog\nhint: Resolve all conflicts manually, mark them as resolved with\nhint: \"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\nhint: You can instead skip this commit: run \"git rebase --skip\".\nhint: To abort and get back to the state before \"git rebase\", run \"git rebase --abort\".\nhint: Disable this message with \"git config set advice.mergeConflict false\"\nCould not apply ad9501031... # feat(workflow): add clusterlink execution site to Pegasus site catalog",
+      "timestamp": "2026-10-28T20:29:49.343106"
     }
   },
   "upstream_remote": "upstream",
